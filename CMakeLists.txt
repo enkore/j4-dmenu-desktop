@@ -12,3 +12,6 @@ ADD_EXECUTABLE(
     src/desktop.cc
     src/locale.cc
 )
+
+INSTALL (TARGETS j4-dmenu
+         RUNTIME DESTINATION bin)
