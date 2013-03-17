@@ -9,6 +9,15 @@
 
 int main(int argc, char **argv)
 {
+    std::string dmenu_command_;
+    if(argc == 1) {
+        dmenu_command_ = "dmenu";
+    } else {
+        for(int i = 1; i < argc; i++)
+            dmenu_command_.append(argv[i]) += " ";
+    }
+    const char *dmenu_command = dmenu_command_.c_str();
+
     // suffixes is a set of locale suffixes derived from the set locale
     // The suffixes for en_US.UTF-8 would be en and en_US
     stringset_t suffixes = get_locale_suffixes(get_locale());
@@ -67,9 +76,7 @@ int main(int argc, char **argv)
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
-            // Never returns
-            // TODO parameter for dmenu command to run
-            execl(shell, shell, "-c", "dmenu -fn 'DejaVu Sans-10' -l 20", 0);
+            execl(shell, shell, "-c", dmenu_command, 0);
             return 0;
     }
 
