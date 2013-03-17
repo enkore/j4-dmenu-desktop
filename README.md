@@ -8,6 +8,7 @@ and offer you a menu to start an application using dmenu.
 * Compiler with basic C++11 support (GCC 4.6 is probably just fine)
 * CMake
 
+Building is the usual cmake/make thingy:
 
     cmake .
     make
