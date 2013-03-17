@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 
     replace(exec, "%%", "%");
 
-    std::string command  = "exec ";
+    std::string command;
     if(app.count("Terminal") && app["Terminal"].boolean) {
         // Execute in terminal
 
@@ -186,7 +186,9 @@ int main(int argc, char **argv)
     };
 
     printf("Command line: %s\n", command.c_str());
-    system(("i3-msg \"" + command + "\"").c_str());
+
+    execl("/usr/bin/i3-msg", "i3-msg", "exec", command.c_str(), 0);
+//    system(("i3-msg \"" + command + "\"").c_str());
 
     return 0;
 }
