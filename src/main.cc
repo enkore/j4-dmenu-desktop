@@ -50,6 +50,10 @@ int main(int argc, char **argv)
         for(auto desktopfile : files) {
             std::ifstream file(desktopfile);
             desktop_file_t dft;
+            desktop_entry location;
+            location.type = location.STRING;
+            location.str = path + desktopfile;
+            dft["_Location"] = location;
 
             if(read_desktop_file(file, dft, suffixes))
                 apps[dft["Name"].str] = dft;
@@ -139,7 +143,7 @@ int main(int argc, char **argv)
     replace(exec, "%c", name);
 
     // Location of .desktop file
-    //TODO replace(exec, "%k", ...);
+    replace(exec, "%k", app["_Location"].str);
 
     // Icons are not supported, so remove %i
     replace(exec, "%i", "");
