@@ -182,7 +182,7 @@ int main(int argc, char **argv)
     };
 
     printf("Command line: %s\n", command.c_str());
-    system(("i3-msg " + command).c_str());
+    system(("i3-msg \"" + command + "\"").c_str());
 
     return 0;
 }
