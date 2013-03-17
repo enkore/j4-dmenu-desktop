@@ -1,30 +1,57 @@
 #include <sstream>
+#include <istream>
+
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+
 
 #include "util.hh"
 
-// STL sucks so much in this regards, even very basic stuff like "split some string"
+// STL sucks so much in this regard, even very basic stuff like "split some string"
 // or "replace this with that" isn't implemented.
 
-stringlist_t &split(const std::string &s, char delimiter, stringlist_t &elems)
+void split(const std::string &str, char delimiter, stringlist_t &elems)
 {
-    std::stringstream ss(s);
+    std::stringstream ss(str);
     std::string item;
-    while(std::getline(ss, item, delimiter))
+
+    while (std::getline(ss, item, delimiter))
         elems.push_back(item);
-    return elems;
 }
 
-std::string &replace(std::string& str, const std::string& substr, const std::string &substitute)
+std::pair<std::string, std::string> split(const std::string &str, const std::string &delimiter)
+{
+    size_t pos = 0;
+    pos = str.find(delimiter);
+    return std::make_pair(str.substr(0, pos), str.substr(pos+1, str.length()));
+}
+
+
+std::string &replace(std::string &str, const std::string &substr, const std::string &substitute)
 {
     if(substr.empty())
         return str;
     size_t start_pos = 0;
-    while((start_pos = str.find(substr, start_pos)) != std::string::npos) {
+    while ((start_pos = str.find(substr, start_pos)) != std::string::npos) {
         str.replace(start_pos, substr.length(), substitute);
         start_pos += substitute.length(); // In case 'substitute' contains 'substr', like replacing 'x' with 'yx'
     }
     return str;
+}
+
+bool endswith(const std::string &str, const std::string &suffix)
+{
+    if(str.length() < suffix.length())
+        return false;
+    return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
+}
+
+bool startswith(const std::string &str, const std::string &prefix)
+{
+    if(str.length() < prefix.length())
+        return false;
+    return str.compare(0, prefix.length(), prefix) == 0;
 }
 
 bool is_directory(const std::string &path)
@@ -48,28 +75,27 @@ std::string get_variable(const std::string &var)
         return "";
 }
 
-void build_search_path(stringlist_t &search_path)
+
+void find_files(const std::string &path, const std::string &name_suffix, stringlist_t &files)
 {
-    stringlist_t sp;
+    DIR *dir;
+    dirent *entry;
 
-    std::string xdg_data_home = get_variable("XDGDATA_HOME");
-    if(xdg_data_home.empty())
-        xdg_data_home = std::string(get_variable("HOME")) + "/.local/share/applications/";
+    dir = opendir(path.c_str());
+    if(!dir)
+        return;
 
-    if(is_directory(xdg_data_home))
-        sp.push_back(xdg_data_home);
+    while(entry = readdir(dir)) {
+        std::string entry_name(entry->d_name);
+        if(entry_name.compare(".") == 0 || entry_name.compare("..") == 0)
+            continue;
 
-    std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
-    if(xdg_data_dirs.empty())
-        xdg_data_dirs = "/usr/local/share/applications/:/usr/share/applications/";
+        std::string pathspec = path + "/" + entry_name;
+        if(is_directory(pathspec))
+            find_files(pathspec, name_suffix, files);
+        else if(endswith(pathspec, name_suffix))
+            files.push_back(pathspec);
+    }
 
-    stringlist_t items;
-    split(xdg_data_dirs, ':', items);
-    for(auto path : items)
-        if(is_directory(path))
-            sp.push_back(path);
-
-    // Fix double slashes, if any
-    for(auto path : sp)
-        search_path.push_back(replace(path, "//", "/"));
+    closedir(dir);
 }

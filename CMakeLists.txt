@@ -9,4 +9,6 @@ ADD_EXECUTABLE(
     j4-dmenu
     src/util.cc
     src/main.cc
+    src/desktop.cc
+    src/locale.cc
 )
