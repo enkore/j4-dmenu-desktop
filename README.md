@@ -1,4 +1,3 @@
-
 # j4-dmenu
 
 j4-dmenu is a replacement for i3-dmenu-desktop. It's purpose is to find .desktop files
@@ -6,8 +5,9 @@ and offer you a menu to start an application using dmenu.
 
 ## Build requirements
 
-* Compiler with basic C++11 support
+* Compiler with basic C++11 support (GCC 4.6 is probably just fine)
 * CMake
+
 
     cmake .
     make
