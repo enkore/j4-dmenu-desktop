@@ -12,7 +12,6 @@ typedef std::map<std::string, std::string> stringmap_t;
 typedef std::list<std::string> stringlist_t;
 typedef std::set<std::string> stringset_t;
 
-
 void split(const std::string &str, char delimiter, stringlist_t &elems);
 std::pair<std::string, std::string> split(const std::string &str, const std::string &delimiter);
 std::string &replace(std::string &str, const std::string &substr, const std::string &substitute);
