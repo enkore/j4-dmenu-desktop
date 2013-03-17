@@ -2,6 +2,9 @@
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
+#include <cstring>
+
+#include <sys/stat.h>
 
 #include "util.hh"
 #include "desktop.hh"
@@ -147,7 +150,7 @@ int main(int argc, char **argv)
     if(app.count("Terminal") && app["Terminal"].boolean) {
         // Execute in terminal
 
-        std::string scriptname = mktemp((char*)"j4-dmenu-XXXXXX");
+        std::string scriptname = tmpnam(0);
         std::ofstream script(scriptname);
         script << "#!/bin/sh" << std::endl;
         script << "rm " << scriptname << std::endl;
@@ -160,6 +163,7 @@ int main(int argc, char **argv)
 
         // TODO
         // chmod 0755
+        chmod(scriptname.c_str(), S_IRWXU|S_IRGRP|S_IROTH);
 
         command += "i3-sensible-terminal -e \"" + scriptname + "\"";
     } else {
