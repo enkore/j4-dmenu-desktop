@@ -29,11 +29,12 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-void read_desktop_file(std::istream &stream, desktop_file_t &values, stringset_t &suffixes)
+bool read_desktop_file(std::istream &stream, desktop_file_t &values, stringset_t &suffixes)
 {
     std::string line;
     std::string fall_back_name;
     bool parse_key_values = false;
+    bool discard = false;
 
     while(stream) {
         std::getline(stream, line);
@@ -61,14 +62,14 @@ void read_desktop_file(std::istream &stream, desktop_file_t &values, stringset_t
             if(key == "Name")
                 fall_back_name = value;
 
-            if(key == "NoDisplay" ||
-                key == "Hidden" ||
-                key == "StartupNotify" ||
+            if(key == "Hidden" || key == "NoDisplay")
+                discard = true;
+
+            if(key == "StartupNotify" ||
                 key == "Terminal") {
                 entry.type = entry.BOOL;
                 entry.boolean = value == "true";
             } else if(key == "Exec" ||
-                key == "TryExec" ||
                 key == "Type") {
                 entry.type = entry.STRING;
                 entry.str = value;
@@ -91,4 +92,6 @@ void read_desktop_file(std::istream &stream, desktop_file_t &values, stringset_t
         entry.str = fall_back_name;
         values["Name"] = entry;
     }
+
+    return !discard;
 }

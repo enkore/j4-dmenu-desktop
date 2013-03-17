@@ -51,10 +51,10 @@ int main(int argc, char **argv)
             std::ifstream file(desktopfile);
             desktop_file_t dft;
 
-            read_desktop_file(file, dft, suffixes);
-
-            // Insert by name
-            apps[dft["Name"].str] = dft;
+            if(read_desktop_file(file, dft, suffixes))
+                apps[dft["Name"].str] = dft;
+            else
+                apps.erase(dft["Name"].str);
         }
     }
 
