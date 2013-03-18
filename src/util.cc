@@ -55,12 +55,21 @@ bool startswith(const std::string &str, const std::string &prefix)
     return str.compare(0, prefix.length(), prefix) == 0;
 }
 
-bool is_directory(const std::string &path)
+bool endswith(const char *str, const char *suffix)
+{
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix > lenstr)
+        return false;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
+bool is_directory(const char *path)
 {
     int status;
     struct stat filestat;
 
-    status = stat(path.c_str(), &filestat);
+    status = stat(path, &filestat);
     if(status)
         return false;
 
@@ -76,26 +85,34 @@ std::string get_variable(const std::string &var)
         return "";
 }
 
-void find_files(const std::string &path, const std::string &name_suffix, file_cb cb)
+void find_files(const char *path, const char *name_suffix, file_cb cb)
 {
     DIR *dir;
     dirent *entry;
 
-    dir = opendir(path.c_str());
+    dir = opendir(path);
     if(!dir)
         return;
+
+    char *pathspec = new char[512]; // Easily long enough
+    strcpy(pathspec, path);
+    int len = strlen(path);
+    pathspec[len++] = '/';
+    pathspec[len] = 0;
 
     while(entry = readdir(dir)) {
         if(entry->d_name[0] == '.' || strcmp(entry->d_name, "..") == 0)
             continue;
 
-        std::string pathspec = path + "/" + entry->d_name;
+        strcpy(pathspec+len, entry->d_name);
         if(is_directory(pathspec)) {
             find_files(pathspec, name_suffix, cb);
         } else if(endswith(pathspec, name_suffix)) {
             cb(pathspec);
         }
     }
+
+    delete[] pathspec;
 
     closedir(dir);
 }

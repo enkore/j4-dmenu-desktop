@@ -18,9 +18,9 @@ apps_t apps;
 // Current base path
 std::string path;
 
-void file_callback(const std::string &filename)
+void file_callback(const char *filename)
 {
-    FILE *file = fopen(filename.c_str(), "r");
+    FILE *file = fopen(filename, "r");
     desktop_file_t dft;
 
     if(read_desktop_file(file, dft)) {
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 
     replace(exec, "%%", "%");
 
-    std::string command;
+    std::string command = "exec ";
     if(app.count("Terminal") && app["Terminal"].boolean) {
         // Execute in terminal
 
@@ -214,6 +214,5 @@ int main(int argc, char **argv)
     int status=0;
     waitpid(dmenu_pid, &status, 0);
 
-    //return execl("/usr/bin/i3-msg", "i3-msg", "exec", command.c_str(), 0);
-    return 0;
+    return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
 }

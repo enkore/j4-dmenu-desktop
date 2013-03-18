@@ -12,7 +12,7 @@ void build_search_path(stringlist_t &search_path)
     if(xdg_data_home.empty())
         xdg_data_home = std::string(get_variable("HOME")) + "/.local/share/applications/";
 
-    if(is_directory(xdg_data_home))
+    if(is_directory(xdg_data_home.c_str()))
         sp.push_back(xdg_data_home);
 
     std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
@@ -22,7 +22,7 @@ void build_search_path(stringlist_t &search_path)
     stringlist_t items;
     split(xdg_data_dirs, ':', items);
     for(auto path : items)
-        if(is_directory(path))
+        if(is_directory(path.c_str()))
             sp.push_back(path);
 
     sp.reverse();
