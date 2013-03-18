@@ -1,14 +1,20 @@
 
+#include <string.h>
+
 #include "locale.hh"
+
+char **suffixes;
 
 std::string get_locale()
 {
     return setlocale(LC_MESSAGES, "");
 }
 
-stringset_t get_locale_suffixes(std::string locale)
+void populate_locale_suffixes(std::string locale)
 {
-    stringset_t suffixes;
+    suffixes = new char*[4];
+
+    int i = 0;
     size_t dotpos = locale.find(".");
     size_t atpos = locale.find("@") != std::string::npos ? locale.find("@") : locale.length();
     size_t uscorepos = locale.find("_");
@@ -19,12 +25,21 @@ stringset_t get_locale_suffixes(std::string locale)
         atpos = locale.find("@") != std::string::npos ? locale.find("@") : locale.length();
     }
 
-    suffixes.insert(locale);
+    suffixes[i++] = strdup(locale.c_str());
 
     if(uscorepos < atpos && atpos != std::string::npos) {
-        suffixes.insert(locale.substr(0, atpos));
-        suffixes.insert(locale.substr(0, uscorepos) + locale.substr(atpos, locale.length()));
+        suffixes[i++] = strdup(locale.substr(0, atpos).c_str());
+        suffixes[i++] = strdup((locale.substr(0, uscorepos) + locale.substr(atpos, locale.length())).c_str());
     }
 
-    return suffixes;
+    suffixes[i++] = 0;
 }
+
+void free_locale_suffixes()
+{
+    for(int i = 0; i < 4; i++)
+        free(suffixes[i]);
+    delete[] suffixes;
+}
+
+

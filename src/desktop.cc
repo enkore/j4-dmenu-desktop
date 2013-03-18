@@ -1,8 +1,8 @@
 
 #include <string.h>
 
-
 #include "desktop.hh"
+#include "locale.hh"
 
 void build_search_path(stringlist_t &search_path)
 {
@@ -32,7 +32,7 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes)
+bool read_desktop_file(FILE *file, desktop_file_t &values)
 {
     std::string fall_back_name;
     bool parse_key_values = false;
@@ -51,14 +51,8 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
         if(!linelen || line[0] == '#')
             continue;
 
-        // Desktop Entry section starts
-        if(strncmp(line, "[Desktop Entry]", 15) == 0) {
-            parse_key_values = true;
-            continue;
-        }
-
         if(parse_key_values) {
-            // Desktop Entry section ended
+            // Desktop Entry section ended (b/c another section starts)
             if(line[0] == '[')
                 break;
 
@@ -70,19 +64,26 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
 
             bool store = false;
 
-            if(strncmp(key, "Name[", 5) == 0) {
-                // Don't ask, don't tell.
-                char *langcode = key + 5;
-                value[-2] = 0;
-                entry.type = entry.STRING;
-                entry.str = value;
-                for(auto suffix : suffixes)
-                    if(suffix.compare(langcode) == 0)
-                        values["Name"] = entry;
-                continue;
-            } else if(strcmp(key, "Name") == 0) {
-                fall_back_name = value;
-                continue;
+            if(strncmp(key, "Name", 4) == 0) {
+                if(key[4] == '[') {
+                    // Don't ask, don't tell.
+                    char *langcode = key + 5;
+                    const char *suffix;
+                    int i = 0;
+                    value[-2] = 0;
+                    entry.type = entry.STRING;
+                    entry.str = value;
+                    while(suffix = suffixes[i++]) {
+                        if(strcmp(suffix, langcode) == 0) {
+                            values["Name"] = entry;
+                            break;
+                        }
+                    }
+                    continue;
+                } else {
+                    fall_back_name = value;
+                    continue;
+                }
             } else if(strcmp(key, "Hidden") == 0 ||
                 strcmp(key, "NoDisplay") == 0) {
                 delete[] line;
@@ -99,10 +100,15 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
                 continue; // Skip storing uninteresting values
             values[key] = entry;
         }
+
+        // Desktop Entry section starts
+        if(strcmp(line, "[Desktop Entry]") == 0) {
+            parse_key_values = true;
+            continue;
+        }
     }
 
     if(!values.count("Name")) {
-        desktop_entry entry;
         entry.type = entry.STRING,
         entry.str = fall_back_name;
         values["Name"] = entry;

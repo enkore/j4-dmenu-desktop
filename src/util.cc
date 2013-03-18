@@ -99,3 +99,9 @@ void find_files(const std::string &path, const std::string &name_suffix, file_cb
 
     closedir(dir);
 }
+
+void free_cstringlist(cstringlist_t &stringlist)
+{
+    for(auto item : stringlist)
+        free(item);
+}

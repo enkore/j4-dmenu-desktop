@@ -14,7 +14,7 @@ struct desktop_entry {
 };
 
 typedef std::unordered_map<std::string, desktop_entry> desktop_file_t;
-typedef std::unordered_map<std::string, desktop_file_t> apps_t;
+typedef std::unordered_map<std::string , desktop_file_t> apps_t;
 
 void build_search_path(stringlist_t &search_path);
-bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes);
+bool read_desktop_file(FILE *file, desktop_file_t &values);

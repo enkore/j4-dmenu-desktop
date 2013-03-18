@@ -11,7 +11,7 @@
 
 typedef std::map<std::string, std::string> stringmap_t;
 typedef std::list<std::string> stringlist_t;
-typedef std::set<std::string> stringset_t;
+typedef std::vector<char *> cstringlist_t;
 
 typedef void (*file_cb)(const std::string &file);
 
@@ -25,3 +25,5 @@ bool is_directory(const std::string &path);
 std::string get_variable(const std::string &var);
 
 void find_files(const std::string &path, const std::string &name_suffix, file_cb cb);
+
+void free_cstringlist(cstringlist_t &stringlist);

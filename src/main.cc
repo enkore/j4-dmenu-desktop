@@ -11,10 +11,6 @@
 #include "desktop.hh"
 #include "locale.hh"
 
-// suffixes is a set of locale suffixes derived from the set locale
-// The suffixes for en_US.UTF-8 would be en and en_US
-stringset_t suffixes = get_locale_suffixes(get_locale());
-
 // apps is a mapping of the locale-specific name extracted from .desktop-
 // files to the contents of those files (key/value pairs)
 apps_t apps;
@@ -27,7 +23,7 @@ void file_callback(const std::string &filename)
     FILE *file = fopen(filename.c_str(), "r");
     desktop_file_t dft;
 
-    if(read_desktop_file(file, dft, suffixes)) {
+    if(read_desktop_file(file, dft)) {
         desktop_entry location;
         location.type = location.STRING;
         location.str = path + filename;
@@ -58,7 +54,7 @@ int main(int argc, char **argv)
     const char *dmenu_command = dmenu_command_.c_str();
 
 
-    suffixes = get_locale_suffixes(get_locale());
+    populate_locale_suffixes(get_locale());
 
     // The search path contains all directories that are recursively searched for
     // .desktop-files
@@ -124,6 +120,10 @@ int main(int argc, char **argv)
     }
 
     close(dmenu_outpipe[1]);
+
+    // User enters her choice
+
+    free_locale_suffixes();
 
     std::string choice;
     std::string args;
@@ -214,7 +214,6 @@ int main(int argc, char **argv)
     int status=0;
     waitpid(dmenu_pid, &status, 0);
 
-    execl("/usr/bin/i3-msg", "i3-msg", "exec", command.c_str(), 0);
-
+    //return execl("/usr/bin/i3-msg", "i3-msg", "exec", command.c_str(), 0);
     return 0;
 }
