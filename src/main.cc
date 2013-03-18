@@ -34,6 +34,8 @@ void file_callback(const std::string &filename)
         apps[dft["Name"].str] = dft;
     else
         apps.erase(dft["Name"].str);
+
+    fclose(file);
 }
 
 int main(int argc, char **argv)
@@ -60,7 +62,7 @@ int main(int argc, char **argv)
     // This way desktop files that are customized in more important directories
     // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
     // directories
-    std::string original_wd = get_current_dir_name();
+    char *original_wd = get_current_dir_name();
 
     for(auto spath : search_path) {
         chdir(spath.c_str());
@@ -68,7 +70,8 @@ int main(int argc, char **argv)
         find_files(".", ".desktop", file_callback);
     }
 
-    chdir(original_wd.c_str());
+    chdir(original_wd);
+    free(original_wd);
 
     printf("Found %d .desktop files\n", apps.size());
 
