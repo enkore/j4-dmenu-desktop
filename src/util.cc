@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <string.h>
 
 
 #include "util.hh"
@@ -85,11 +86,10 @@ void find_files(const std::string &path, const std::string &name_suffix, file_cb
         return;
 
     while(entry = readdir(dir)) {
-        std::string entry_name(entry->d_name);
-        if(entry_name.compare(".") == 0 || entry_name.compare("..") == 0)
+        if(entry->d_name[0] == '.' || strcmp(entry->d_name, "..") == 0)
             continue;
 
-        std::string pathspec = path + "/" + entry_name;
+        std::string pathspec = path + "/" + entry->d_name;
         if(is_directory(pathspec)) {
             find_files(pathspec, name_suffix, cb);
         } else if(endswith(pathspec, name_suffix)) {

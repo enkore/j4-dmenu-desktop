@@ -32,12 +32,6 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-inline static
-bool starts_with(const char *s1, const char *s2)
-{
-    return strncmp(s1, s2, strlen(s2)) == 0;
-}
-
 bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes)
 {
     std::string fall_back_name;
@@ -46,7 +40,8 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
     int linelen = 0;
 
     char *line = new char[4096];
-    static const char desktop_section[] = "[Desktop Entry]";
+
+    desktop_entry entry;
 
     while(fgets(line, 4096, file)) {
         linelen = strlen(line)-1;
@@ -56,18 +51,16 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
         if(!linelen || line[0] == '#')
             continue;
 
-        // Desktop Entry section ended
-        if(line[0] == '[' && parse_key_values)
-            break;
-
         // Desktop Entry section starts
-        if(strncmp(line, desktop_section, sizeof(desktop_section)) == 0) {
+        if(strncmp(line, "[Desktop Entry]", 15) == 0) {
             parse_key_values = true;
             continue;
         }
 
         if(parse_key_values) {
-            //printf("pkv: %s\n", line);
+            // Desktop Entry section ended
+            if(line[0] == '[')
+                break;
 
             char *key=line, *value;
             // Split that string in place
@@ -75,10 +68,7 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
             value[0] = 0;
             value++;
 
-            //printf("%s=%s\n", key, value);
-
             bool store = false;
-            desktop_entry entry;
 
             if(strcmp(key, "Name") == 0)
                 fall_back_name = value;
@@ -86,20 +76,11 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
             // Discard Hidden and NoDisplay entries
             if(strcmp(key, "Hidden") == 0 ||
                 strcmp(key, "NoDisplay") == 0) {
-                //printf(" DISCARD\n");
                 delete[] line;
                 return false;
             }
 
-            if(strcmp(key, "StartupNotify") == 0 ||
-                strcmp(key, "Terminal") == 0) {
-                entry.type = entry.BOOL;
-                entry.boolean = strcmp(value, "true") == 0;
-            } else if(strcmp(key, "Exec") == 0 ||
-                strcmp(key, "Type") == 0) {
-                entry.type = entry.STRING;
-                entry.str = value;
-            } else if(starts_with(key, "Name[")) {
+            if(strncmp(key, "Name[", 5)) {
                 // Don't ask, don't tell.
                 char *langcode = key + 5;
                 value[-2] = 0;
@@ -109,6 +90,14 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
                     if(suffix.compare(langcode) == 0)
                         values["Name"] = entry;
                 continue;
+            } else if(strcmp(key, "StartupNotify") == 0 ||
+                strcmp(key, "Terminal") == 0) {
+                entry.type = entry.BOOL;
+                entry.boolean = strcmp(value, "true") == 0;
+            } else if(strcmp(key, "Exec") == 0 ||
+                strcmp(key, "Type") == 0) {
+                entry.type = entry.STRING;
+                entry.str = value;
             } else
                 continue; // Skip storing uninteresting values
             values[key] = entry;
@@ -122,8 +111,6 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
         values["Name"] = entry;
     }
 
-
-    //printf("  Final Appname: %s\n", values["Name"].str.c_str());
     delete[] line;
     return true;
 }
