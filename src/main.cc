@@ -38,6 +38,12 @@ void file_callback(const std::string &filename)
     fclose(file);
 }
 
+static inline
+bool compare_cstrings(const char *s1, const char *s2)
+{
+    return strcmp(s1, s2) < 0;
+}
+
 int main(int argc, char **argv)
 {
     std::string dmenu_command_;
@@ -103,8 +109,15 @@ int main(int argc, char **argv)
 
     dup2(dmenu_inpipe[0], STDIN_FILENO);
 
-    for(auto app : apps) {
-        write(dmenu_outpipe[1], app.first.c_str(), app.first.length());
+    // apps is a hashmap, thus unsorted
+    std::vector<const char *> keys;
+    keys.reserve(apps.size());
+    for(auto app : apps)
+        keys.push_back(app.first.c_str());
+    std::sort(keys.begin(), keys.end(), compare_cstrings);
+
+    for(auto item : keys) {
+        write(dmenu_outpipe[1], item, strlen(item));
         write(dmenu_outpipe[1], "\n", 1);
     }
 

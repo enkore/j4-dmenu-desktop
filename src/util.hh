@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include <istream>
+#include <algorithm>
 
 typedef std::map<std::string, std::string> stringmap_t;
 typedef std::list<std::string> stringlist_t;
