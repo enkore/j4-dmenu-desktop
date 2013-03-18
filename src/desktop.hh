@@ -17,5 +17,4 @@ typedef std::map<std::string, desktop_entry> desktop_file_t;
 typedef std::map<std::string, desktop_file_t> apps_t;
 
 void build_search_path(stringlist_t &search_path);
-void find_files(const std::string &path, const std::string &name_suffix, stringlist_t &files);
-bool read_desktop_file(std::istream &stream, desktop_file_t &values, stringset_t &suffixes);
+bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes);

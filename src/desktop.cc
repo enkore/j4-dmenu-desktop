@@ -1,4 +1,7 @@
 
+#include <cstring>
+
+
 #include "desktop.hh"
 
 void build_search_path(stringlist_t &search_path)
@@ -29,15 +32,18 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-bool read_desktop_file(std::istream &stream, desktop_file_t &values, stringset_t &suffixes)
+bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes)
 {
     std::string line;
     std::string fall_back_name;
     bool parse_key_values = false;
     bool discard = false;
 
-    while(stream) {
-        std::getline(stream, line);
+    char *buffer = new char[4096];
+
+    while(fgets(buffer, 4096, file)) {
+        buffer[std::strlen(buffer)-1] = 0; // Chop off \n
+        line = buffer;
 
         // Blank line or comment
         if(!line.length() || line[0] == '#')
@@ -92,6 +98,9 @@ bool read_desktop_file(std::istream &stream, desktop_file_t &values, stringset_t
         entry.str = fall_back_name;
         values["Name"] = entry;
     }
+
+
+    delete[] buffer;
 
     return !discard;
 }
