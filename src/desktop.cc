@@ -70,17 +70,7 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
 
             bool store = false;
 
-            if(strcmp(key, "Name") == 0)
-                fall_back_name = value;
-
-            // Discard Hidden and NoDisplay entries
-            if(strcmp(key, "Hidden") == 0 ||
-                strcmp(key, "NoDisplay") == 0) {
-                delete[] line;
-                return false;
-            }
-
-            if(strncmp(key, "Name[", 5)) {
+            if(strncmp(key, "Name[", 5) == 0) {
                 // Don't ask, don't tell.
                 char *langcode = key + 5;
                 value[-2] = 0;
@@ -90,6 +80,13 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, stringset_t &suffixes
                     if(suffix.compare(langcode) == 0)
                         values["Name"] = entry;
                 continue;
+            } else if(strcmp(key, "Name") == 0) {
+                fall_back_name = value;
+                continue;
+            } else if(strcmp(key, "Hidden") == 0 ||
+                strcmp(key, "NoDisplay") == 0) {
+                delete[] line;
+                return false;
             } else if(strcmp(key, "StartupNotify") == 0 ||
                 strcmp(key, "Terminal") == 0) {
                 entry.type = entry.BOOL;
