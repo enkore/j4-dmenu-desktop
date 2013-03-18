@@ -10,6 +10,32 @@
 #include "desktop.hh"
 #include "locale.hh"
 
+// suffixes is a set of locale suffixes derived from the set locale
+// The suffixes for en_US.UTF-8 would be en and en_US
+stringset_t suffixes = get_locale_suffixes(get_locale());
+
+// apps is a mapping of the locale-specific name extracted from .desktop-
+// files to the contents of those files (key/value pairs)
+apps_t apps;
+
+// Current base path
+std::string path;
+
+void file_callback(const std::string &filename)
+{
+    FILE *file = fopen(filename.c_str(), "r");
+    desktop_file_t dft;
+    desktop_entry location;
+    location.type = location.STRING;
+    location.str = path + filename;
+    dft["_Location"] = location;
+
+    if(read_desktop_file(file, dft, suffixes))
+        apps[dft["Name"].str] = dft;
+    else
+        apps.erase(dft["Name"].str);
+}
+
 int main(int argc, char **argv)
 {
     std::string dmenu_command_;
@@ -21,13 +47,8 @@ int main(int argc, char **argv)
     }
     const char *dmenu_command = dmenu_command_.c_str();
 
-    // suffixes is a set of locale suffixes derived from the set locale
-    // The suffixes for en_US.UTF-8 would be en and en_US
-    stringset_t suffixes = get_locale_suffixes(get_locale());
 
-    // apps is a mapping of the locale-specific name extracted from .desktop-
-    // files to the contents of those files (key/value pairs)
-    apps_t apps;
+    suffixes = get_locale_suffixes(get_locale());
 
     // The search path contains all directories that are recursively searched for
     // .desktop-files
@@ -41,28 +62,15 @@ int main(int argc, char **argv)
     // directories
     std::string original_wd = get_current_dir_name();
 
-    for(auto path : search_path) {
-        stringlist_t files;
-        chdir(path.c_str());
-        find_files(".", ".desktop", files);
-
-        // Read the .desktop-files
-        for(auto desktopfile : files) {
-            std::ifstream file(desktopfile);
-            desktop_file_t dft;
-            desktop_entry location;
-            location.type = location.STRING;
-            location.str = path + desktopfile;
-            dft["_Location"] = location;
-
-            if(read_desktop_file(file, dft, suffixes))
-                apps[dft["Name"].str] = dft;
-            else
-                apps.erase(dft["Name"].str);
-        }
+    for(auto spath : search_path) {
+        chdir(spath.c_str());
+        path = spath;
+        find_files(".", ".desktop", file_callback);
     }
 
     chdir(original_wd.c_str());
+
+    printf("Found %d .desktop files\n", apps.size());
 
     int dmenu_inpipe[2], dmenu_outpipe[2];
     if(pipe(dmenu_inpipe) == -1 || pipe(dmenu_outpipe) == -1)
@@ -188,7 +196,6 @@ int main(int argc, char **argv)
     printf("Command line: %s\n", command.c_str());
 
     execl("/usr/bin/i3-msg", "i3-msg", "exec", command.c_str(), 0);
-//    system(("i3-msg \"" + command + "\"").c_str());
 
     return 0;
 }

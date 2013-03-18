@@ -75,8 +75,7 @@ std::string get_variable(const std::string &var)
         return "";
 }
 
-
-void find_files(const std::string &path, const std::string &name_suffix, stringlist_t &files)
+void find_files(const std::string &path, const std::string &name_suffix, file_cb cb)
 {
     DIR *dir;
     dirent *entry;
@@ -91,10 +90,11 @@ void find_files(const std::string &path, const std::string &name_suffix, stringl
             continue;
 
         std::string pathspec = path + "/" + entry_name;
-        if(is_directory(pathspec))
-            find_files(pathspec, name_suffix, files);
-        else if(endswith(pathspec, name_suffix))
-            files.push_back(pathspec);
+        if(is_directory(pathspec)) {
+            find_files(pathspec, name_suffix, cb);
+        } else if(endswith(pathspec, name_suffix)) {
+            cb(pathspec);
+        }
     }
 
     closedir(dir);
