@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include "util.hh"
 #include "desktop.hh"
@@ -209,6 +210,9 @@ int main(int argc, char **argv)
     };
 
     printf("Command line: %s\n", command.c_str());
+
+    int status=0;
+    waitpid(dmenu_pid, &status, 0);
 
     execl("/usr/bin/i3-msg", "i3-msg", "exec", command.c_str(), 0);
 
