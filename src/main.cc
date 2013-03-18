@@ -25,14 +25,15 @@ void file_callback(const std::string &filename)
 {
     FILE *file = fopen(filename.c_str(), "r");
     desktop_file_t dft;
-    desktop_entry location;
-    location.type = location.STRING;
-    location.str = path + filename;
-    dft["_Location"] = location;
 
-    if(read_desktop_file(file, dft, suffixes))
+    if(read_desktop_file(file, dft, suffixes)) {
+        desktop_entry location;
+        location.type = location.STRING;
+        location.str = path + filename;
+        dft["_Location"] = location;
+
         apps[dft["Name"].str] = dft;
-    else
+    } else
         apps.erase(dft["Name"].str);
 
     fclose(file);
