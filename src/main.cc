@@ -190,8 +190,6 @@ int main(int argc, char **argv)
         script << "exec " << exec << std::endl;
         script.close();
 
-        // TODO
-        // chmod 0755
         chmod(scriptname.c_str(), S_IRWXU|S_IRGRP|S_IROTH);
 
         command += "i3-sensible-terminal -e \"" + scriptname + "\"";

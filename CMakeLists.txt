@@ -6,12 +6,12 @@ INCLUDE_DIRECTORIES(include)
 SET(CMAKE_CXX_FLAGS "-std=c++0x")
 
 ADD_EXECUTABLE(
-    j4-dmenu
+    j4-dmenu-desktop
     src/util.cc
     src/main.cc
     src/desktop.cc
     src/locale.cc
 )
 
-INSTALL (TARGETS j4-dmenu
+INSTALL (TARGETS j4-dmenu-desktop
          RUNTIME DESTINATION bin)
