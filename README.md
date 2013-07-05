@@ -24,9 +24,20 @@ command to start dmenu.
 would use `dmenu` executed with your standard shell (`$SHELL` if set, `/bin/sh` otherwise)
 to start dmenu.
 
-    j4-dmenu-desktop "dmenu -fn 'DejaVu Sans-10' -l 20"
+    j4-dmenu-desktop --dmenu="dmenu -fn 'DejaVu Sans-10' -l 20"
 
 would start dmenu with the -fn and -l arguments to create a vertical menu.
+
+You can also change the way entries are displayed, e.g.
+    
+    j4-dmenu-desktop --convert=lowercase
+
+Will create a dmenu with all entries converted to lowercase.
+
+### Options
+
+* --dmenu [command] or -d [command], default is "dmenu"
+* --convert [*none*|lowercase] or -c [*none*|lowercase], default is none
 
 ## Perfomance
 
