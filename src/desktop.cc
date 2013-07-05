@@ -71,11 +71,11 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, string_mapper sm)
                     const char *suffix;
                     int i = 0;
                     value[-2] = 0;
-                    entry.type = entry.STRING;
-                    sm(value);
-                    entry.str = value;
                     while(suffix = suffixes[i++]) {
                         if(strcmp(suffix, langcode) == 0) {
+                            entry.type = entry.STRING;
+                            sm(value);
+                            entry.str = value;
                             values["Name"] = entry;
                             break;
                         }
