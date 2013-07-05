@@ -3,6 +3,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
+#include <getopt.h>
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -10,6 +11,13 @@
 #include "util.hh"
 #include "desktop.hh"
 #include "locale.hh"
+
+enum CONVERT {
+    CONVERT_NONE,
+    CONVERT_LOWERCASE
+};
+
+CONVERT conversion;
 
 // apps is a mapping of the locale-specific name extracted from .desktop-
 // files to the contents of those files (key/value pairs)
@@ -44,15 +52,57 @@ bool compare_cstrings(const char *s1, const char *s2)
 
 int main(int argc, char **argv)
 {
-    std::string dmenu_command_;
-    if(argc == 1) {
-        dmenu_command_ = "dmenu";
-    } else {
-        for(int i = 1; i < argc; i++)
-            dmenu_command_.append(argv[i]) += " ";
-    }
-    const char *dmenu_command = dmenu_command_.c_str();
+    const char *dmenu_command = "dmenu";
 
+    int digit_optind = 0;
+
+    while (1) {
+        int this_option_optind = optind ? optind : 1;
+        int option_index = 0;
+        static struct option long_options[] = {
+            {"dmenu",   required_argument,  0,  'd'},
+            {"convert", required_argument,  0,  'c'},
+            {0,         0,                  0,  0}
+        };
+
+       int c = getopt_long(argc, argv, "d:c:",
+                long_options, &option_index);
+       if (c == -1)
+           break;
+
+        switch (c) {
+            case 0:
+                printf("option %s", long_options[option_index].name);
+                if (optarg)
+                   printf(" with arg %s", optarg);
+                printf("\n");
+                break;
+
+            case 'c':
+                if(strcmp(optarg, "none") == 0)
+                    conversion = CONVERT_NONE;
+                else if(strcmp(optarg, "lowercase") == 0)
+                    conversion = CONVERT_LOWERCASE;
+                else {
+                    printf("Unknown conversion '%s'\n", optarg);
+                    return 1;
+                }
+                break;
+
+            case 'd':
+                dmenu_command = optarg;
+
+                break;
+
+            case '?':
+                break;
+
+            default:
+                printf("?? getopt returned character code 0%o ??\n", c);
+        }
+    }
+
+    printf("dmenu: %s\n", dmenu_command);
 
     populate_locale_suffixes(get_locale());
 
