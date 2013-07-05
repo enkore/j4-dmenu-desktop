@@ -12,12 +12,6 @@
 #include "desktop.hh"
 #include "locale.hh"
 
-enum CONVERT {
-    CONVERT_NONE,
-    CONVERT_LOWERCASE
-};
-
-CONVERT conversion;
 
 // apps is a mapping of the locale-specific name extracted from .desktop-
 // files to the contents of those files (key/value pairs)
@@ -26,12 +20,24 @@ apps_t apps;
 // Current base path
 std::string path;
 
+string_mapper sm;
+
+void convert_lower(char *inp)
+{
+    for ( ; *inp; ++inp) *inp = tolower(*inp);
+}
+
+void convert_none(char *inp)
+{
+
+}
+
 void file_callback(const char *filename)
 {
     FILE *file = fopen(filename, "r");
     desktop_file_t dft;
 
-    if(read_desktop_file(file, dft)) {
+    if(read_desktop_file(file, dft, sm)) {
         desktop_entry location;
         location.type = location.STRING;
         location.str = path + filename;
@@ -53,6 +59,7 @@ bool compare_cstrings(const char *s1, const char *s2)
 int main(int argc, char **argv)
 {
     const char *dmenu_command = "dmenu";
+    sm = convert_none;
 
     int digit_optind = 0;
 
@@ -80,9 +87,9 @@ int main(int argc, char **argv)
 
             case 'c':
                 if(strcmp(optarg, "none") == 0)
-                    conversion = CONVERT_NONE;
+                    sm = convert_none;
                 else if(strcmp(optarg, "lowercase") == 0)
-                    conversion = CONVERT_LOWERCASE;
+                    sm = convert_lower;
                 else {
                     printf("Unknown conversion '%s'\n", optarg);
                     return 1;
