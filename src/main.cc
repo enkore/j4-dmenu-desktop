@@ -56,6 +56,26 @@ bool compare_cstrings(const char *s1, const char *s2)
     return strcmp(s1, s2) < 0;
 }
 
+void print_usage(FILE* f)
+{
+    fprintf(f,
+        "j4-dmenu-desktop\n"
+        "A faster replacement for i3-dmenu-desktop\n"
+        "Copyright (c) 2013 Marian Beermann, GPLv3 license\n"
+        "\nUsage:\n"
+        "\tj4-dmenu-desktop [--dmenu=\"dmenu\"] [--convert=none]\n"
+        "\tj4-dmenu-desktop --help\n"
+        "\nOptions:\n"
+        "    --dmenu=<command>\n"
+        "\tDetermines the command used to invoke dmenu\n"
+        "    --convert=<none|lowercase>\n"
+        "\tnone: menu entries are displayed as-is\n"
+        "\tlowercase: menu entries are converted to lowercase\n"
+        "    --help\n"
+        "\tDisplay this help message\n"
+    );
+}
+
 int main(int argc, char **argv)
 {
     const char *dmenu_command = "dmenu";
@@ -69,22 +89,15 @@ int main(int argc, char **argv)
         static struct option long_options[] = {
             {"dmenu",   required_argument,  0,  'd'},
             {"convert", required_argument,  0,  'c'},
+            {"help",    no_argument,        0,  'h'},
             {0,         0,                  0,  0}
         };
 
-       int c = getopt_long(argc, argv, "d:c:",
-                long_options, &option_index);
+       int c = getopt_long(argc, argv, "d:c:h", long_options, &option_index);
        if (c == -1)
            break;
 
         switch (c) {
-            case 0:
-                printf("option %s", long_options[option_index].name);
-                if (optarg)
-                   printf(" with arg %s", optarg);
-                printf("\n");
-                break;
-
             case 'c':
                 if(strcmp(optarg, "none") == 0)
                     sm = convert_none;
@@ -95,17 +108,14 @@ int main(int argc, char **argv)
                     return 1;
                 }
                 break;
-
             case 'd':
                 dmenu_command = optarg;
-
                 break;
-
-            case '?':
-                break;
-
+            case 'h':
+                print_usage(stderr);
+                return 0;
             default:
-                printf("?? getopt returned character code 0%o ??\n", c);
+                return 1;
         }
     }
 
