@@ -24,7 +24,8 @@ string_mapper sm;
 
 void convert_lower(char *inp)
 {
-    for ( ; *inp; ++inp) *inp = tolower(*inp);
+    while(*inp = tolower(*inp))
+        inp++;
 }
 
 void convert_none(char *inp)
@@ -150,7 +151,7 @@ int main(int argc, char **argv)
 
     dup2(dmenu_inpipe[0], STDIN_FILENO);
 
-    // Get use the used locale suffixes
+    // Get us the used locale suffixes
     populate_locale_suffixes(get_locale());
 
     // The search path contains all directories that are recursively searched for
