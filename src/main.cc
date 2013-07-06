@@ -119,33 +119,9 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("dmenu: %s\n", dmenu_command);
-
-    populate_locale_suffixes(get_locale());
-
-    // The search path contains all directories that are recursively searched for
-    // .desktop-files
-    stringlist_t search_path;
-
-    build_search_path(search_path);
-
-    // We switch the working directory to easier get relative paths
-    // This way desktop files that are customized in more important directories
-    // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
-    // directories
-    char *original_wd = get_current_dir_name();
-
-    for(auto spath : search_path) {
-        chdir(spath.c_str());
-        path = spath;
-        find_files(".", ".desktop", file_callback);
-    }
-
-    chdir(original_wd);
-    free(original_wd);
-
-    printf("Found %d .desktop files\n", apps.size());
-
+    // Create the dmenu as soon as we know the command,
+    // this speeds up things a bit if the -f flag for dmenu is
+    // used
     int dmenu_inpipe[2], dmenu_outpipe[2];
     if(pipe(dmenu_inpipe) == -1 || pipe(dmenu_outpipe) == -1)
         return 100;
@@ -174,21 +150,50 @@ int main(int argc, char **argv)
 
     dup2(dmenu_inpipe[0], STDIN_FILENO);
 
-    // apps is a hashmap, thus unsorted
+    // Get use the used locale suffixes
+    populate_locale_suffixes(get_locale());
+
+    // The search path contains all directories that are recursively searched for
+    // .desktop-files
+    stringlist_t search_path;
+
+    build_search_path(search_path);
+
+    // We switch the working directory to easier get relative paths
+    // This way desktop files that are customized in more important directories
+    // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
+    // directories
+    char *original_wd = get_current_dir_name();
+
+    for(auto spath : search_path) {
+        chdir(spath.c_str());
+        path = spath;
+        find_files(".", ".desktop", file_callback);
+    }
+
+    chdir(original_wd);
+    free(original_wd);
+
+    // Sort the unsorted hashmap
     std::vector<const char *> keys;
     keys.reserve(apps.size());
     for(auto app : apps)
         keys.push_back(app.first.c_str());
     std::sort(keys.begin(), keys.end(), compare_cstrings);
 
+    // Transfer the list to dmenu
     for(auto item : keys) {
         write(dmenu_outpipe[1], item, strlen(item));
         write(dmenu_outpipe[1], "\n", 1);
     }
 
+    // Closing the pipe produces EOF for dmenu, signalling
+    // end of all options. dmenu shows now up on the screen
+    // (if -f hasn't been used)
     close(dmenu_outpipe[1]);
 
-    // User enters her choice
+    // User enters now her choice (probably takes a while, the blocking call is std::getline)
+    // so do some cleanup here.
 
     free_locale_suffixes();
 
@@ -197,9 +202,13 @@ int main(int argc, char **argv)
     std::getline(std::cin, choice);
 
     desktop_file_t app;
+
     if(apps.count(choice)) {
+        // A full match
         app = apps[choice];
     } else {
+        // User only entered a partial match
+        // (or no match at all)
         size_t match_length = 0;
 
         // Find longest match amongst apps
@@ -213,11 +222,15 @@ int main(int argc, char **argv)
         }
 
         if(!match_length)
+            // No matching app found
             return 1;
 
         // +1 b/c there must be whitespace we add back later...
         args = choice.substr(match_length+1, choice.length()-1);
     }
+
+
+    // Build the command line
 
     std::string exec = app["Exec"].str;
     std::string name = app["Name"].str;
@@ -247,6 +260,7 @@ int main(int argc, char **argv)
     if(app.count("Terminal") && app["Terminal"].boolean) {
         // Execute in terminal
 
+        // Creating a temporary script
         std::string scriptname = tmpnam(0);
         std::ofstream script(scriptname);
         script << "#!/bin/sh" << std::endl;
@@ -275,8 +289,6 @@ int main(int argc, char **argv)
 
         command += "\"" + exec + "\"";
     };
-
-    printf("Command line: %s\n", command.c_str());
 
     int status=0;
     waitpid(dmenu_pid, &status, 0);
