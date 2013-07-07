@@ -34,7 +34,7 @@ std::string &replace(std::string &str, const std::string &substr, const std::str
     if(substr.empty())
         return str;
     size_t start_pos = 0;
-    while ((start_pos = str.find(substr, start_pos)) != std::string::npos) {
+    while((start_pos = str.find(substr, start_pos)) != std::string::npos) {
         str.replace(start_pos, substr.length(), substitute);
         start_pos += substitute.length(); // In case 'substitute' contains 'substr', like replacing 'x' with 'yx'
     }
@@ -100,7 +100,7 @@ void find_files(const char *path, const char *name_suffix, file_cb cb)
     pathspec[len++] = '/';
     pathspec[len] = 0;
 
-    while(entry = readdir(dir)) {
+    while((entry = readdir(dir))) {
         if(entry->d_name[0] == '.' || strcmp(entry->d_name, "..") == 0)
             continue;
 

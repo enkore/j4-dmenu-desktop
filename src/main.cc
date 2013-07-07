@@ -22,9 +22,11 @@ std::string path;
 
 string_mapper sm;
 
+char *buf;
+
 void convert_lower(char *inp)
 {
-    while(*inp = tolower(*inp))
+    while((*inp = tolower(*inp)))
         inp++;
 }
 
@@ -38,7 +40,9 @@ void file_callback(const char *filename)
     FILE *file = fopen(filename, "r");
     desktop_file_t dft;
 
-    if(read_desktop_file(file, dft, sm)) {
+    buf[0] = 0;
+
+    if(read_desktop_file(file, buf, dft, sm)) {
         desktop_entry location;
         location.type = location.STRING;
         location.str = path + filename;
@@ -82,10 +86,7 @@ int main(int argc, char **argv)
     const char *dmenu_command = "dmenu";
     sm = convert_none;
 
-    int digit_optind = 0;
-
     while (1) {
-        int this_option_optind = optind ? optind : 1;
         int option_index = 0;
         static struct option long_options[] = {
             {"dmenu",   required_argument,  0,  'd'},
@@ -166,11 +167,15 @@ int main(int argc, char **argv)
     // directories
     char *original_wd = get_current_dir_name();
 
+    buf = new char[4096];
+
     for(auto spath : search_path) {
         chdir(spath.c_str());
         path = spath;
         find_files(".", ".desktop", file_callback);
     }
+
+    delete[] buf;
 
     chdir(original_wd);
     free(original_wd);

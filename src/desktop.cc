@@ -32,14 +32,11 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-bool read_desktop_file(FILE *file, desktop_file_t &values, string_mapper sm)
+bool read_desktop_file(FILE *file, char *line, desktop_file_t &values, string_mapper sm)
 {
     std::string fall_back_name;
     bool parse_key_values = false;
-    bool discard = false;
     int linelen = 0;
-
-    char *line = new char[4096];
 
     desktop_entry entry;
 
@@ -56,13 +53,9 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, string_mapper sm)
             if(line[0] == '[')
                 break;
 
-            char *key=line, *value;
             // Split that string in place
-            value = strchr(line, '=');
-            value[0] = 0;
-            value++;
-
-            bool store = false;
+            char *key=line, *value=strchr(line, '=');
+            (value++)[0] = 0;
 
             if(strncmp(key, "Name", 4) == 0) {
                 if(key[4] == '[') {
@@ -71,7 +64,7 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, string_mapper sm)
                     const char *suffix;
                     int i = 0;
                     value[-2] = 0;
-                    while(suffix = suffixes[i++]) {
+                    while((suffix = suffixes[i++])) {
                         if(strcmp(suffix, langcode) == 0) {
                             entry.type = entry.STRING;
                             sm(value);
@@ -88,7 +81,6 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, string_mapper sm)
                 }
             } else if(strcmp(key, "Hidden") == 0 ||
                 strcmp(key, "NoDisplay") == 0) {
-                delete[] line;
                 return false;
             } else if(strcmp(key, "StartupNotify") == 0 ||
                 strcmp(key, "Terminal") == 0) {
@@ -116,6 +108,5 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, string_mapper sm)
         values["Name"] = entry;
     }
 
-    delete[] line;
     return true;
 }
