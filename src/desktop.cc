@@ -59,6 +59,9 @@ bool read_desktop_file(FILE *file, desktop_file_t &values, string_mapper sm)
             char *key=line, *value;
             // Split that string in place
             value = strchr(line, '=');
+            if (value == NULL)
+                continue;
+
             value[0] = 0;
             value++;
 
