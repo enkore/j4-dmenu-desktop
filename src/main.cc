@@ -20,20 +20,7 @@ apps_t apps;
 // Current base path
 std::string path;
 
-string_mapper sm;
-
 char *buf;
-
-void convert_lower(char *inp)
-{
-    while((*inp = tolower(*inp)))
-        inp++;
-}
-
-void convert_none(char *inp)
-{
-
-}
 
 void file_callback(const char *filename)
 {
@@ -42,7 +29,7 @@ void file_callback(const char *filename)
 
     buf[0] = 0;
 
-    if(read_desktop_file(file, buf, dft, sm)) {
+    if(read_desktop_file(file, buf, dft)) {
         desktop_entry location;
         location.type = location.STRING;
         location.str = path + filename;
@@ -68,14 +55,11 @@ void print_usage(FILE* f)
         "A faster replacement for i3-dmenu-desktop\n"
         "Copyright (c) 2013 Marian Beermann, GPLv3 license\n"
         "\nUsage:\n"
-        "\tj4-dmenu-desktop [--dmenu=\"dmenu\"] [--convert=none]\n"
+        "\tj4-dmenu-desktop [--dmenu=\"dmenu\"]\n"
         "\tj4-dmenu-desktop --help\n"
         "\nOptions:\n"
         "    --dmenu=<command>\n"
         "\tDetermines the command used to invoke dmenu\n"
-        "    --convert=<none|lowercase>\n"
-        "\tnone: menu entries are displayed as-is\n"
-        "\tlowercase: menu entries are converted to lowercase\n"
         "    --help\n"
         "\tDisplay this help message\n"
     );
@@ -84,32 +68,20 @@ void print_usage(FILE* f)
 int main(int argc, char **argv)
 {
     const char *dmenu_command = "dmenu";
-    sm = convert_none;
 
     while (1) {
         int option_index = 0;
         static struct option long_options[] = {
             {"dmenu",   required_argument,  0,  'd'},
-            {"convert", required_argument,  0,  'c'},
             {"help",    no_argument,        0,  'h'},
             {0,         0,                  0,  0}
         };
 
-       int c = getopt_long(argc, argv, "d:c:h", long_options, &option_index);
+       int c = getopt_long(argc, argv, "d:h", long_options, &option_index);
        if (c == -1)
            break;
 
         switch (c) {
-            case 'c':
-                if(strcmp(optarg, "none") == 0)
-                    sm = convert_none;
-                else if(strcmp(optarg, "lowercase") == 0)
-                    sm = convert_lower;
-                else {
-                    printf("Unknown conversion '%s'\n", optarg);
-                    return 1;
-                }
-                break;
             case 'd':
                 dmenu_command = optarg;
                 break;

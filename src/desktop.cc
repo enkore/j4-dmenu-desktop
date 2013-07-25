@@ -32,7 +32,7 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-bool read_desktop_file(FILE *file, char *line, desktop_file_t &values, string_mapper sm)
+bool read_desktop_file(FILE *file, char *line, desktop_file_t &values)
 {
     std::string fall_back_name;
     bool parse_key_values = false;
@@ -67,7 +67,6 @@ bool read_desktop_file(FILE *file, char *line, desktop_file_t &values, string_ma
                     while((suffix = suffixes[i++])) {
                         if(strcmp(suffix, langcode) == 0) {
                             entry.type = entry.STRING;
-                            sm(value);
                             entry.str = value;
                             values["Name"] = entry;
                             break;
@@ -75,7 +74,6 @@ bool read_desktop_file(FILE *file, char *line, desktop_file_t &values, string_ma
                     }
                     continue;
                 } else {
-                    sm(value);
                     fall_back_name = value;
                     continue;
                 }
