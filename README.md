@@ -32,7 +32,14 @@ would start dmenu with the -fn and -l arguments to create a vertical menu.
 
 * --dmenu [command] or -d [command], default is "dmenu"
 
-## Perfomance
+
+## FAQ
+
+### Case insensitivity?
+
+Add the `-i` option to the dmenu command
+
+### How much faster is it?
 
     % time i3-dmenu-desktop --dmenu="cat"
     [{"success":true}]
