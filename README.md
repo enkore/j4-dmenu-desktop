@@ -30,7 +30,7 @@ would start dmenu with the -fn and -l arguments to create a vertical menu.
 
 ### Options
 
-* --dmenu [command] or -d [command], default is "dmenu"
+* --dmenu [command] or -d [command], default is "dmenu -i" (-i for case insensitive matching)
 
 
 ## FAQ
