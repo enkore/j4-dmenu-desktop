@@ -251,15 +251,12 @@ int main(int argc, char **argv)
     if(app.count("Terminal") && app["Terminal"].boolean) {
         // Execute in terminal
 
-        // Creating a temporary script
         std::string scriptname = tmpnam(0);
         std::ofstream script(scriptname);
         script << "#!/bin/sh" << std::endl;
         script << "rm " << scriptname << std::endl;
-
-        // This should set the title in most terminal emulators correctly
-        script << "echo \"\\e]2;" << name << "\\a\"" << std::endl;
-        script << "echo -e '\\033k'" << name << "\\033\\\\" << std::endl;
+        script << "echo -n \"\\033]2;" << name << "\\007\"" << std::endl;
+        script << "echo -ne \"\\033]2;" << name << "\\007\"" << std::endl;
         script << "exec " << exec << std::endl;
         script.close();
 
