@@ -28,18 +28,18 @@ to start dmenu.
 
 would start dmenu with the -fn and -l arguments to create a vertical menu.
 
-You can also change the way entries are displayed, e.g.
-    
-    j4-dmenu-desktop --convert=lowercase
-
-Will create a dmenu with all entries converted to lowercase.
-
 ### Options
 
-* --dmenu [command] or -d [command], default is "dmenu"
-* --convert [*none*|lowercase] or -c [*none*|lowercase], default is none
+* --dmenu [command] or -d [command], default is "dmenu -i" (-i for case insensitive matching)
 
-## Perfomance
+
+## FAQ
+
+### Case insensitivity?
+
+Add the `-i` option to the dmenu command
+
+### How much faster is it?
 
     % time i3-dmenu-desktop --dmenu="cat"
     [{"success":true}]

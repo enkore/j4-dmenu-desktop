@@ -68,7 +68,7 @@ void print_usage(FILE* f)
         "A faster replacement for i3-dmenu-desktop\n"
         "Copyright (c) 2013 Marian Beermann, GPLv3 license\n"
         "\nUsage:\n"
-        "\tj4-dmenu-desktop [--dmenu=\"dmenu\"]\n"
+        "\tj4-dmenu-desktop [--dmenu=\"dmenu -i\"]\n"
         "\tj4-dmenu-desktop --help\n"
         "\nOptions:\n"
         "    --dmenu=<command>\n"
@@ -80,7 +80,7 @@ void print_usage(FILE* f)
 
 int main(int argc, char **argv)
 {
-    const char *dmenu_command = "dmenu";
+    const char *dmenu_command = "dmenu -i";
 
     while (1) {
         int option_index = 0;
