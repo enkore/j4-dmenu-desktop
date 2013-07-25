@@ -32,15 +32,18 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-bool read_desktop_file(FILE *file, char *line, desktop_file_t &values)
+bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
 {
     std::string fall_back_name;
     bool parse_key_values = false;
     int linelen = 0;
+    int lineno = 0;
+    FILE *file = fopen(filename, "r");
 
     desktop_entry entry;
 
     while(fgets(line, 4096, file)) {
+        lineno++;
         linelen = strlen(line)-1;
         line[linelen] = 0; // Chop off \n
 
@@ -55,6 +58,10 @@ bool read_desktop_file(FILE *file, char *line, desktop_file_t &values)
 
             // Split that string in place
             char *key=line, *value=strchr(line, '=');
+            if (!value) {
+                printf("%s:%d: malformed file, ignoring\n", filename, lineno);
+                continue;
+            }
             (value++)[0] = 0;
 
             if(strncmp(key, "Name", 4) == 0) {
@@ -79,6 +86,7 @@ bool read_desktop_file(FILE *file, char *line, desktop_file_t &values)
                 }
             } else if(strcmp(key, "Hidden") == 0 ||
                 strcmp(key, "NoDisplay") == 0) {
+                fclose(file);
                 return false;
             } else if(strcmp(key, "StartupNotify") == 0 ||
                 strcmp(key, "Terminal") == 0) {
@@ -106,5 +114,6 @@ bool read_desktop_file(FILE *file, char *line, desktop_file_t &values)
         values["Name"] = entry;
     }
 
+    fclose(file);
     return true;
 }

@@ -24,12 +24,11 @@ char *buf;
 
 void file_callback(const char *filename)
 {
-    FILE *file = fopen(filename, "r");
     desktop_file_t dft;
 
     buf[0] = 0;
 
-    if(read_desktop_file(file, buf, dft)) {
+    if(read_desktop_file(filename, buf, dft)) {
         desktop_entry location;
         location.type = location.STRING;
         location.str = path + filename;
@@ -38,8 +37,6 @@ void file_callback(const char *filename)
         apps[dft["Name"].str] = dft;
     } else
         apps.erase(dft["Name"].str);
-
-    fclose(file);
 }
 
 static inline

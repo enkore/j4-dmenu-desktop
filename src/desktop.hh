@@ -17,4 +17,4 @@ typedef std::unordered_map<std::string, desktop_entry> desktop_file_t;
 typedef std::unordered_map<std::string , desktop_file_t> apps_t;
 
 void build_search_path(stringlist_t &search_path);
-bool read_desktop_file(FILE *file, char *line, desktop_file_t &values);
+bool read_desktop_file(const char *filename, char *line, desktop_file_t &values);
