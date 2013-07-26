@@ -78,14 +78,15 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
     //
 
     std::string fallback_name;
+    bool use_fallback = true;
     bool parse_key_values = false;
-    int linelen = 0;
+    ssize_t linelen;
+    size_t n = 4096;
     FILE *file = fopen(filename, "r");
     desktop_entry entry;
 
-    while(fgets(line, 4096, file)) {
-        linelen = strlen(line)-1;
-        line[linelen] = 0; // Chop off \n
+    while((linelen = getline(&line, &n, file)) != -1) {
+        line[--linelen] = 0; // Chop off \n
 
         // Blank line or comment
         if(!linelen || line[0] == '#')
@@ -103,13 +104,13 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
                 fclose(file);
                 return false;
             }
-            (value++)[0] = 0;
+            (value++)[0] = 0; // Overwrite = with NUL (terminate key)
 
             switch(*reinterpret_cast<const uint32_t*>(key)) {
                 case "Name"_istr:
                     if(key[4] == '[') {
                         // Don't ask, don't tell.
-                        char *langcode = key + 5;
+                        const char *langcode = key + 5;
                         const char *suffix;
                         int i = 0;
                         value[-2] = 0;
@@ -118,12 +119,18 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
                                 entry.type = entry.STRING;
                                 entry.str = value;
                                 values["Name"] = entry;
+                                use_fallback = false;
                                 break;
                             }
                         }
                     } else
                         fallback_name = value;
                     continue;
+                case "Exec"_istr:
+                case "Type"_istr:
+                    entry.type = entry.STRING;
+                    entry.str = value;
+                    break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
                     fclose(file);
@@ -132,11 +139,6 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
                 case "Terminal"_istr:
                     entry.type = entry.BOOL;
                     entry.boolean = !strcmp(value, "true");
-                    break;
-                case "Exec"_istr:
-                case "Type"_istr:
-                    entry.type = entry.STRING;
-                    entry.str = value;
                     break;
                 default:
                     // Skip storing uninteresting values
@@ -151,7 +153,7 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
             parse_key_values = true;
     }
 
-    if(!values.count("Name")) {
+    if(use_fallback) {
         entry.type = entry.STRING,
         entry.str = fallback_name;
         values["Name"] = entry;

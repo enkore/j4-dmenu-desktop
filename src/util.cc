@@ -136,6 +136,6 @@ void find_files(const char *path, const char *name_suffix, file_cb cb)
 
 void free_cstringlist(cstringlist_t &stringlist)
 {
-    for(auto item : stringlist)
+    for(auto &item : stringlist)
         free(item);
 }

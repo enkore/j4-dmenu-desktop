@@ -37,14 +37,11 @@ apps_t apps;
 std::string path;
 
 int parsed_files = 0;
-
 char *buf;
 
 void file_callback(const char *filename)
 {
     desktop_file_t dft;
-
-    buf[0] = 0;
 
     if(read_desktop_file(filename, buf, dft)) {
         desktop_entry location;
@@ -152,6 +149,7 @@ int main(int argc, char **argv)
 
     // Allocating the line buffer just once saves lots of MM calls
     buf = new char[4096];
+
     // Reserving enough is a minimal memory impact, but speeds up things a bit, too
     // (memory: less than a page on x64)
     apps.reserve(500);
