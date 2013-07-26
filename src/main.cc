@@ -218,8 +218,8 @@ int main(int argc, char **argv)
         }
 
         if(!match_length)
-            // No matching app found
-            return 1;
+            // No matching app found, just execute the input in a shell
+            return system(choice.c_str());
 
         // +1 b/c there must be whitespace we add back later...
         args = choice.substr(match_length+1, choice.length()-1);
