@@ -132,8 +132,7 @@ int main(int argc, char **argv)
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
-            execl(shell, shell, "-c", dmenu_command, 0);
-            return 0;
+            return execl(shell, shell, "-c", dmenu_command, 0);
     }
 
     close(dmenu_inpipe[1]);
@@ -154,7 +153,8 @@ int main(int argc, char **argv)
     // This way desktop files that are customized in more important directories
     // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
     // directories
-    char *original_wd = get_current_dir_name();
+    char original_wd[384];
+    getcwd(original_wd, 384);
 
     // Allocating the line buffer just once saves lots of MM calls
     buf = new char[4096];
@@ -171,7 +171,6 @@ int main(int argc, char **argv)
     delete[] buf;
 
     chdir(original_wd);
-    free(original_wd);
 
     // Sort the unsorted hashmap
     std::vector<const char *> keys;
