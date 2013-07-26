@@ -156,7 +156,11 @@ int main(int argc, char **argv)
     // directories
     char *original_wd = get_current_dir_name();
 
+    // Allocating the line buffer just once saves lots of MM calls
     buf = new char[4096];
+    // Reserving enough is a minimal memory impact, but speeds up things a bit, too
+    // (memory: less than a page on x64)
+    apps.reserve(500);
 
     for(auto spath : search_path) {
         chdir(spath.c_str());
