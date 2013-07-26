@@ -36,6 +36,8 @@ apps_t apps;
 // Current base path
 std::string path;
 
+int parsed_files = 0;
+
 char *buf;
 
 void file_callback(const char *filename)
@@ -53,6 +55,8 @@ void file_callback(const char *filename)
         apps[dft["Name"].str] = dft;
     } else
         apps.erase(dft["Name"].str);
+
+    parsed_files++;
 }
 
 static inline
@@ -187,6 +191,7 @@ int main(int argc, char **argv)
     // so do some cleanup here.
 
     free_locale_suffixes();
+    printf("Read %d .desktop files, found %ld apps.\n", parsed_files, apps.size());
 
     std::string choice;
     std::string args;
