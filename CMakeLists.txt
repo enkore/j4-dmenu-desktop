@@ -3,7 +3,14 @@ cmake_minimum_required(VERSION 2.8)
 PROJECT(j4-dmenu)
 
 INCLUDE_DIRECTORIES(include)
-SET(CMAKE_CXX_FLAGS "-std=c++0x")
+SET(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wpedantic -Wextra")
+
+INCLUDE(TestBigEndian)
+
+TEST_BIG_ENDIAN(BIGENDIAN)
+IF(${BIGENDIAN})
+     ADD_DEFINITIONS(-DBIGENDIAN)
+ENDIF(${BIGENDIAN})
 
 ADD_EXECUTABLE(
     j4-dmenu-desktop

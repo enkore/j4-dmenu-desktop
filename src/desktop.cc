@@ -20,6 +20,23 @@
 #include "desktop.hh"
 #include "locale.hh"
 
+
+// I'd prefer *reinterpret_cast<const uint32_t*>(s),
+// but reinterpret_cast is per definition not constexpr, while a constexpr is
+// required for this, as it must be executed at compile time.
+// The function above avoids all endianness-hassle, but isn't constexpr.
+// The functiom below is constexpr, but requires endianness-testing.
+
+constexpr uint32_t operator "" _istr(char const* s, size_t)
+{
+#ifdef BIGENDIAN
+    // untested
+    return s[3] | s[2] << 8 | s[1] << 16 | s[0] << 24;
+#else
+    return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
+#endif
+}
+
 void build_search_path(stringlist_t &search_path)
 {
     stringlist_t sp;
@@ -50,15 +67,23 @@ void build_search_path(stringlist_t &search_path)
 
 bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
 {
+    //
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!   The code below is extremely hacky. But fast.    !!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // Please don't try this at home.
+    //
+    //
+
     std::string fallback_name;
     bool parse_key_values = false;
     int linelen = 0;
-    int lineno = 0;
     FILE *file = fopen(filename, "r");
     desktop_entry entry;
 
     while(fgets(line, 4096, file)) {
-        lineno++;
         linelen = strlen(line)-1;
         line[linelen] = 0; // Chop off \n
 
@@ -74,41 +99,51 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
             // Split that string in place
             char *key=line, *value=strchr(line, '=');
             if (!value) {
-                printf("%s:%d: malformed file, ignoring\n", filename, lineno);
-                continue;
+                printf("%s: malformed file, ignoring\n", filename);
+                fclose(file);
+                return false;
             }
             (value++)[0] = 0;
 
-            if(!strncmp(key, "Name", 4)) {
-                if(key[4] == '[') {
-                    // Don't ask, don't tell.
-                    char *langcode = key + 5;
-                    const char *suffix;
-                    int i = 0;
-                    value[-2] = 0;
-                    while((suffix = suffixes[i++])) {
-                        if(!strcmp(suffix, langcode)) {
-                            entry.type = entry.STRING;
-                            entry.str = value;
-                            values["Name"] = entry;
-                            break;
+            switch(*reinterpret_cast<const uint32_t*>(key)) {
+                case "Name"_istr:
+                    if(key[4] == '[') {
+                        // Don't ask, don't tell.
+                        char *langcode = key + 5;
+                        const char *suffix;
+                        int i = 0;
+                        value[-2] = 0;
+                        while((suffix = suffixes[i++])) {
+                            if(!strcmp(suffix, langcode)) {
+                                entry.type = entry.STRING;
+                                entry.str = value;
+                                values["Name"] = entry;
+                                break;
+                            }
                         }
-                    }
-                } else 
-                    fallback_name = value;
-                continue;
-            } else if(!strcmp(key, "Hidden") || !strcmp(key, "NoDisplay")) {
-                fclose(file);
-                return false;
-            } else if(!strcmp(key, "StartupNotify") || !strcmp(key, "Terminal")) {
-                entry.type = entry.BOOL;
-                entry.boolean = !strcmp(value, "true");
-            } else if(!strcmp(key, "Exec") || !strcmp(key, "Type")) {
-                entry.type = entry.STRING;
-                entry.str = value;
-            } else
-                continue; // Skip storing uninteresting values
+                    } else
+                        fallback_name = value;
+                    continue;
+                case "Hidden"_istr:
+                case "NoDisplay"_istr:
+                    fclose(file);
+                    return false;
+                case "StartupNotify"_istr:
+                case "Terminal"_istr:
+                    entry.type = entry.BOOL;
+                    entry.boolean = !strcmp(value, "true");
+                    break;
+                case "Exec"_istr:
+                case "Type"_istr:
+                    entry.type = entry.STRING;
+                    entry.str = value;
+                    break;
+                default:
+                    // Skip storing uninteresting values
+                    continue;
+            }
             values[key] = entry;
+            continue;
         }
 
         // Desktop Entry section starts

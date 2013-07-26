@@ -1,6 +1,6 @@
 # j4-dmenu-desktop
 
-j4-dmenu is a replacement for i3-dmenu-desktop. It's purpose is to find .desktop files
+j4-dmenu-desktop is a replacement for i3-dmenu-desktop. It's purpose is to find .desktop files
 and offer you a menu to start an application using dmenu.
 
 ## Build requirements
@@ -44,10 +44,9 @@ Add the `-i` option to the dmenu command
     % time i3-dmenu-desktop --dmenu="cat"
     [{"success":true}]
     i3-dmenu-desktop --dmenu="cat"  0.37s user 0.02s system 96% cpu 0.404 total
-    % time ./j4-dmenu-desktop cat
-    Found 247 .desktop files
-    Command line: "/usr/bin/0ad"
+    % time ./j4-dmenu-desktop --dmenu=cat
     [{"success":true}]
-    ./j4-dmenu-desktop cat  0.01s user 0.01s system 75% cpu 0.031 total
+    ./j4-dmenu-desktop --dmenu=cat  0.01s user 0.00s system 95% cpu 0.017 total
 
-About thirteen times faster :)
+More than twenty times faster :)
+
