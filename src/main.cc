@@ -59,12 +59,6 @@ void file_callback(const char *filename)
     parsed_files++;
 }
 
-static inline
-bool compare_cstrings(const char *s1, const char *s2)
-{
-    return strcmp(s1, s2) < 0;
-}
-
 void print_usage(FILE* f)
 {
     fprintf(f,
@@ -162,7 +156,7 @@ int main(int argc, char **argv)
     // (memory: less than a page on x64)
     apps.reserve(500);
 
-    for(auto spath : search_path) {
+    for(auto &spath : search_path) {
         chdir(spath.c_str());
         path = spath;
         find_files(".", ".desktop", file_callback);
@@ -175,9 +169,9 @@ int main(int argc, char **argv)
     // Sort the unsorted hashmap
     std::vector<const char *> keys;
     keys.reserve(apps.size());
-    for(auto& app : apps)
+    for(auto &app : apps)
         keys.push_back(app.first.c_str());
-    std::sort(keys.begin(), keys.end(), compare_cstrings);
+    std::sort(keys.begin(), keys.end(), [](const char *s1, const char *s2) {return strcmp(s1, s2) < 0;});
 
     // Transfer the list to dmenu
     for(auto item : keys) {
