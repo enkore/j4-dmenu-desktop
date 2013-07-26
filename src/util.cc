@@ -118,7 +118,7 @@ void find_files(const char *path, const char *name_suffix, file_cb cb)
     pathspec[len] = 0;
 
     while((entry = readdir(dir))) {
-        if(entry->d_name[0] == '.' || strcmp(entry->d_name, "..") == 0)
+        if(entry->d_name[0] == '.') // Exclude ., .. and hidden files
             continue;
 
         strcpy(pathspec+len, entry->d_name);
