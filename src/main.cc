@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     // Sort the unsorted hashmap
     std::vector<const char *> keys;
     keys.reserve(apps.size());
-    for(auto app : apps)
+    for(auto& app : apps)
         keys.push_back(app.first.c_str());
     std::sort(keys.begin(), keys.end(), compare_cstrings);
 
