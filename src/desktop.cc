@@ -50,12 +50,11 @@ void build_search_path(stringlist_t &search_path)
 
 bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
 {
-    std::string fall_back_name;
+    std::string fallback_name;
     bool parse_key_values = false;
     int linelen = 0;
     int lineno = 0;
     FILE *file = fopen(filename, "r");
-
     desktop_entry entry;
 
     while(fgets(line, 4096, file)) {
@@ -80,7 +79,7 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
             }
             (value++)[0] = 0;
 
-            if(strncmp(key, "Name", 4) == 0) {
+            if(!strncmp(key, "Name", 4)) {
                 if(key[4] == '[') {
                     // Don't ask, don't tell.
                     char *langcode = key + 5;
@@ -88,28 +87,23 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
                     int i = 0;
                     value[-2] = 0;
                     while((suffix = suffixes[i++])) {
-                        if(strcmp(suffix, langcode) == 0) {
+                        if(!strcmp(suffix, langcode)) {
                             entry.type = entry.STRING;
                             entry.str = value;
                             values["Name"] = entry;
                             break;
                         }
                     }
-                    continue;
-                } else {
-                    fall_back_name = value;
-                    continue;
-                }
-            } else if(strcmp(key, "Hidden") == 0 ||
-                strcmp(key, "NoDisplay") == 0) {
+                } else 
+                    fallback_name = value;
+                continue;
+            } else if(!strcmp(key, "Hidden") || !strcmp(key, "NoDisplay")) {
                 fclose(file);
                 return false;
-            } else if(strcmp(key, "StartupNotify") == 0 ||
-                strcmp(key, "Terminal") == 0) {
+            } else if(!strcmp(key, "StartupNotify") || !strcmp(key, "Terminal")) {
                 entry.type = entry.BOOL;
-                entry.boolean = strcmp(value, "true") == 0;
-            } else if(strcmp(key, "Exec") == 0 ||
-                strcmp(key, "Type") == 0) {
+                entry.boolean = !strcmp(value, "true");
+            } else if(!strcmp(key, "Exec") || !strcmp(key, "Type")) {
                 entry.type = entry.STRING;
                 entry.str = value;
             } else
@@ -118,15 +112,13 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
         }
 
         // Desktop Entry section starts
-        if(strcmp(line, "[Desktop Entry]") == 0) {
+        if(!strcmp(line, "[Desktop Entry]"))
             parse_key_values = true;
-            continue;
-        }
     }
 
     if(!values.count("Name")) {
         entry.type = entry.STRING,
-        entry.str = fall_back_name;
+        entry.str = fallback_name;
         values["Name"] = entry;
     }
 
