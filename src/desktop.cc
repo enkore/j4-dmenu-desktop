@@ -20,21 +20,14 @@
 #include "desktop.hh"
 #include "locale.hh"
 
-
-// I'd prefer *reinterpret_cast<const uint32_t*>(s),
-// but reinterpret_cast is per definition not constexpr, while a constexpr is
-// required for this, as it must be executed at compile time.
-// The function above avoids all endianness-hassle, but isn't constexpr.
-// The functiom below is constexpr, but requires endianness-testing.
+static inline constexpr uint32_t make_istring(const char* s)
+{
+    return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
+}
 
 constexpr uint32_t operator "" _istr(char const* s, size_t)
 {
-#ifdef BIGENDIAN
-    // untested
-    return s[3] | s[2] << 8 | s[1] << 16 | s[0] << 24;
-#else
-    return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
-#endif
+    return make_istring(s);
 }
 
 void build_search_path(stringlist_t &search_path)
@@ -67,15 +60,11 @@ void build_search_path(stringlist_t &search_path)
 
 bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
 {
-    //
-    //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // !!   The code below is extremely hacky. But fast.    !!
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // Please don't try this at home.
-    //
-    //
 
     std::string fallback_name;
     bool use_fallback = true;
@@ -106,7 +95,7 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
             }
             (value++)[0] = 0; // Overwrite = with NUL (terminate key)
 
-            switch(*reinterpret_cast<const uint32_t*>(key)) {
+            switch(make_istring(key)) {
                 case "Name"_istr:
                     if(key[4] == '[') {
                         // Don't ask, don't tell.
