@@ -55,11 +55,13 @@ void print_usage(FILE* f)
         "A faster replacement for i3-dmenu-desktop\n"
         "Copyright (c) 2013 Marian Beermann, GPLv3 license\n"
         "\nUsage:\n"
-        "\tj4-dmenu-desktop [--dmenu=\"dmenu -i\"]\n"
+        "\tj4-dmenu-desktop [--dmenu=\"dmenu -i\"] [--term=\"i3-sensible-terminal\"]\n"
         "\tj4-dmenu-desktop --help\n"
         "\nOptions:\n"
         "    --dmenu=<command>\n"
         "\tDetermines the command used to invoke dmenu\n"
+        "    --term=<command>\n"
+        "\tSets the terminal emulator used to start terminal apps\n"
         "    --help\n"
         "\tDisplay this help message\n"
     );
@@ -68,22 +70,27 @@ void print_usage(FILE* f)
 int main(int argc, char **argv)
 {
     const char *dmenu_command = "dmenu -i";
+    const char *terminal = "i3-sensible-terminal";
 
     while (1) {
         int option_index = 0;
         static struct option long_options[] = {
             {"dmenu",   required_argument,  0,  'd'},
+            {"term",    required_argument,  0,  't'},
             {"help",    no_argument,        0,  'h'},
             {0,         0,                  0,  0}
         };
 
-       int c = getopt_long(argc, argv, "d:h", long_options, &option_index);
+       int c = getopt_long(argc, argv, "d:t:h", long_options, &option_index);
        if (c == -1)
            break;
 
         switch (c) {
             case 'd':
                 dmenu_command = optarg;
+                break;
+            case 't':
+                terminal = optarg;
                 break;
             case 'h':
                 print_usage(stderr);
@@ -235,11 +242,12 @@ int main(int argc, char **argv)
 
     replace(exec, "%%", "%");
 
-    std::string command = "exec ";
+    char command[4096];
+
     if(app->terminal) {
         // Execute in terminal
 
-        std::string scriptname = tmpnam(0);
+        const char *scriptname = tmpnam(0);
         std::ofstream script(scriptname);
         script << "#!/bin/sh" << std::endl;
         script << "rm " << scriptname << std::endl;
@@ -248,9 +256,9 @@ int main(int argc, char **argv)
         script << "exec " << exec << std::endl;
         script.close();
 
-        chmod(scriptname.c_str(), S_IRWXU|S_IRGRP|S_IROTH);
+        chmod(scriptname, S_IRWXU|S_IRGRP|S_IROTH);
 
-        command += "i3-sensible-terminal -e \"" + scriptname + "\"";
+        snprintf(command, 4096, "exec %s -e \"%s\"", terminal, scriptname);
     } else {
         // i3 executes applications by passing the argument to i3’s “exec” command
         // as-is to $SHELL -c. The i3 parser supports quoted strings: When a string
@@ -260,14 +268,17 @@ int main(int argc, char **argv)
         // Therefore, we escape all double quotes (") by replacing them with \"
         replace(exec, "\"", "\\\"");
 
+        const char *nsi = "";
         if(!app->startupnotify)
-            command += "--no-startup-id ";
+            nsi = "--no-startup-id ";
 
-        command += "\"" + exec + "\"";
+        snprintf(command, 4096, "exec %s \"%s\"", nsi, exec.c_str());
     };
+
+    puts(command);
 
     int status=0;
     waitpid(dmenu_pid, &status, 0);
 
-    return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
+    return execl("/usr/bin/i3-msg", "i3-msg", command, 0);
 }
