@@ -72,6 +72,9 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
     size_t n = 4096;
     FILE *file = fopen(filename, "r");
 
+    dft.terminal = false;
+    dft.startupnotify = false;
+
     while((linelen = getline(&line, &n, file)) != -1) {
         line[--linelen] = 0; // Chop off \n
 

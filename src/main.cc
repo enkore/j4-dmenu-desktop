@@ -33,9 +33,6 @@
 // files to the contents of those files (key/value pairs)
 apps_t apps;
 
-// Current base path
-std::string path;
-
 int parsed_files = 0;
 char *buf;
 
@@ -43,10 +40,9 @@ void file_callback(const char *filename)
 {
     desktop_file_t dft;
 
-    if(read_desktop_file(filename, buf, dft)) {
-        dft.location = path + filename;
+    if(read_desktop_file(filename, buf, dft))
         apps[dft.name] = dft;
-    } else
+    else
         apps.erase(dft.name);
 
     parsed_files++;
@@ -150,9 +146,8 @@ int main(int argc, char **argv)
     // (memory: less than a page on x64)
     apps.reserve(500);
 
-    for(auto &spath : search_path) {
-        chdir(spath.c_str());
-        path = spath;
+    for(auto &path : search_path) {
+        chdir(path.c_str());
         find_files(".", ".desktop", file_callback);
     }
 
@@ -188,22 +183,22 @@ int main(int argc, char **argv)
     std::string args;
     std::getline(std::cin, choice);
 
-    desktop_file_t app;
+    desktop_file_t *app = 0;
 
     if(apps.count(choice)) {
         // A full match
-        app = apps[choice];
+        app = &apps[choice];
     } else {
         // User only entered a partial match
         // (or no match at all)
         size_t match_length = 0;
 
         // Find longest match amongst apps
-        for(auto current_app : apps) {
+        for(auto &current_app : apps) {
             std::string &name = current_app.second.name;
 
-            if(startswith(choice, name) && name.length() > match_length) {
-                app = current_app.second;
+            if(name.size() > match_length && startswith(choice, name)) {
+                app = &current_app.second;
                 match_length = name.length();
             }
         }
@@ -219,8 +214,8 @@ int main(int argc, char **argv)
 
     // Build the command line
 
-    std::string &exec = app.exec;
-    std::string &name = app.name;
+    std::string &exec = app->exec;
+    std::string &name = app->name;
 
     // Replace filename field codes with the rest of the command line.
     replace(exec, "%f", args);
@@ -235,16 +230,13 @@ int main(int argc, char **argv)
     // The localized name of the application
     replace(exec, "%c", name);
 
-    // Location of .desktop file
-    replace(exec, "%k", app.location);
-
-    // Icons are not supported, so remove %i
+    replace(exec, "%k", "");
     replace(exec, "%i", "");
 
     replace(exec, "%%", "%");
 
     std::string command = "exec ";
-    if(app.terminal) {
+    if(app->terminal) {
         // Execute in terminal
 
         std::string scriptname = tmpnam(0);
@@ -268,7 +260,7 @@ int main(int argc, char **argv)
         // Therefore, we escape all double quotes (") by replacing them with \"
         replace(exec, "\"", "\\\"");
 
-        if(!app.startupnotify)
+        if(!app->startupnotify)
             command += "--no-startup-id ";
 
         command += "\"" + exec + "\"";
@@ -277,5 +269,5 @@ int main(int argc, char **argv)
     int status=0;
     waitpid(dmenu_pid, &status, 0);
 
-    return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
+    return 0 && execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
 }

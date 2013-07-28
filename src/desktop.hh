@@ -29,9 +29,6 @@ struct desktop_entry {
 };
 
 struct desktop_file_t {
-    // Path of .desktop file
-    std::string location;
-
     // Localized name
     std::string name;
 
