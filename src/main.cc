@@ -44,14 +44,10 @@ void file_callback(const char *filename)
     desktop_file_t dft;
 
     if(read_desktop_file(filename, buf, dft)) {
-        desktop_entry location;
-        location.type = location.STRING;
-        location.str = path + filename;
-        dft["_Location"] = location;
-
-        apps[dft["Name"].str] = dft;
+        dft.location = path + filename;
+        apps[dft.name] = dft;
     } else
-        apps.erase(dft["Name"].str);
+        apps.erase(dft.name);
 
     parsed_files++;
 }
@@ -204,7 +200,7 @@ int main(int argc, char **argv)
 
         // Find longest match amongst apps
         for(auto current_app : apps) {
-            std::string &name = current_app.second["Name"].str;
+            std::string &name = current_app.second.name;
 
             if(startswith(choice, name) && name.length() > match_length) {
                 app = current_app.second;
@@ -223,8 +219,8 @@ int main(int argc, char **argv)
 
     // Build the command line
 
-    std::string exec = app["Exec"].str;
-    std::string name = app["Name"].str;
+    std::string &exec = app.exec;
+    std::string &name = app.name;
 
     // Replace filename field codes with the rest of the command line.
     replace(exec, "%f", args);
@@ -240,7 +236,7 @@ int main(int argc, char **argv)
     replace(exec, "%c", name);
 
     // Location of .desktop file
-    replace(exec, "%k", app["_Location"].str);
+    replace(exec, "%k", app.location);
 
     // Icons are not supported, so remove %i
     replace(exec, "%i", "");
@@ -248,7 +244,7 @@ int main(int argc, char **argv)
     replace(exec, "%%", "%");
 
     std::string command = "exec ";
-    if(app.count("Terminal") && app["Terminal"].boolean) {
+    if(app.terminal) {
         // Execute in terminal
 
         std::string scriptname = tmpnam(0);
@@ -272,7 +268,7 @@ int main(int argc, char **argv)
         // Therefore, we escape all double quotes (") by replacing them with \"
         replace(exec, "\"", "\\\"");
 
-        if(app.count("StartupNotify") && !app["StartupNotify"].boolean)
+        if(!app.startupnotify)
             command += "--no-startup-id ";
 
         command += "\"" + exec + "\"";

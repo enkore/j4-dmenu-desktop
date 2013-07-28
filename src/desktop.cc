@@ -58,7 +58,7 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
+bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
 {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // !!   The code below is extremely hacky. But fast.    !!
@@ -67,12 +67,10 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
     // Please don't try this at home.
 
     std::string fallback_name;
-    bool use_fallback = true;
     bool parse_key_values = false;
     ssize_t linelen;
     size_t n = 4096;
     FILE *file = fopen(filename, "r");
-    desktop_entry entry;
 
     while((linelen = getline(&line, &n, file)) != -1) {
         line[--linelen] = 0; // Chop off \n
@@ -105,10 +103,7 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
                         value[-2] = 0;
                         while((suffix = suffixes[i++])) {
                             if(!strcmp(suffix, langcode)) {
-                                entry.type = entry.STRING;
-                                entry.str = value;
-                                values["Name"] = entry;
-                                use_fallback = false;
+                                dft.name = value;
                                 break;
                             }
                         }
@@ -116,25 +111,19 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
                         fallback_name = value;
                     continue;
                 case "Exec"_istr:
-                case "Type"_istr:
-                    entry.type = entry.STRING;
-                    entry.str = value;
+                    dft.exec = value;
                     break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
                     fclose(file);
                     return false;
                 case "StartupNotify"_istr:
-                case "Terminal"_istr:
-                    entry.type = entry.BOOL;
-                    entry.boolean = !strcmp(value, "true");
+                    dft.startupnotify = make_istring(value) == "true"_istr;
                     break;
-                default:
-                    // Skip storing uninteresting values
-                    continue;
+                case "Terminal"_istr:
+                    dft.terminal = make_istring(value) == "true"_istr;
+                    break;
             }
-            values[key] = entry;
-            continue;
         }
 
         // Desktop Entry section starts
@@ -142,11 +131,8 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &values)
             parse_key_values = true;
     }
 
-    if(use_fallback) {
-        entry.type = entry.STRING,
-        entry.str = fallback_name;
-        values["Name"] = entry;
-    }
+    if(!dft.name.size())
+        dft.name = fallback_name;
 
     fclose(file);
     return true;
