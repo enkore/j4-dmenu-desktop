@@ -269,5 +269,5 @@ int main(int argc, char **argv)
     int status=0;
     waitpid(dmenu_pid, &status, 0);
 
-    return 0 && execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
+    return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
 }

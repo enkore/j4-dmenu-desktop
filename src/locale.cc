@@ -16,6 +16,7 @@
 //
 
 #include <string.h>
+#include <set>
 
 #include "locale.hh"
 
@@ -28,9 +29,8 @@ std::string get_locale()
 
 void populate_locale_suffixes(std::string locale)
 {
-    suffixes = new char*[4];
+    std::set<std::string> suffixset;
 
-    int i = 0;
     size_t dotpos = locale.find(".");
     size_t atpos = locale.find("@") != std::string::npos ? locale.find("@") : locale.length();
     size_t uscorepos = locale.find("_");
@@ -41,20 +41,26 @@ void populate_locale_suffixes(std::string locale)
         atpos = locale.find("@") != std::string::npos ? locale.find("@") : locale.length();
     }
 
-    suffixes[i++] = strdup(locale.c_str());
+    suffixset.insert(locale);
 
     if(uscorepos < atpos && atpos != std::string::npos) {
-        suffixes[i++] = strdup(locale.substr(0, atpos).c_str());
-        suffixes[i++] = strdup((locale.substr(0, uscorepos) + locale.substr(atpos, locale.length())).c_str());
+        suffixset.insert(locale.substr(0, atpos));
+        suffixset.insert((locale.substr(0, uscorepos) + locale.substr(atpos, locale.length())));
     }
 
+    suffixes = new char*[suffixset.size()+1];
+    int i = 0;
+    for(auto &suffix : suffixset)
+        suffixes[i++] = strdup(suffix.c_str());
     suffixes[i++] = 0;
 }
 
 void free_locale_suffixes()
 {
-    for(int i = 0; i < 4; i++)
-        free(suffixes[i]);
+    int i = 0;
+    while(suffixes[i])
+        free(suffixes[i++]);
+
     delete[] suffixes;
 }
 
