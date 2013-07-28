@@ -149,10 +149,6 @@ int main(int argc, char **argv)
     // Allocating the line buffer just once saves lots of MM calls
     buf = new char[4096];
 
-    // Reserving enough is a minimal memory impact, but speeds up things a bit, too
-    // (memory: less than a page on x64)
-    apps.reserve(500);
-
     for(auto &path : search_path) {
         chdir(path.c_str());
         find_files(".", ".desktop", file_callback);
@@ -162,16 +158,9 @@ int main(int argc, char **argv)
 
     chdir(original_wd);
 
-    // Sort the unsorted hashmap
-    std::vector<const std::string*> keys;
-    keys.reserve(apps.size());
-    for(auto &app : apps)
-        keys.push_back(&app.first);
-    std::sort(keys.begin(), keys.end(), [](const std::string *s1, const std::string *s2) {return s1->compare(*s2) < 0;});
-
     // Transfer the list to dmenu
-    for(auto item : keys) {
-        write(dmenu_outpipe[1], item->c_str(), item->size());
+    for(auto &app : apps) {
+        write(dmenu_outpipe[1], app.first.c_str(), app.first.size());
         write(dmenu_outpipe[1], "\n", 1);
     }
 
@@ -192,10 +181,11 @@ int main(int argc, char **argv)
 
     desktop_file_t *app = 0;
 
-    if(apps.count(choice)) {
+    auto it = apps.find(choice);
+    if(it != apps.end())
         // A full match
-        app = &apps[choice];
-    } else {
+        app = &it->second;
+    else {
         // User only entered a partial match
         // (or no match at all)
         size_t match_length = 0;
