@@ -163,15 +163,15 @@ int main(int argc, char **argv)
     chdir(original_wd);
 
     // Sort the unsorted hashmap
-    std::vector<const char *> keys;
+    std::vector<const std::string*> keys;
     keys.reserve(apps.size());
     for(auto &app : apps)
-        keys.push_back(app.first.c_str());
-    std::sort(keys.begin(), keys.end(), [](const char *s1, const char *s2) {return strcmp(s1, s2) < 0;});
+        keys.push_back(&app.first);
+    std::sort(keys.begin(), keys.end(), [](const std::string *s1, const std::string *s2) {return s1->compare(*s2) < 0;});
 
     // Transfer the list to dmenu
     for(auto item : keys) {
-        write(dmenu_outpipe[1], item, strlen(item));
+        write(dmenu_outpipe[1], item->c_str(), item->size());
         write(dmenu_outpipe[1], "\n", 1);
     }
 
