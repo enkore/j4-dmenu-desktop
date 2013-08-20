@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 PROJECT(j4-dmenu)
 
 INCLUDE_DIRECTORIES(include)
-SET(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wpedantic -Wextra -O2")
+SET(CMAKE_CXX_FLAGS "-std=c++0x -Wall -pedantic -Wextra -O2")
 
 ADD_EXECUTABLE(
     j4-dmenu-desktop
