@@ -43,6 +43,8 @@ struct desktop_file_t {
 
     // Supports StartupNotify
     bool startupnotify;
+
+    std::string get_command(const std::string &args, const std::string &terminal_emulator);
 };
 
 typedef std::map<std::string, desktop_file_t> apps_t;

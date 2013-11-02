@@ -69,6 +69,40 @@ void print_usage(FILE* f)
     );
 }
 
+std::pair<desktop_file_t *, std::string> find_application(const std::string &choice) {
+    desktop_file_t *app = 0;
+    std::string args;
+
+    auto it = apps.find(choice);
+    if(it != apps.end())
+        // A full match
+        app = &it->second;
+    else {
+        // User only entered a partial match
+        // (or no match at all)
+        size_t match_length = 0;
+
+        // Find longest match amongst apps
+        for(auto &current_app : apps) {
+            std::string &name = current_app.second.name;
+
+            if(name.size() > match_length && startswith(choice, name)) {
+                app = &current_app.second;
+                match_length = name.length();
+            }
+        }
+
+        if(!match_length)
+            // No matching app found, just execute the input in a shell
+            exit(system(choice.c_str()));
+
+        // +1 b/c there must be whitespace we add back later...
+        args = choice.substr(match_length+1, choice.length()-1);
+    }
+
+    return std::make_pair(app, args);
+}
+
 int main(int argc, char **argv)
 {
     const char *dmenu_command = "dmenu -i";
@@ -189,98 +223,17 @@ int main(int argc, char **argv)
 
     std::string choice;
     std::string args;
+    desktop_file_t *app;
+
     std::getline(std::cin, choice);
+    std::tie(app, args) = find_application(choice);
 
-    desktop_file_t *app = 0;
+    std::string command = app->get_command(args, terminal);
 
-    auto it = apps.find(choice);
-    if(it != apps.end())
-        // A full match
-        app = &it->second;
-    else {
-        // User only entered a partial match
-        // (or no match at all)
-        size_t match_length = 0;
-
-        // Find longest match amongst apps
-        for(auto &current_app : apps) {
-            std::string &name = current_app.second.name;
-
-            if(name.size() > match_length && startswith(choice, name)) {
-                app = &current_app.second;
-                match_length = name.length();
-            }
-        }
-
-        if(!match_length)
-            // No matching app found, just execute the input in a shell
-            return system(choice.c_str());
-
-        // +1 b/c there must be whitespace we add back later...
-        args = choice.substr(match_length+1, choice.length()-1);
-    }
-
-
-    // Build the command line
-
-    std::string &exec = app->exec;
-    std::string &name = app->name;
-
-    // Replace filename field codes with the rest of the command line.
-    replace(exec, "%f", args);
-    replace(exec, "%F", args);
-
-    // If the program works with URLs,
-    // we assume the user provided a URL instead of a filename.
-    // As per the spec, there must be at most one of %f, %u, %F or %U present.
-    replace(exec, "%u", args);
-    replace(exec, "%U", args);
-
-    // The localized name of the application
-    replace(exec, "%c", name);
-
-    replace(exec, "%k", "");
-    replace(exec, "%i", "");
-
-    replace(exec, "%%", "%");
-
-    char command[4096];
-
-    if(app->terminal) {
-        // Execute in terminal
-
-        const char *scriptname = tmpnam(0);
-        std::ofstream script(scriptname);
-        script << "#!/bin/sh" << std::endl;
-        script << "rm " << scriptname << std::endl;
-        script << "echo -n \"\\033]2;" << name << "\\007\"" << std::endl;
-        script << "echo -ne \"\\033]2;" << name << "\\007\"" << std::endl;
-        script << "exec " << exec << std::endl;
-        script.close();
-
-        chmod(scriptname, S_IRWXU|S_IRGRP|S_IROTH);
-
-        snprintf(command, 4096, "exec %s -e \"%s\"", terminal, scriptname);
-    } else {
-        // i3 executes applications by passing the argument to i3’s “exec” command
-        // as-is to $SHELL -c. The i3 parser supports quoted strings: When a string
-        // starts with a double quote ("), everything is parsed as-is until the next
-        // double quote which is NOT preceded by a backslash (\).
-        //
-        // Therefore, we escape all double quotes (") by replacing them with \"
-        replace(exec, "\"", "\\\"");
-
-        const char *nsi = "";
-        if(!app->startupnotify)
-            nsi = "--no-startup-id ";
-
-        snprintf(command, 4096, "exec %s \"%s\"", nsi, exec.c_str());
-    };
-
-    puts(command);
+    puts(command.c_str());
 
     int status=0;
     waitpid(dmenu_pid, &status, 0);
 
-    return execl("/usr/bin/i3-msg", "i3-msg", command, 0);
+    return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
 }

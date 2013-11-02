@@ -15,7 +15,13 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
 #include <string.h>
+
+#include <sys/stat.h>
+#include <sys/wait.h>
 
 #include "desktop.hh"
 #include "locale.hh"
@@ -140,4 +146,64 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
 
     fclose(file);
     return true;
+}
+
+std::string desktop_file_t::get_command(const std::string &args, const std::string &terminal_emulator)
+{
+    // Build the command line
+    std::string &exec = this->exec;
+    std::string &name = this->name;
+
+    // Replace filename field codes with the rest of the command line.
+    replace(exec, "%f", args);
+    replace(exec, "%F", args);
+
+    // If the program works with URLs,
+    // we assume the user provided a URL instead of a filename.
+    // As per the spec, there must be at most one of %f, %u, %F or %U present.
+    replace(exec, "%u", args);
+    replace(exec, "%U", args);
+
+    // The localized name of the application
+    replace(exec, "%c", name);
+
+    replace(exec, "%k", "");
+    replace(exec, "%i", "");
+
+    replace(exec, "%%", "%");
+
+    char command[4096];
+
+    if(this->terminal) {
+        // Execute in terminal
+
+        const char *scriptname = tmpnam(0);
+        std::ofstream script(scriptname);
+        script << "#!/bin/sh" << std::endl;
+        script << "rm " << scriptname << std::endl;
+        script << "echo -n \"\\033]2;" << name << "\\007\"" << std::endl;
+        script << "echo -ne \"\\033]2;" << name << "\\007\"" << std::endl;
+        script << "exec " << exec << std::endl;
+        script.close();
+
+        chmod(scriptname, S_IRWXU|S_IRGRP|S_IROTH);
+
+        snprintf(command, 4096, "exec %s -e \"%s\"", terminal_emulator.c_str(), scriptname);
+    } else {
+        // i3 executes applications by passing the argument to i3’s “exec” command
+        // as-is to $SHELL -c. The i3 parser supports quoted strings: When a string
+        // starts with a double quote ("), everything is parsed as-is until the next
+        // double quote which is NOT preceded by a backslash (\).
+        //
+        // Therefore, we escape all double quotes (") by replacing them with \"
+        replace(exec, "\"", "\\\"");
+
+        const char *nsi = "";
+        if(!this->startupnotify)
+            nsi = "--no-startup-id ";
+
+        snprintf(command, 4096, "exec %s \"%s\"", nsi, exec.c_str());
+    };
+
+    return command;
 }
