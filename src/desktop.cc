@@ -115,6 +115,7 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
                     continue;
                 case "Exec"_istr:
                     dft.exec = value;
+                    dft.binary = split(dft.exec, " ").first;
                     break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:

@@ -60,6 +60,8 @@ void print_usage(FILE* f)
         "\nOptions:\n"
         "    --dmenu=<command>\n"
         "\tDetermines the command used to invoke dmenu\n"
+        "    --display-binary\n"
+        "\tDisplay binary name after each entry (off by default)\n"
         "    --term=<command>\n"
         "\tSets the terminal emulator used to start terminal apps\n"
         "    --help\n"
@@ -71,6 +73,7 @@ int main(int argc, char **argv)
 {
     const char *dmenu_command = "dmenu -i";
     const char *terminal = "i3-sensible-terminal";
+    bool display_binary = false;
 
     while (1) {
         int option_index = 0;
@@ -78,6 +81,7 @@ int main(int argc, char **argv)
             {"dmenu",   required_argument,  0,  'd'},
             {"term",    required_argument,  0,  't'},
             {"help",    no_argument,        0,  'h'},
+            {"display-binary", no_argument, 0,  'b'},
             {0,         0,                  0,  0}
         };
 
@@ -95,6 +99,9 @@ int main(int argc, char **argv)
             case 'h':
                 print_usage(stderr);
                 return 0;
+            case 'b':
+                display_binary = true;
+                break;
             default:
                 return 1;
         }
@@ -161,6 +168,11 @@ int main(int argc, char **argv)
     // Transfer the list to dmenu
     for(auto &app : apps) {
         write(dmenu_outpipe[1], app.first.c_str(), app.first.size());
+        if(display_binary) {
+            write(dmenu_outpipe[1], " (", 2);
+            write(dmenu_outpipe[1], app.second.binary.c_str(), app.second.binary.size());
+            write(dmenu_outpipe[1], ")", 1);
+        }
         write(dmenu_outpipe[1], "\n", 1);
     }
 

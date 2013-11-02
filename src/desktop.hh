@@ -35,6 +35,9 @@ struct desktop_file_t {
     // Command line
     std::string exec;
 
+    // Binary name
+    std::string binary;
+
     // Terminal app
     bool terminal;
 
