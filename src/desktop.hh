@@ -35,8 +35,6 @@ public:
     bool startupnotify;
 
     bool read(const char *filename, char *line);
-
-    std::string get_command(const std::string &args, const std::string &terminal_emulator);
 };
 
 class ApplicationRunner {
