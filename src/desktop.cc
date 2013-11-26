@@ -151,8 +151,6 @@ bool Application::read(const char *filename, char *line)
     return true;
 }
 
-
-
 const std::string &ApplicationRunner::command()
 {
     // Build the command line
