@@ -78,7 +78,7 @@ bool Application::read(const char *filename, char *line)
     size_t n = 4096;
     FILE *file = fopen(filename, "r");
     if(!file) {
-	return false;
+        return false;
     }
 
     this->terminal = false;
@@ -106,36 +106,36 @@ bool Application::read(const char *filename, char *line)
             (value++)[0] = 0; // Overwrite = with NUL (terminate key)
 
             switch(make_istring(key)) {
-                case "Name"_istr:
-                    if(key[4] == '[') {
-                        // Don't ask, don't tell.
-                        const char *langcode = key + 5;
-                        const char *suffix;
-                        int i = 0;
-                        value[-2] = 0;
-                        while((suffix = suffixes[i++])) {
-                            if(!strcmp(suffix, langcode)) {
-                                this->name = value;
-                                break;
-                            }
+            case "Name"_istr:
+                if(key[4] == '[') {
+                    // Don't ask, don't tell.
+                    const char *langcode = key + 5;
+                    const char *suffix;
+                    int i = 0;
+                    value[-2] = 0;
+                    while((suffix = suffixes[i++])) {
+                        if(!strcmp(suffix, langcode)) {
+                            this->name = value;
+                            break;
                         }
-                    } else
-                        fallback_name = value;
-                    continue;
-                case "Exec"_istr:
-                    this->exec = value;
-                    this->binary = split(this->exec, " ").first;
-                    break;
-                case "Hidden"_istr:
-                case "NoDisplay"_istr:
-                    fclose(file);
-                    return false;
-                case "StartupNotify"_istr:
-                    this->startupnotify = make_istring(value) == "true"_istr;
-                    break;
-                case "Terminal"_istr:
-                    this->terminal = make_istring(value) == "true"_istr;
-                    break;
+                    }
+                } else
+                    fallback_name = value;
+                continue;
+            case "Exec"_istr:
+                this->exec = value;
+                this->binary = split(this->exec, " ").first;
+                break;
+            case "Hidden"_istr:
+            case "NoDisplay"_istr:
+                fclose(file);
+                return false;
+            case "StartupNotify"_istr:
+                this->startupnotify = make_istring(value) == "true"_istr;
+                break;
+            case "Terminal"_istr:
+                this->terminal = make_istring(value) == "true"_istr;
+                break;
             }
         }
 
