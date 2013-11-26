@@ -36,6 +36,8 @@ apps_t apps;
 int parsed_files = 0;
 char *buf;
 
+application_formatter appformatter = &appformatter_default;
+
 void file_callback(const char *filename)
 {
     Application dft;
@@ -107,7 +109,6 @@ int main(int argc, char **argv)
 {
     const char *dmenu_command = "dmenu -i";
     const char *terminal = "i3-sensible-terminal";
-    bool display_binary = false;
 
     while (1) {
         int option_index = 0;
@@ -134,7 +135,7 @@ int main(int argc, char **argv)
                 print_usage(stderr);
                 return 0;
             case 'b':
-                display_binary = true;
+		appformatter = appformatter_with_binary_name;
                 break;
             default:
                 return 1;
@@ -202,11 +203,6 @@ int main(int argc, char **argv)
     // Transfer the list to dmenu
     for(auto &app : apps) {
         write(dmenu_outpipe[1], app.first.c_str(), app.first.size());
-        if(display_binary) {
-            write(dmenu_outpipe[1], " (", 2);
-            write(dmenu_outpipe[1], app.second.binary.c_str(), app.second.binary.size());
-            write(dmenu_outpipe[1], ")", 1);
-        }
         write(dmenu_outpipe[1], "\n", 1);
     }
 

@@ -58,7 +58,15 @@ private:
 };
 
 
+typedef std::string (*application_formatter)(const Application &app);
+
+std::string appformatter_default(const Application &app);
+std::string appformatter_with_binary_name(const Application &app);
+
 typedef std::map<std::string, Application> apps_t;
 
 void build_search_path(stringlist_t &search_path);
 bool read_desktop_file(const char *filename, char *line, Application &dft);
+
+
+extern application_formatter appformatter;

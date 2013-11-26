@@ -146,6 +146,8 @@ bool Application::read(const char *filename, char *line)
     if(!this->name.size())
         this->name = fallback_name;
 
+    this->name = appformatter(*this);
+
     fclose(file);
     return true;
 }
@@ -218,4 +220,14 @@ const std::string ApplicationRunner::command()
 int ApplicationRunner::run()
 {
     return execl("/usr/bin/i3-msg", "i3-msg", command().c_str(), 0);
+}
+
+std::string appformatter_default(const Application &app)
+{
+    return app.name;
+}
+
+std::string appformatter_with_binary_name(const Application &app)
+{
+    return app.name + " (" + app.binary + ")";
 }
