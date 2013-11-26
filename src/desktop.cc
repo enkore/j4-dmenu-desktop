@@ -150,11 +150,9 @@ bool Application::read(const char *filename, char *line)
     return true;
 }
 
-const std::string ApplicationRunner::command()
+const std::string ApplicationRunner::application_command()
 {
-    // Build the command line
     std::string exec(this->app.exec);
-    const std::string &name = this->app.name;
 
     // Replace filename field codes with the rest of the command line.
     replace(exec, "%f", this->args);
@@ -167,13 +165,20 @@ const std::string ApplicationRunner::command()
     replace(exec, "%U", this->args);
 
     // The localized name of the application
-    replace(exec, "%c", name);
+    replace(exec, "%c", this->app.name);
 
     replace(exec, "%k", "");
     replace(exec, "%i", "");
 
     replace(exec, "%%", "%");
 
+    return exec;
+}
+
+const std::string ApplicationRunner::command()
+{
+    std::string exec = this->application_command();
+    const std::string &name = this->app.name;
     char command[4096];
 
     if(this->app.terminal) {

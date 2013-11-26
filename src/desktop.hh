@@ -49,6 +49,7 @@ public:
 
 private:
     const std::string command();
+    const std::string application_command();
 
     const Application &app;
     const std::string &args;
