@@ -47,10 +47,11 @@ public:
 
     }
 
-    const std::string &command();
     int run();
 
 private:
+    const std::string command();
+
     Application &app;
     const std::string &args;
   
