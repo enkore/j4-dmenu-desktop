@@ -77,9 +77,8 @@ bool Application::read(const char *filename, char *line)
     ssize_t linelen;
     size_t n = 4096;
     FILE *file = fopen(filename, "r");
-    if(!file) {
+    if(!file)
         return false;
-    }
 
     this->terminal = false;
     this->startupnotify = false;
@@ -154,8 +153,8 @@ bool Application::read(const char *filename, char *line)
 const std::string ApplicationRunner::command()
 {
     // Build the command line
-    std::string &exec = this->app.exec;
-    std::string &name = this->app.name;
+    std::string exec(this->app.exec);
+    const std::string &name = this->app.name;
 
     // Replace filename field codes with the rest of the command line.
     replace(exec, "%f", this->args);

@@ -39,7 +39,7 @@ public:
 
 class ApplicationRunner {
 public:
-    ApplicationRunner(const std::string &terminal_emulator, Application &app, const std::string &args)
+    ApplicationRunner(const std::string &terminal_emulator, const Application &app, const std::string &args)
         : app(app), args(args), terminal_emulator(terminal_emulator)
     {
 
@@ -50,7 +50,7 @@ public:
 private:
     const std::string command();
 
-    Application &app;
+    const Application &app;
     const std::string &args;
   
     const std::string &terminal_emulator;
