@@ -38,9 +38,9 @@ char *buf;
 
 void file_callback(const char *filename)
 {
-    desktop_file_t dft;
+    Application dft;
 
-    if(read_desktop_file(filename, buf, dft))
+    if(dft.read(filename, buf))
         apps[dft.name] = dft;
     else
         apps.erase(dft.name);
@@ -69,15 +69,15 @@ void print_usage(FILE* f)
     );
 }
 
-std::pair<desktop_file_t *, std::string> find_application(const std::string &choice) {
-    desktop_file_t *app = 0;
+std::pair<Application *, std::string> find_application(const std::string &choice) {
+    Application *app = 0;
     std::string args;
 
     auto it = apps.find(choice);
-    if(it != apps.end())
+    if(it != apps.end()) {
         // A full match
         app = &it->second;
-    else {
+    } else {
         // User only entered a partial match
         // (or no match at all)
         size_t match_length = 0;
@@ -223,17 +223,15 @@ int main(int argc, char **argv)
 
     std::string choice;
     std::string args;
-    desktop_file_t *app;
+    Application *app;
 
     std::getline(std::cin, choice);
     std::tie(app, args) = find_application(choice);
 
-    std::string command = app->get_command(args, terminal);
-
-    puts(command.c_str());
+    ApplicationRunner app_runner(terminal, *app, args);
 
     int status=0;
     waitpid(dmenu_pid, &status, 0);
 
-    return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
+    return app_runner.run();
 }

@@ -64,7 +64,7 @@ void build_search_path(stringlist_t &search_path)
         search_path.push_back(replace(path, "//", "/"));
 }
 
-bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
+bool Application::read(const char *filename, char *line)
 {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // !!   The code below is extremely hacky. But fast.    !!
@@ -78,8 +78,8 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
     size_t n = 4096;
     FILE *file = fopen(filename, "r");
 
-    dft.terminal = false;
-    dft.startupnotify = false;
+    this->terminal = false;
+    this->startupnotify = false;
 
     while((linelen = getline(&line, &n, file)) != -1) {
         line[--linelen] = 0; // Chop off \n
@@ -112,7 +112,7 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
                         value[-2] = 0;
                         while((suffix = suffixes[i++])) {
                             if(!strcmp(suffix, langcode)) {
-                                dft.name = value;
+                                this->name = value;
                                 break;
                             }
                         }
@@ -120,18 +120,18 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
                         fallback_name = value;
                     continue;
                 case "Exec"_istr:
-                    dft.exec = value;
-                    dft.binary = split(dft.exec, " ").first;
+                    this->exec = value;
+                    this->binary = split(this->exec, " ").first;
                     break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
                     fclose(file);
                     return false;
                 case "StartupNotify"_istr:
-                    dft.startupnotify = make_istring(value) == "true"_istr;
+                    this->startupnotify = make_istring(value) == "true"_istr;
                     break;
                 case "Terminal"_istr:
-                    dft.terminal = make_istring(value) == "true"_istr;
+                    this->terminal = make_istring(value) == "true"_istr;
                     break;
             }
         }
@@ -141,28 +141,30 @@ bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft)
             parse_key_values = true;
     }
 
-    if(!dft.name.size())
-        dft.name = fallback_name;
+    if(!this->name.size())
+        this->name = fallback_name;
 
     fclose(file);
     return true;
 }
 
-std::string desktop_file_t::get_command(const std::string &args, const std::string &terminal_emulator)
+
+
+const std::string &ApplicationRunner::command()
 {
     // Build the command line
-    std::string &exec = this->exec;
-    std::string &name = this->name;
+    std::string &exec = this->app.exec;
+    std::string &name = this->app.name;
 
     // Replace filename field codes with the rest of the command line.
-    replace(exec, "%f", args);
-    replace(exec, "%F", args);
+    replace(exec, "%f", this->args);
+    replace(exec, "%F", this->args);
 
     // If the program works with URLs,
     // we assume the user provided a URL instead of a filename.
     // As per the spec, there must be at most one of %f, %u, %F or %U present.
-    replace(exec, "%u", args);
-    replace(exec, "%U", args);
+    replace(exec, "%u", this->args);
+    replace(exec, "%U", this->args);
 
     // The localized name of the application
     replace(exec, "%c", name);
@@ -174,7 +176,7 @@ std::string desktop_file_t::get_command(const std::string &args, const std::stri
 
     char command[4096];
 
-    if(this->terminal) {
+    if(this->app.terminal) {
         // Execute in terminal
 
         const char *scriptname = tmpnam(0);
@@ -188,7 +190,7 @@ std::string desktop_file_t::get_command(const std::string &args, const std::stri
 
         chmod(scriptname, S_IRWXU|S_IRGRP|S_IROTH);
 
-        snprintf(command, 4096, "exec %s -e \"%s\"", terminal_emulator.c_str(), scriptname);
+        snprintf(command, 4096, "exec %s -e \"%s\"", this->terminal_emulator.c_str(), scriptname);
     } else {
         // i3 executes applications by passing the argument to i3’s “exec” command
         // as-is to $SHELL -c. The i3 parser supports quoted strings: When a string
@@ -199,11 +201,16 @@ std::string desktop_file_t::get_command(const std::string &args, const std::stri
         replace(exec, "\"", "\\\"");
 
         const char *nsi = "";
-        if(!this->startupnotify)
+        if(!this->app.startupnotify)
             nsi = "--no-startup-id ";
 
         snprintf(command, 4096, "exec %s \"%s\"", nsi, exec.c_str());
     };
 
-    return command;
+    return std::string(command);
+}
+
+int ApplicationRunner::run()
+{
+    return execl("/usr/bin/i3-msg", "i3-msg", command().c_str(), 0);
 }

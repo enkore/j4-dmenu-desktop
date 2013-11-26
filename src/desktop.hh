@@ -17,18 +17,8 @@
 
 #include "util.hh"
 
-struct desktop_entry {
-    enum desktop_entry_type {
-        STRING,
-        BOOL
-    };
-    desktop_entry_type type;
-
-    std::string str;
-    bool boolean;
-};
-
-struct desktop_file_t {
+class Application {
+public:
     // Localized name
     std::string name;
 
@@ -44,10 +34,31 @@ struct desktop_file_t {
     // Supports StartupNotify
     bool startupnotify;
 
+    bool read(const char *filename, char *line);
+
     std::string get_command(const std::string &args, const std::string &terminal_emulator);
 };
 
-typedef std::map<std::string, desktop_file_t> apps_t;
+class ApplicationRunner {
+public:
+    ApplicationRunner(const std::string &terminal_emulator, Application &app, const std::string &args)
+        : app(app), args(args), terminal_emulator(terminal_emulator)
+    {
+
+    }
+
+    const std::string &command();
+    int run();
+
+private:
+    Application &app;
+    const std::string &args;
+  
+    const std::string &terminal_emulator;
+};
+
+
+typedef std::map<std::string, Application> apps_t;
 
 void build_search_path(stringlist_t &search_path);
-bool read_desktop_file(const char *filename, char *line, desktop_file_t &dft);
+bool read_desktop_file(const char *filename, char *line, Application &dft);
