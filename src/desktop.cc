@@ -156,6 +156,14 @@ const std::string ApplicationRunner::application_command()
 {
     std::string exec(this->app.exec);
 
+
+    // Undo quoting before expanding field codes
+    replace(exec, "\\\\ ", "\\ ");
+    replace(exec, "\\\\`", "\\`");
+    replace(exec, "\\\\$", "\\$");
+    replace(exec, "\\\\\"", "\\\"");
+    replace(exec, "\\\\\\\\", "\\\\");
+
     // Replace filename field codes with the rest of the command line.
     replace(exec, "%f", this->args);
     replace(exec, "%F", this->args);
