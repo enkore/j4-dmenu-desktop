@@ -27,6 +27,7 @@
 #include "util.hh"
 #include "desktop.hh"
 #include "locale.hh"
+#include "dmenu.hh"
 
 
 // apps is a mapping of the locale-specific name extracted from .desktop-
@@ -53,25 +54,26 @@ void file_callback(const char *filename)
 void print_usage(FILE* f)
 {
     fprintf(f,
-        "j4-dmenu-desktop\n"
-        "A faster replacement for i3-dmenu-desktop\n"
-        "Copyright (c) 2013 Marian Beermann, GPLv3 license\n"
-        "\nUsage:\n"
-        "\tj4-dmenu-desktop [--dmenu=\"dmenu -i\"] [--term=\"i3-sensible-terminal\"]\n"
-        "\tj4-dmenu-desktop --help\n"
-        "\nOptions:\n"
-        "    --dmenu=<command>\n"
-        "\tDetermines the command used to invoke dmenu\n"
-        "    --display-binary\n"
-        "\tDisplay binary name after each entry (off by default)\n"
-        "    --term=<command>\n"
-        "\tSets the terminal emulator used to start terminal apps\n"
-        "    --help\n"
-        "\tDisplay this help message\n"
-    );
+            "j4-dmenu-desktop\n"
+            "A faster replacement for i3-dmenu-desktop\n"
+            "Copyright (c) 2013 Marian Beermann, GPLv3 license\n"
+            "\nUsage:\n"
+            "\tj4-dmenu-desktop [--dmenu=\"dmenu -i\"] [--term=\"i3-sensible-terminal\"]\n"
+            "\tj4-dmenu-desktop --help\n"
+            "\nOptions:\n"
+            "    --dmenu=<command>\n"
+            "\tDetermines the command used to invoke dmenu\n"
+            "    --display-binary\n"
+            "\tDisplay binary name after each entry (off by default)\n"
+            "    --term=<command>\n"
+            "\tSets the terminal emulator used to start terminal apps\n"
+            "    --help\n"
+            "\tDisplay this help message\n"
+           );
 }
 
-std::pair<Application *, std::string> find_application(const std::string &choice) {
+std::pair<Application *, std::string> find_application(const std::string &choice)
+{
     Application *app = 0;
     std::string args;
 
@@ -107,7 +109,7 @@ std::pair<Application *, std::string> find_application(const std::string &choice
 
 int main(int argc, char **argv)
 {
-    const char *dmenu_command = "dmenu -i";
+    std::string dmenu_command("dmenu -i");
     std::string terminal("i3-sensible-terminal");
 
     while (1) {
@@ -120,57 +122,29 @@ int main(int argc, char **argv)
             {0,         0,                  0,  0}
         };
 
-       int c = getopt_long(argc, argv, "d:t:hb", long_options, &option_index);
-       if (c == -1)
-           break;
+        int c = getopt_long(argc, argv, "d:t:hb", long_options, &option_index);
+        if (c == -1)
+            break;
 
         switch (c) {
-            case 'd':
-                dmenu_command = optarg;
-                break;
-            case 't':
-                terminal = optarg;
-                break;
-            case 'h':
-                print_usage(stderr);
-                return 0;
-            case 'b':
-		appformatter = appformatter_with_binary_name;
-                break;
-            default:
-                return 1;
+        case 'd':
+            dmenu_command = optarg;
+            break;
+        case 't':
+            terminal = optarg;
+            break;
+        case 'h':
+            print_usage(stderr);
+            return 0;
+        case 'b':
+            appformatter = appformatter_with_binary_name;
+            break;
+        default:
+            return 1;
         }
     }
 
-    // Create the dmenu as soon as we know the command,
-    // this speeds up things a bit if the -f flag for dmenu is
-    // used
-    int dmenu_inpipe[2], dmenu_outpipe[2];
-    if(pipe(dmenu_inpipe) == -1 || pipe(dmenu_outpipe) == -1)
-        return 100;
-
-    int dmenu_pid = fork();
-    switch(dmenu_pid) {
-        case -1:
-            return 101;
-        case 0:
-            close(dmenu_inpipe[0]);
-            close(dmenu_outpipe[1]);
-
-            dup2(dmenu_inpipe[1], STDOUT_FILENO);
-            dup2(dmenu_outpipe[0], STDIN_FILENO);
-
-            static const char *shell = 0;
-            if((shell = getenv("SHELL")) == 0)
-                shell = "/bin/sh";
-
-            return execl(shell, shell, "-c", dmenu_command, 0);
-    }
-
-    close(dmenu_inpipe[1]);
-    close(dmenu_outpipe[0]);
-
-    dup2(dmenu_inpipe[0], STDIN_FILENO);
+    Dmenu dmenu(dmenu_command);
 
     // Get us the used locale suffixes
     populate_locale_suffixes(get_locale());
@@ -202,32 +176,23 @@ int main(int argc, char **argv)
 
     // Transfer the list to dmenu
     for(auto &app : apps) {
-        write(dmenu_outpipe[1], app.first.c_str(), app.first.size());
-        write(dmenu_outpipe[1], "\n", 1);
+        dmenu.write(app.first);
     }
 
-    // Closing the pipe produces EOF for dmenu, signalling
-    // end of all options. dmenu shows now up on the screen
-    // (if -f hasn't been used)
-    close(dmenu_outpipe[1]);
+    dmenu.display();
 
-    // User enters now her choice (probably takes a while, the blocking call is std::getline)
-    // so do some cleanup here.
+    // User enters now her choice (probably takes a while) so do some
+    // cleanup here.
 
     free_locale_suffixes();
     printf("Read %d .desktop files, found %ld apps.\n", parsed_files, apps.size());
 
-    std::string choice;
+    std::string choice(dmenu.read_choice()); // Blocks
+
     std::string args;
     Application *app;
-
-    std::getline(std::cin, choice);
     std::tie(app, args) = find_application(choice);
 
     ApplicationRunner app_runner(terminal, *app, args);
-
-    int status=0;
-    waitpid(dmenu_pid, &status, 0);
-
     return app_runner.run();
 }
