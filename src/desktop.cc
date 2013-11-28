@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <unistd.h>
 #include <string.h>
 
@@ -156,7 +157,6 @@ const std::string ApplicationRunner::application_command()
 {
     std::string exec(this->app.exec);
 
-
     // Undo quoting before expanding field codes
     replace(exec, "\\\\ ", "\\ ");
     replace(exec, "\\\\`", "\\`");
@@ -189,7 +189,9 @@ const std::string ApplicationRunner::command()
 {
     std::string exec = this->application_command();
     const std::string &name = this->app.name;
-    char command[4096];
+    std::stringstream command;
+
+    puts(exec.c_str());
 
     if(this->app.terminal) {
         // Execute in terminal
@@ -205,7 +207,8 @@ const std::string ApplicationRunner::command()
 
         chmod(scriptname, S_IRWXU|S_IRGRP|S_IROTH);
 
-        snprintf(command, 4096, "exec %s -e \"%s\"", this->terminal_emulator.c_str(), scriptname);
+        command << "exec " << this->terminal_emulator;
+        command << " -e \"" << scriptname << "\"";
     } else {
         // i3 executes applications by passing the argument to i3’s “exec” command
         // as-is to $SHELL -c. The i3 parser supports quoted strings: When a string
@@ -215,14 +218,13 @@ const std::string ApplicationRunner::command()
         // Therefore, we escape all double quotes (") by replacing them with \"
         replace(exec, "\"", "\\\"");
 
-        const char *nsi = "";
+        command << "exec ";
         if(!this->app.startupnotify)
-            nsi = "--no-startup-id ";
-
-        snprintf(command, 4096, "exec %s \"%s\"", nsi, exec.c_str());
+            command << "--no-startup-id ";
+        command << "\"" << exec << "\"";
     };
 
-    return std::string(command);
+    return command.str();
 }
 
 int ApplicationRunner::run()
