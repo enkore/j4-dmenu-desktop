@@ -229,7 +229,7 @@ const std::string ApplicationRunner::command()
 
 int ApplicationRunner::run()
 {
-    return execl("/usr/bin/i3-msg", "i3-msg", command().c_str(), 0);
+    return execl("/usr/bin/i3-msg", "i3-msg", this->command().c_str(), 0);
 }
 
 std::string appformatter_default(const Application &app)
