@@ -108,7 +108,7 @@ std::pair<Application *, std::string> find_application(const std::string &choice
 int main(int argc, char **argv)
 {
     const char *dmenu_command = "dmenu -i";
-    const char *terminal = "i3-sensible-terminal";
+    std::string terminal("i3-sensible-terminal");
 
     while (1) {
         int option_index = 0;
