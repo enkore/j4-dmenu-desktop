@@ -78,8 +78,14 @@ bool Application::read(const char *filename, char *line)
     ssize_t linelen;
     size_t n = 4096;
     FILE *file = fopen(filename, "r");
-    if(!file)
+    if(!file) {
+	char *pwd = new char[100];
+	int error = errno;
+	getcwd(pwd, 100);
+	fprintf(stderr, "fopen(%s/%s) failed: %s\n", pwd, filename, strerror(error));
+	delete[] pwd;
         return false;
+    }
 
     this->terminal = false;
     this->startupnotify = false;
