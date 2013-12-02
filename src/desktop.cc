@@ -26,34 +26,7 @@
 
 #include "desktop.hh"
 #include "locale.hh"
-
-void build_search_path(stringlist_t &search_path)
-{
-    stringlist_t sp;
-
-    std::string xdg_data_home = get_variable("XDGDATA_HOME");
-    if(xdg_data_home.empty())
-        xdg_data_home = std::string(get_variable("HOME")) + "/.local/share/applications/";
-
-    if(is_directory(xdg_data_home.c_str()))
-        sp.push_back(xdg_data_home);
-
-    std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
-    if(xdg_data_dirs.empty())
-        xdg_data_dirs = "/usr/local/share/applications/:/usr/share/applications/";
-
-    stringlist_t items;
-    split(xdg_data_dirs, ':', items);
-    for(auto path : items)
-        if(is_directory(path.c_str()))
-            sp.push_back(path);
-
-    sp.reverse();
-
-    // Fix double slashes, if any
-    for(auto path : sp)
-        search_path.push_back(replace(path, "//", "/"));
-}
+#include "Application.hh"
 
 std::string appformatter_default(const Application &app)
 {

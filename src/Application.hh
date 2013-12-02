@@ -56,8 +56,7 @@ public:
     // Supports StartupNotify
     bool startupnotify;
 
-    bool read(const char *filename, char *line)
-    {
+    bool read(const char *filename, char *line) {
         using namespace ApplicationHelpers;
 
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -33,13 +33,11 @@ class ApplicationRunner
 {
 public:
     ApplicationRunner(const std::string &terminal_emulator, const Application &app, const std::string &args)
-        : app(app), args(args), terminal_emulator(terminal_emulator)
-    {
+        : app(app), args(args), terminal_emulator(terminal_emulator) {
 
     }
 
-    const std::string command()
-    {
+    const std::string command() {
         std::string exec = this->application_command();
         const std::string &name = this->app.name;
         std::stringstream command;
@@ -81,8 +79,7 @@ public:
     }
 
 private:
-    const std::string application_command()
-    {
+    const std::string application_command() {
         std::string exec(this->app.exec);
 
         // Undo quoting before expanding field codes
