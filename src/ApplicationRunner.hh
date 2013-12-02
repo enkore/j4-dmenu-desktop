@@ -38,13 +38,6 @@ public:
 
     }
 
-    int run()
-    {
-        return execl("/usr/bin/i3-msg", "i3-msg", this->command().c_str(), 0);
-    }
-
-
-private:
     const std::string command()
     {
         std::string exec = this->application_command();
@@ -87,7 +80,7 @@ private:
         return command.str();
     }
 
-
+private:
     const std::string application_command()
     {
         std::string exec(this->app.exec);
