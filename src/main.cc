@@ -29,6 +29,8 @@
 #include "locale.hh"
 #include "dmenu.hh"
 
+#include "Application.hh"
+#include "ApplicationRunner.hh"
 
 // apps is a mapping of the locale-specific name extracted from .desktop-
 // files to the contents of those files (key/value pairs)
@@ -63,6 +65,7 @@ void print_usage(FILE* f)
             "\nOptions:\n"
             "    --dmenu=<command>\n"
             "\tDetermines the command used to invoke dmenu\n"
+	    "\tExecuted with your shell ($SHELL) or /bin/sh\n"
             "    --display-binary\n"
             "\tDisplay binary name after each entry (off by default)\n"
             "    --term=<command>\n"

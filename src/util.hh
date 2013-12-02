@@ -15,6 +15,9 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#ifndef UTIL_DEF
+#define UTIL_DEF
+
 #include <cstdlib>
 #include <map>
 #include <list>
@@ -42,3 +45,5 @@ std::string get_variable(const std::string &var);
 void find_files(const char *path, const char *name_suffix, file_cb cb);
 
 void free_cstringlist(cstringlist_t &stringlist);
+
+#endif

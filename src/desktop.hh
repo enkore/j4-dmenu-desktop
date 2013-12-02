@@ -15,48 +15,12 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#ifndef DESKTOP_DEF
+#define DESKTOP_DEF
+
 #include "util.hh"
 
-class Application {
-public:
-    // Localized name
-    std::string name;
-
-    // Command line
-    std::string exec;
-
-    // Binary name
-    std::string binary;
-
-    // Terminal app
-    bool terminal;
-
-    // Supports StartupNotify
-    bool startupnotify;
-
-    bool read(const char *filename, char *line);
-};
-
-class ApplicationRunner {
-public:
-    ApplicationRunner(const std::string &terminal_emulator, const Application &app, const std::string &args)
-        : app(app), args(args), terminal_emulator(terminal_emulator)
-    {
-
-    }
-
-    int run();
-
-private:
-    const std::string command();
-    const std::string application_command();
-
-    const Application &app;
-    const std::string &args;
-  
-    const std::string &terminal_emulator;
-};
-
+class Application;
 
 typedef std::string (*application_formatter)(const Application &app);
 
@@ -68,5 +32,8 @@ typedef std::map<std::string, Application> apps_t;
 void build_search_path(stringlist_t &search_path);
 bool read_desktop_file(const char *filename, char *line, Application &dft);
 
-
 extern application_formatter appformatter;
+
+#include "Application.hh"
+
+#endif
