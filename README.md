@@ -16,22 +16,22 @@ Building is the usual cmake/make thingy:
 
 ## Invocation
 
-If you specifify arguments to j4-dmenu they will be concatenated and used as the
-command to start dmenu.
+Usage:
 
-    j4-dmenu-desktop
+        j4-dmenu-desktop [--dmenu="dmenu -i"] [--term="i3-sensible-terminal"]
+        j4-dmenu-desktop --help
 
-would use `dmenu` executed with your standard shell (`$SHELL` if set, `/bin/sh` otherwise)
-to start dmenu.
+Options:
 
-    j4-dmenu-desktop --dmenu="dmenu -fn 'DejaVu Sans-10' -l 20"
-
-would start dmenu with the -fn and -l arguments to create a vertical menu.
-
-### Options
-
-* --dmenu [command] or -d [command], default is "dmenu -i" (-i for case insensitive matching)
-
+        --dmenu=<command>
+            Determines the command used to invoke dmenu
+            Executed with your shell ($SHELL) or /bin/sh
+        --display-binary
+            Display binary name after each entry (off by default)
+        --term=<command>
+            Sets the terminal emulator used to start terminal apps
+        --help
+            Display this help message
 
 ## FAQ
 
