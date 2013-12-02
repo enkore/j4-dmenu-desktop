@@ -18,20 +18,21 @@ Building is the usual cmake/make thingy:
 
 Usage:
 
-        j4-dmenu-desktop [--dmenu="dmenu -i"] [--term="i3-sensible-terminal"]
-        j4-dmenu-desktop --help
+    j4-dmenu-desktop [--dmenu="dmenu -i"] [--term="i3-sensible-terminal"]
+    j4-dmenu-desktop --help
 
 Options:
 
-        --dmenu=<command>
-            Determines the command used to invoke dmenu
-            Executed with your shell ($SHELL) or /bin/sh
-        --display-binary
-            Display binary name after each entry (off by default)
-        --term=<command>
-            Sets the terminal emulator used to start terminal apps
-        --help
-            Display this help message
+    --dmenu=<command>
+        Determines the command used to invoke dmenu
+        Executed with your shell ($SHELL) or /bin/sh
+    --display-binary
+        Display binary name after each entry (off by default)
+    --term=<command>
+        Sets the terminal emulator used to start terminal apps
+    --help
+        Display this help message
+
 
 ## FAQ
 
