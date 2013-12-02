@@ -27,8 +27,7 @@
 #include "util.hh"
 #include "desktop.hh"
 #include "locale.hh"
-#include "dmenu.hh"
-
+#include "Dmenu.hh"
 #include "Application.hh"
 #include "ApplicationRunner.hh"
 
