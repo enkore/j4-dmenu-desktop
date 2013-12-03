@@ -6,17 +6,23 @@
 
 #include "Application.hh"
 
-class Applications : public std::map<std::string, Application>
+class Applications : public std::map<std::string, Application*>
 {
 public:
+    ~Applications() {
+	for(auto app : *this) {
+	    delete app.second;
+	}
+    }
+
     std::pair<Application *, std::string> find(const std::string &choice) {
         Application *app = 0;
         std::string args;
 
-        auto it = std::map<std::string, Application>::find(choice);
+        auto it = std::map<std::string, Application*>::find(choice);
         if(it != this->end()) {
             // A full match
-            app = &it->second;
+            app = it->second;
         } else {
             // User only entered a partial match
             // (or no match at all)
@@ -24,10 +30,10 @@ public:
 
             // Find longest match amongst apps
             for(auto &current_app : *this) {
-                std::string &name = current_app.second.name;
+                std::string &name = current_app.second->name;
 
                 if(name.size() > match_length && startswith(choice, name)) {
-                    app = &current_app.second;
+                    app = current_app.second;
                     match_length = name.length();
                 }
             }

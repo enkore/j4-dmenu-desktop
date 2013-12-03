@@ -40,17 +40,22 @@ Applications apps;
 int parsed_files = 0;
 char *buf;
 
-application_formatter appformatter = &appformatter_default;
+application_formatter appformatter = appformatter_default;
 
 void file_callback(const char *filename)
 {
-    Application dft;
+    Application *dft = new Application(appformatter);
 
-    if(dft.read(filename, buf))
-        apps[dft.name] = dft;
-    else
-        apps.erase(dft.name);
-
+    if(dft->read(filename, buf) && dft->name.size()) {
+	if(apps.count(dft->name)) {
+	    delete apps[dft->name];
+	}
+        apps[dft->name] = dft;
+    } else {
+	if(dft->name.size())
+	    apps.erase(dft->name);
+	delete dft;
+    }
     parsed_files++;
 }
 
@@ -78,10 +83,12 @@ public:
         this->dmenu->display();
 
         std::string command = get_command();
-
         delete this->dmenu;
 
-        return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
+	if(command.size())
+	    return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
+	else
+	    return 0;
     }
 
 private:
@@ -178,6 +185,8 @@ private:
         printf("Read %d .desktop files, found %ld apps.\n", parsed_files, apps.size());
 
         choice = dmenu->read_choice(); // Blocks
+	if(!choice.size())
+	    return "";
 
         std::tie(app, args) = apps.find(choice);
 

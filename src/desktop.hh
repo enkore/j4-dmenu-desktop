@@ -22,7 +22,7 @@
 
 class Application;
 
-typedef std::string (*application_formatter)(const Application &app);
+typedef std::function<std::string(const Application &)> application_formatter;
 
 std::string appformatter_default(const Application &app);
 std::string appformatter_with_binary_name(const Application &app);

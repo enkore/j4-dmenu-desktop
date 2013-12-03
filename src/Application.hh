@@ -41,6 +41,11 @@ constexpr uint32_t operator "" _istr(char const* s, size_t)
 class Application
 {
 public:
+    explicit Application(const application_formatter &formatter)
+	: formatter(formatter)
+    {
+    }
+
     // Localized name
     std::string name;
 
@@ -150,6 +155,9 @@ public:
         fclose(file);
         return true;
     }
+
+private:
+    const application_formatter &formatter;
 };
 
 #endif
