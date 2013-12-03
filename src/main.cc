@@ -114,7 +114,7 @@ private:
     }
 
     bool read_args(int argc, char **argv) {
-        while (1) {
+        while (true) {
             int option_index = 0;
             static struct option long_options[] = {
                 {"dmenu",   required_argument,  0,  'd'},
@@ -124,9 +124,9 @@ private:
                 {0,         0,                  0,  0}
             };
 
-            int c = getopt_long(argc, argv, "d:t:hb", long_options, &option_index);
-            if (c == -1)
-                break;
+	    int c = getopt_long(argc, argv, "d:t:hb", long_options, &option_index);
+	    if(c == -1)
+		break;
 
             switch (c) {
             case 'd':
