@@ -50,9 +50,6 @@ public:
     // Command line
     std::string exec;
 
-    // Binary name
-    std::string binary;
-
     // Terminal app
     bool terminal;
 
@@ -121,7 +118,6 @@ public:
                     continue;
                 case "Exec"_istr:
                     this->exec = value;
-                    this->binary = split(this->exec, " ").first;
                     break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:

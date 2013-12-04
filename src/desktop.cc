@@ -35,5 +35,5 @@ std::string appformatter_default(const Application &app)
 
 std::string appformatter_with_binary_name(const Application &app)
 {
-    return app.name + " (" + app.binary + ")";
+    return app.name + " (" + split(app.exec, " ").first + ")";
 }
