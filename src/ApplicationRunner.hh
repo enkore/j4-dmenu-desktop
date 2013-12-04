@@ -58,21 +58,10 @@ public:
 
             chmod(scriptname, S_IRWXU|S_IRGRP|S_IROTH);
 
-            command << "exec " << this->terminal_emulator;
+            command << this->terminal_emulator;
             command << " -e \"" << scriptname << "\"";
         } else {
-            // i3 executes applications by passing the argument to i3’s “exec” command
-            // as-is to $SHELL -c. The i3 parser supports quoted strings: When a string
-            // starts with a double quote ("), everything is parsed as-is until the next
-            // double quote which is NOT preceded by a backslash (\).
-            //
-            // Therefore, we escape all double quotes (") by replacing them with \"
-            replace(exec, "\"", "\\\"");
-
-            command << "exec ";
-            if(!this->app.startupnotify)
-                command << "--no-startup-id ";
-            command << "\"" << exec << "\"";
+            command << exec;
         };
 
         return command.str();

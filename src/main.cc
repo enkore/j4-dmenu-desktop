@@ -85,10 +85,14 @@ public:
         std::string command = get_command();
         delete this->dmenu;
 
-	if(command.size())
-	    return execl("/usr/bin/i3-msg", "i3-msg", command.c_str(), 0);
-	else
-	    return 0;
+	if(command.size()) {
+            static const char *shell = 0;
+            if((shell = getenv("SHELL")) == 0)
+                shell = "/bin/sh";
+
+            return execl(shell, shell, "-c", command.c_str(), 0);
+	}
+	return 0;
     }
 
 private:
