@@ -25,12 +25,12 @@
 namespace ApplicationHelpers
 {
 
-static inline constexpr uint32_t make_istring(const char* s)
+static inline constexpr uint32_t make_istring(const char *s)
 {
     return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
 }
 
-constexpr uint32_t operator "" _istr(char const* s, size_t)
+constexpr uint32_t operator "" _istr(const char *s, size_t)
 {
     return make_istring(s);
 }
@@ -41,8 +41,7 @@ class Application
 {
 public:
     explicit Application(const application_formatter &formatter)
-	: formatter(formatter)
-    {
+        : formatter(formatter) {
     }
 
     // Localized name
