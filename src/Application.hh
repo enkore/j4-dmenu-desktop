@@ -131,10 +131,7 @@ public:
                     this->terminal = make_istring(value) == "true"_istr;
                     break;
                 }
-            }
-
-            // Desktop Entry section starts
-            if(!strcmp(line, "[Desktop Entry]"))
+            } else if(!strcmp(line, "[Desktop Entry]"))
                 parse_key_values = true;
         }
 
