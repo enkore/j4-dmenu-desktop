@@ -48,8 +48,8 @@ Add the `-i` option to the dmenu command
     [{"success":true}]
     i3-dmenu-desktop --dmenu="cat"  0.37s user 0.02s system 96% cpu 0.404 total
     % time ./j4-dmenu-desktop --dmenu=cat
-    [{"success":true}]
-    ./j4-dmenu-desktop --dmenu=cat  0.01s user 0.00s system 95% cpu 0.017 total
+    ./j4-dmenu-desktop --dmenu=cat  0.01s user 0.01s system 107% cpu 0.015 total
 
-More than twenty times faster :)
+
+More than 25 times faster :)
 
