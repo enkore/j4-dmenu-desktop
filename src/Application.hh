@@ -37,7 +37,6 @@ constexpr uint32_t operator "" _istr(char const* s, size_t)
 
 }
 
-
 class Application
 {
 public:
@@ -57,9 +56,6 @@ public:
 
     // Terminal app
     bool terminal;
-
-    // Supports StartupNotify
-    bool startupnotify;
 
     bool read(const char *filename, char *line) {
         using namespace ApplicationHelpers;
@@ -85,7 +81,6 @@ public:
         }
 
         this->terminal = false;
-        this->startupnotify = false;
 
         while((linelen = getline(&line, &n, file)) != -1) {
             line[--linelen] = 0; // Chop off \n
@@ -133,9 +128,6 @@ public:
                 case "NoDisplay"_istr:
                     fclose(file);
                     return false;
-                case "StartupNotify"_istr:
-                    this->startupnotify = make_istring(value) == "true"_istr;
-                    break;
                 case "Terminal"_istr:
                     this->terminal = make_istring(value) == "true"_istr;
                     break;
