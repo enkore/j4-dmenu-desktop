@@ -1,7 +1,9 @@
 # j4-dmenu-desktop
 
-j4-dmenu-desktop is a replacement for i3-dmenu-desktop. It's purpose is to find .desktop files
-and offer you a menu to start an application using dmenu.
+j4-dmenu-desktop is a replacement for i3-dmenu-desktop. It's purpose
+is to find .desktop files and offer you a menu to start an application
+using dmenu. Since r2.7 j4-dmenu-desktop doesn't require i3wm anymore
+and should work just fine on about any desktop environment.
 
 ## Build requirements
 
