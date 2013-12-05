@@ -71,7 +71,7 @@ public:
             char *pwd = new char[100];
             int error = errno;
             getcwd(pwd, 100);
-            fprintf(stderr, "fopen(%s/%s) failed: %s\n", pwd, filename, strerror(error));
+            fprintf(stderr, "%s/%s: %s\n", pwd, filename, strerror(error));
             delete[] pwd;
             return false;
         }
