@@ -59,8 +59,10 @@ private:
         sp.reverse();
 
         // Fix double slashes, if any
-        for(auto path : sp)
+        for(auto path : sp) {
             this->search_path.push_back(replace(path, "//", "/"));
+	    printf("SearchPath: %s\n", this->search_path.back().c_str());
+	}
     }
 
     stringlist_t search_path;
