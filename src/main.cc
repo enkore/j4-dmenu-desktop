@@ -47,14 +47,14 @@ void file_callback(const char *filename)
     Application *dft = new Application(appformatter);
 
     if(dft->read(filename, buf) && dft->name.size()) {
-	if(apps.count(dft->name)) {
-	    delete apps[dft->name];
-	}
+        if(apps.count(dft->name)) {
+            delete apps[dft->name];
+        }
         apps[dft->name] = dft;
     } else {
-	if(dft->name.size())
-	    apps.erase(dft->name);
-	delete dft;
+        if(dft->name.size())
+            apps.erase(dft->name);
+        delete dft;
     }
     parsed_files++;
 }
@@ -85,14 +85,14 @@ public:
         std::string command = get_command();
         delete this->dmenu;
 
-	if(command.size()) {
+        if(command.size()) {
             static const char *shell = 0;
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
             return execl(shell, shell, "-c", command.c_str(), 0);
-	}
-	return 0;
+        }
+        return 0;
     }
 
 private:
@@ -128,9 +128,9 @@ private:
                 {0,         0,                  0,  0}
             };
 
-	    int c = getopt_long(argc, argv, "d:t:hb", long_options, &option_index);
-	    if(c == -1)
-		break;
+            int c = getopt_long(argc, argv, "d:t:hb", long_options, &option_index);
+            if(c == -1)
+                break;
 
             switch (c) {
             case 'd':
@@ -192,8 +192,8 @@ private:
         printf("Read %d .desktop files, found %ld apps.\n", parsed_files, apps.size());
 
         choice = dmenu->read_choice(); // Blocks
-	if(!choice.size())
-	    return "";
+        if(!choice.size())
+            return "";
 
         std::tie(app, args) = apps.find(choice);
 
