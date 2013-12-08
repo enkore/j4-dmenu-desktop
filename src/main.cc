@@ -172,7 +172,6 @@ private:
 
         for(auto &path : this->search_path) {
             chdir(path.c_str());
-            printf("scan %s\n", path.c_str());
             find_files(".", ".desktop", file_callback);
         }
 
