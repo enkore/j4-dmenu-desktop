@@ -165,15 +165,17 @@ private:
         getcwd(original_wd, 384);
 
         // Allocating the line buffer just once saves lots of MM calls
-        buf = new char[4096];
+        // malloc required to avoid mixing malloc/new[] as getdelim may realloc() buf
+        buf = malloc(4096);
+        buf[0] = 0;
 
         for(auto &path : this->search_path) {
             chdir(path.c_str());
-	    printf("scan %s\n", path.c_str());
+            printf("scan %s\n", path.c_str());
             find_files(".", ".desktop", file_callback);
         }
 
-        delete[] buf;
+        free(buf);
 
         chdir(original_wd);
     }
