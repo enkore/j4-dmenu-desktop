@@ -53,7 +53,7 @@ public:
     // Terminal app
     bool terminal;
 
-    bool read(const char *filename, char *line) {
+    bool read(const char *filename, char **linep, size_t *linesz) {
         using namespace ApplicationHelpers;
 
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -65,7 +65,7 @@ public:
         std::string fallback_name;
         bool parse_key_values = false;
         ssize_t linelen;
-        size_t n = 4096;
+	char *line;
         FILE *file = fopen(filename, "r");
         if(!file) {
             char *pwd = new char[100];
@@ -85,7 +85,8 @@ public:
 
         this->terminal = false;
 
-        while((linelen = getline(&line, &n, file)) != -1) {
+        while((linelen = getline(linep, linesz, file)) != -1) {
+	    line = *linep;
             line[--linelen] = 0; // Chop off \n
 
             // Blank line or comment

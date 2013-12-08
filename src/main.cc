@@ -39,6 +39,7 @@ Applications apps;
 
 int parsed_files = 0;
 char *buf;
+size_t bufsz = 4096;
 
 application_formatter appformatter = appformatter_default;
 
@@ -46,7 +47,7 @@ void file_callback(const char *filename)
 {
     Application *dft = new Application(appformatter);
 
-    if(dft->read(filename, buf) && dft->name.size()) {
+    if(dft->read(filename, &buf, &bufsz) && dft->name.size()) {
         if(apps.count(dft->name)) {
             delete apps[dft->name];
         }
@@ -166,7 +167,7 @@ private:
 
         // Allocating the line buffer just once saves lots of MM calls
         // malloc required to avoid mixing malloc/new[] as getdelim may realloc() buf
-        buf = malloc(4096);
+        buf = static_cast<char*>(malloc(bufsz));
         buf[0] = 0;
 
         for(auto &path : this->search_path) {
