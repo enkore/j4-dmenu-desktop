@@ -75,6 +75,13 @@ public:
             delete[] pwd;
             return false;
         }
+	
+	#ifdef DEBUG
+	char *pwd = new char[100];
+	getcwd(pwd, 100);
+	fprintf(stderr, "%s/%s\n", pwd, filename);
+	delete[] pwd;
+        #endif
 
         this->terminal = false;
 
