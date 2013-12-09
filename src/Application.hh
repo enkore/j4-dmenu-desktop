@@ -18,6 +18,9 @@
 #ifndef APPLICATION_DEF
 #define APPLICATION_DEF
 
+#include <string.h>
+#include <unistd.h>
+
 #include "util.hh"
 #include "locale.hh"
 #include "desktop.hh"
@@ -40,8 +43,7 @@ constexpr uint32_t operator "" _istr(const char *s, size_t)
 class Application
 {
 public:
-    explicit Application(const application_formatter &formatter)
-        : formatter(formatter) {
+    explicit Application() {
     }
 
     // Localized name
@@ -147,9 +149,6 @@ public:
         fclose(file);
         return true;
     }
-
-private:
-    const application_formatter &formatter;
 };
 
 #endif

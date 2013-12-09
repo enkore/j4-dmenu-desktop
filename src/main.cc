@@ -45,7 +45,7 @@ application_formatter appformatter = appformatter_default;
 
 void file_callback(const char *filename)
 {
-    Application *dft = new Application(appformatter);
+    Application *dft = new Application;
 
     if(dft->read(filename, &buf, &bufsz) && dft->name.size()) {
         if(apps.count(dft->name)) {
