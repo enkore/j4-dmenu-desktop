@@ -28,6 +28,8 @@
 #include "locale.hh"
 #include "Application.hh"
 
+application_formatter appformatter = appformatter_default;
+
 std::string appformatter_default(const Application &app)
 {
     return app.name;

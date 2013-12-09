@@ -41,8 +41,6 @@ int parsed_files = 0;
 char *buf;
 size_t bufsz = 4096;
 
-application_formatter appformatter = appformatter_default;
-
 void file_callback(const char *filename)
 {
     Application *dft = new Application;
