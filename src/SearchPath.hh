@@ -39,7 +39,7 @@ private:
     void generate() {
         stringlist_t sp;
 
-        std::string xdg_data_home = get_variable("XDGDATA_HOME");
+        std::string xdg_data_home = get_variable("XDG_DATA_HOME");
         if(xdg_data_home.empty())
             xdg_data_home = std::string(get_variable("HOME")) + "/.local/share/";
 
