@@ -47,7 +47,7 @@ private:
 
         std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
         if(xdg_data_dirs.empty())
-            xdg_data_dirs = "/usr/local/share/:/usr/share/";
+            xdg_data_dirs = "/usr/share/:/usr/local/share/";
 
         push_var(xdg_data_dirs, sp);
 
@@ -63,6 +63,7 @@ private:
     void push_var(const std::string &string, stringlist_t &sp) {
         stringlist_t items;
         split(string, ':', items);
+	items.reverse();
         for(auto path : items) {
             if(is_directory(path.c_str())) {
                 if(!endswith(path, "/applications/"))
