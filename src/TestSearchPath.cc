@@ -24,14 +24,14 @@ TEST_CASE("SearchPath/noenv", "Check SearchPath default values")
 
 TEST_CASE("SearchPath/XDG_DATA_HOME", "Check SearchPath honors XDG_DATA_HOME")
 {
-    setenv("XDG_DATA_HOME", "/bin", 1);
+    setenv("XDG_DATA_HOME", "/usr/share", 1);
     setenv("XDG_DATA_DIRS", " ", 1);
 
     SearchPath sp;
     std::vector<std::string> result(sp.begin(), sp.end());
 
     REQUIRE( result.size() == 1 );
-    REQUIRE( result[0] == "/bin/applications/" );
+    REQUIRE( result[0] == "/usr/share/applications/" );
 }
 
 TEST_CASE("SearchPath/XDG_DATA_DIRS", "Check SearchPath honors XDG_DATA_DIRS")
