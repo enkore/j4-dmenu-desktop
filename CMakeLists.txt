@@ -42,6 +42,7 @@ ADD_EXECUTABLE(
     j4-dmenu-tests
     src/Test.cc
     src/TestApplication.cc
+    src/TestSearchPath.cc
 
     src/util.cc
     src/locale.cc
