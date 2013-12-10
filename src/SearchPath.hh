@@ -65,11 +65,10 @@ private:
         split(string, ':', items);
 	items.reverse();
         for(auto path : items) {
-            if(is_directory(path.c_str())) {
-                if(!endswith(path, "/applications/"))
-                    path += "/applications/";
+	    if(!endswith(path, "/applications/"))
+		path += "/applications/";
+            if(is_directory(path.c_str()))	
                 sp.push_back(path);
-            }
         }
     }
 
