@@ -43,6 +43,7 @@ ADD_EXECUTABLE(
     src/Test.cc
     src/TestApplication.cc
     src/TestSearchPath.cc
+    src/TestLocaleSuffixes.cc
 
     src/util.cc
     src/desktop.cc

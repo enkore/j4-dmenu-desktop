@@ -19,6 +19,8 @@
 #define LOCALE_DEF
 
 #include <string.h>
+#include <stdio.h>
+#include <string>
 #include <set>
 
 class LocaleSuffixes
@@ -28,17 +30,18 @@ public:
         generate(locale());
     }
     LocaleSuffixes(const std::string &force_locale) {
-	generate(force_locale);
+        generate(force_locale);
     }
 
     ~LocaleSuffixes() {
         int i = 0;
         while(this->suffixes[i])
-	    free(this->suffixes[i++]);
+            free(this->suffixes[i++]);
         delete[] this->suffixes;
     }
 
     char **suffixes;
+    int count;
 private:
     std::string locale() {
         return setlocale(LC_MESSAGES, "");
@@ -65,12 +68,13 @@ private:
         }
 
         this->suffixes = new char*[suffixset.size()+1];
+        this->count = suffixset.size();
         int i = 0;
         for(auto &suffix : suffixset) {
             this->suffixes[i++] = strdup(suffix.c_str());
-	    printf("LocaleSuffix: %s\n", this->suffixes[i-1]);
-	}
-	this->suffixes[i++] = 0;
+            printf("LocaleSuffix: %s\n", this->suffixes[i-1]);
+        }
+        this->suffixes[i++] = 0;
     }
 };
 
