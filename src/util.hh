@@ -39,10 +39,8 @@ std::string &replace(std::string &str, const std::string &substr, const std::str
 bool endswith(const std::string &str, const std::string &suffix);
 bool startswith(const std::string &str, const std::string &prefix);
 
-bool is_directory(const char *path);
+bool is_directory(const std::string &path);
 std::string get_variable(const std::string &var);
-
-void find_files(const char *path, const char *name_suffix, file_cb cb);
 
 void free_cstringlist(cstringlist_t &stringlist);
 

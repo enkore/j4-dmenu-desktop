@@ -31,6 +31,7 @@
 #include "ApplicationRunner.hh"
 #include "Applications.hh"
 #include "SearchPath.hh"
+#include "FileFinder.hh"
 
 // apps is a mapping of the locale-specific name extracted from .desktop-
 // files to the contents of those files (key/value pairs)
@@ -41,23 +42,6 @@ char *buf;
 size_t bufsz = 4096;
 
 LocaleSuffixes suffixes;
-
-void file_callback(const char *filename)
-{
-    Application *dft = new Application(suffixes);
-
-    if(dft->read(filename, &buf, &bufsz) && dft->name.size()) {
-        if(apps.count(dft->name)) {
-            delete apps[dft->name];
-        }
-        apps[dft->name] = dft;
-    } else {
-        if(dft->name.size())
-            apps.erase(dft->name);
-        delete dft;
-    }
-    parsed_files++;
-}
 
 class Main
 {
@@ -168,12 +152,31 @@ private:
 
         for(auto &path : this->search_path) {
             chdir(path.c_str());
-            find_files(".", ".desktop", file_callback);
+	    FileFinder finder("./", ".desktop");
+	    while(finder++) {
+		handle_file(*finder);
+	    }
         }
 
         free(buf);
 
         chdir(original_wd);
+    }
+
+    void handle_file(const std::string &file) {
+	Application *dft = new Application(suffixes);
+
+	if(dft->read(file.c_str(), &buf, &bufsz) && dft->name.size()) {
+	    if(apps.count(dft->name)) {
+		delete apps[dft->name];
+	    }
+	    apps[dft->name] = dft;
+	} else {
+	    if(dft->name.size())
+		apps.erase(dft->name);
+	    delete dft;
+	}
+	parsed_files++;
     }
 
     std::string get_command() {
