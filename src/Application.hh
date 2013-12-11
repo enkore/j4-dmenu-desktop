@@ -22,7 +22,6 @@
 #include <unistd.h>
 
 #include "util.hh"
-#include "locale.hh"
 #include "desktop.hh"
 
 namespace ApplicationHelpers
@@ -43,7 +42,8 @@ constexpr uint32_t operator "" _istr(const char *s, size_t)
 class Application
 {
 public:
-    explicit Application() {
+    explicit Application(const LocaleSuffixes &locale_suffixes)
+        : locale_suffixes(locale_suffixes) {
     }
 
     // Localized name
@@ -67,7 +67,7 @@ public:
         std::string fallback_name;
         bool parse_key_values = false;
         ssize_t linelen;
-	char *line;
+        char *line;
         FILE *file = fopen(filename, "r");
         if(!file) {
             char *pwd = new char[100];
@@ -77,18 +77,18 @@ public:
             delete[] pwd;
             return false;
         }
-	
-	#ifdef DEBUG
-	char *pwd = new char[100];
-	getcwd(pwd, 100);
-	fprintf(stderr, "%s/%s\n", pwd, filename);
-	delete[] pwd;
-        #endif
+
+#ifdef DEBUG
+        char *pwd = new char[100];
+        getcwd(pwd, 100);
+        fprintf(stderr, "%s/%s\n", pwd, filename);
+        delete[] pwd;
+#endif
 
         this->terminal = false;
 
         while((linelen = getline(linep, linesz, file)) != -1) {
-	    line = *linep;
+            line = *linep;
             line[--linelen] = 0; // Chop off \n
 
             // Blank line or comment
@@ -117,7 +117,7 @@ public:
                         const char *suffix;
                         int i = 0;
                         value[-2] = 0;
-                        while((suffix = suffixes[i++])) {
+                        while((suffix = this->locale_suffixes.suffixes[i++])) {
                             if(!strcmp(suffix, langcode)) {
                                 this->name = value;
                                 break;
@@ -149,6 +149,9 @@ public:
         fclose(file);
         return true;
     }
+
+private:
+    const LocaleSuffixes &locale_suffixes;
 };
 
 #endif

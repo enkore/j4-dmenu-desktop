@@ -20,6 +20,8 @@
 
 #include "util.hh"
 
+#include "LocaleSuffixes.hh"
+
 class Application;
 
 typedef std::function<std::string(const Application &)> application_formatter;

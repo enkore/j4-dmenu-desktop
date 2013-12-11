@@ -45,7 +45,6 @@ ADD_EXECUTABLE(
     src/TestSearchPath.cc
 
     src/util.cc
-    src/locale.cc
     src/desktop.cc
 )
 
@@ -55,7 +54,6 @@ ADD_EXECUTABLE(
     src/util.cc
     src/main.cc
     src/desktop.cc
-    src/locale.cc
 )
 
 INSTALL (TARGETS j4-dmenu-desktop

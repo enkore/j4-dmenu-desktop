@@ -26,7 +26,6 @@
 
 #include "util.hh"
 #include "desktop.hh"
-#include "locale.hh"
 #include "Dmenu.hh"
 #include "Application.hh"
 #include "ApplicationRunner.hh"
@@ -41,9 +40,11 @@ int parsed_files = 0;
 char *buf;
 size_t bufsz = 4096;
 
+LocaleSuffixes suffixes;
+
 void file_callback(const char *filename)
 {
-    Application *dft = new Application;
+    Application *dft = new Application(suffixes);
 
     if(dft->read(filename, &buf, &bufsz) && dft->name.size()) {
         if(apps.count(dft->name)) {
@@ -153,9 +154,6 @@ private:
     }
 
     void collect_files() {
-        // Get us the used locale suffixes
-        populate_locale_suffixes(get_locale());
-
         // We switch the working directory to easier get relative paths
         // This way desktop files that are customized in more important directories
         // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
@@ -183,10 +181,6 @@ private:
         std::string args;
         Application *app;
 
-        // User enters now her choice (probably takes a while) so do some
-        // cleanup here.
-
-        free_locale_suffixes();
         printf("Read %d .desktop files, found %ld apps.\n", parsed_files, apps.size());
 
         choice = dmenu->read_choice(); // Blocks

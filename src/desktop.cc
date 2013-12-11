@@ -25,7 +25,6 @@
 #include <sys/wait.h>
 
 #include "desktop.hh"
-#include "locale.hh"
 #include "Application.hh"
 
 application_formatter appformatter = appformatter_default;
