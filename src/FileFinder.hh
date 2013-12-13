@@ -43,7 +43,7 @@ public:
             dirstack.pop();
             dir = opendir(curdir.c_str());
             if(!dir)
-                throw std::runtime_error("opendir() failed");
+                throw std::runtime_error(curdir + ": opendir() failed");
         }
 
         dirent *entry = readdir(dir);
