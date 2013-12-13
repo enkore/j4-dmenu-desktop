@@ -2,4 +2,4 @@ language: cpp
 script: cmake . && make && ./j4-dmenu-tests
 compiler:
  - clang
- - gcc
+
