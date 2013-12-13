@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-PROJECT(j4-dmenu)
+project(j4-dmenu)
 
 
 include(ExternalProject)
@@ -26,7 +26,7 @@ set(CATCH_INCLUDE_DIR ${source_dir}/include CACHE INTERNAL "Path to include fold
 include_directories(${CATCH_INCLUDE_DIR} ${COMMON_INCLUDES})
 
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -Wextra -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -Wextra -O2")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 add_definitions(-DTEST_FILES="${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
@@ -38,7 +38,7 @@ add_test(
     COMMAND j4-dmenu-tests
 )
 
-ADD_EXECUTABLE(
+add_executable(
     j4-dmenu-tests
     src/Test.cc
     src/TestApplication.cc
@@ -51,13 +51,15 @@ ADD_EXECUTABLE(
 )
 
 
-ADD_EXECUTABLE(
+add_executable(
     j4-dmenu-desktop
     src/util.cc
     src/main.cc
     src/desktop.cc
 )
 
-INSTALL (TARGETS j4-dmenu-desktop
-         RUNTIME DESTINATION bin)
+install (
+	TARGETS j4-dmenu-desktop
+        RUNTIME DESTINATION bin
+	)
 
