@@ -33,23 +33,17 @@ public:
     }
 
     FileFinder& operator++(int) {
-        if(!dir) {
-            if(dirstack.empty()) {
-                done = true;
-                return *this;
-            }
+	if(!dir)
+	    opendir();
 
-            curdir = dirstack.top();
-            dirstack.pop();
-            dir = opendir(curdir.c_str());
-            if(!dir)
-                throw std::runtime_error(curdir + ": opendir() failed");
-        }
+	if(done)
+	    return *this;
 
         dirent *entry = readdir(dir);
         if(!entry) {
             closedir(dir);
             dir = NULL;
+	    // If you think of this as a loop then this is a continue;
             return (*this)++;
         }
         if(entry->d_name[0] == '.') {
@@ -71,6 +65,19 @@ public:
     }
 
 private:
+    void opendir() {
+	if(dirstack.empty()) {
+	    done = true;
+	    return;
+	}
+
+	curdir = dirstack.top();
+	dirstack.pop();
+	dir = ::opendir(curdir.c_str());
+	if(!dir)
+	    throw std::runtime_error(curdir + ": opendir() failed");
+    }
+
     bool done;
 
     DIR *dir;
