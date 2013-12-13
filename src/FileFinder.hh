@@ -64,9 +64,10 @@ public:
         }
         if(endswith(fullpath, suffix)) {
             curpath = fullpath;
+            return *this;
         }
 
-        return *this;
+        return (*this)++;
     }
 
 private:
