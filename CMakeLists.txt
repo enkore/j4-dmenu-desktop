@@ -44,6 +44,7 @@ ADD_EXECUTABLE(
     src/TestApplication.cc
     src/TestSearchPath.cc
     src/TestLocaleSuffixes.cc
+    src/TestFileFinder.cc
 
     src/util.cc
     src/desktop.cc
