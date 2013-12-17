@@ -144,8 +144,6 @@ public:
         if(!this->name.size())
             this->name = fallback_name;
 
-        this->name = appformatter(*this);
-
         fclose(file);
         return true;
     }

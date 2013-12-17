@@ -100,7 +100,7 @@ private:
                 this->print_usage(stderr);
                 return true;
             case 'b':
-                appformatter = appformatter_with_binary_name;
+                this->appformatter = appformatter_with_binary_name;
                 break;
             default:
                 exit(1);
@@ -138,8 +138,10 @@ private:
 
     void handle_file(const std::string &file) {
 	Application *dft = new Application(suffixes);
+	bool file_read = dft->read(file.c_str(), &buf, &bufsz);
+	dft->name = this->appformatter(*dft);
 
-	if(dft->read(file.c_str(), &buf, &bufsz) && dft->name.size()) {
+	if(file_read && dft->name.size()) {
 	    if(apps.count(dft->name)) {
 		delete apps[dft->name];
 	    }
@@ -184,5 +186,7 @@ private:
     size_t bufsz = 4096;
 
     LocaleSuffixes suffixes;    
+
+    application_formatter appformatter = appformatter_default;
 };
 

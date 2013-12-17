@@ -29,6 +29,4 @@ typedef std::function<std::string(const Application &)> application_formatter;
 std::string appformatter_default(const Application &app);
 std::string appformatter_with_binary_name(const Application &app);
 
-extern application_formatter appformatter;
-
 #endif
