@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-#include "util.hh"
+#include "Utilities.hh"
 #include "Dmenu.hh"
 #include "Application.hh"
 #include "ApplicationRunner.hh"

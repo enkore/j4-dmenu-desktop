@@ -5,10 +5,9 @@
 #include <cstddef>
 #include <stack>
 #include <stdexcept>
-
 #include <dirent.h>
 
-#include "util.hh"
+#include "Utilities.hh"
 
 class FileFinder
 {

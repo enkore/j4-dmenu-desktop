@@ -21,8 +21,6 @@
 #include <map>
 #include <string>
 
-#include "util.hh"
-#include "LocaleSuffixes.hh"
 #include "Application.hh"
 
 typedef std::function<std::string(const Application &)> application_formatter;

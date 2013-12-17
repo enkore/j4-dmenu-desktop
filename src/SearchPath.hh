@@ -18,7 +18,7 @@
 #ifndef SEARCHPATH_DEF
 #define SEARCHPATH_DEF
 
-#include "util.hh"
+#include "Utilities.hh"
 
 class SearchPath
 {

@@ -46,14 +46,11 @@ add_executable(
     src/TestLocaleSuffixes.cc
     src/TestFileFinder.cc
     src/TestFormatters.cc
-
-    src/util.cc
 )
 
 
 add_executable(
     j4-dmenu-desktop
-    src/util.cc
     src/main.cc
 )
 

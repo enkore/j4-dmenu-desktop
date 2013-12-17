@@ -15,21 +15,27 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <sstream>
-#include <istream>
+#ifndef UTIL_DEF
+#define UTIL_DEF
 
+#include <cstdlib>
+#include <map>
+#include <list>
+#include <set>
+#include <string>
+#include <utility>
+#include <istream>
+#include <algorithm>
+#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
 
 
-#include "util.hh"
+typedef std::list<std::string> stringlist_t;
 
-// STL sucks so much in this regard, even very basic stuff like "split some string"
-// or "replace this with that" isn't implemented.
-
-void split(const std::string &str, char delimiter, stringlist_t &elems)
+inline void split(const std::string &str, char delimiter, stringlist_t &elems)
 {
     std::stringstream ss(str);
     std::string item;
@@ -38,7 +44,7 @@ void split(const std::string &str, char delimiter, stringlist_t &elems)
         elems.push_back(item);
 }
 
-std::pair<std::string, std::string> split(const std::string &str, const std::string &delimiter)
+inline std::pair<std::string, std::string> split(const std::string &str, const std::string &delimiter)
 {
     size_t pos = 0;
     pos = str.find(delimiter);
@@ -46,35 +52,33 @@ std::pair<std::string, std::string> split(const std::string &str, const std::str
 }
 
 
-std::string &replace(std::string &str, const std::string &substr, const std::string &substitute)
+inline std::string &replace(std::string &str, const std::string &substr, const std::string &substitute)
 {
     if(substr.empty())
         return str;
     size_t start_pos = 0;
     while((start_pos = str.find(substr, start_pos)) != std::string::npos) {
         str.replace(start_pos, substr.length(), substitute);
-        start_pos += substitute.length(); // In case 'substitute' contains 'substr', like replacing 'x' with 'yx'
+        start_pos += substitute.length();
     }
     return str;
 }
 
-bool endswith(const std::string &str, const std::string &suffix)
+inline bool endswith(const std::string &str, const std::string &suffix)
 {
     if(str.length() < suffix.length())
         return false;
     return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
 }
 
-bool startswith(const std::string &str, const std::string &prefix)
+inline bool startswith(const std::string &str, const std::string &prefix)
 {
     if(str.length() < prefix.length())
         return false;
     return str.compare(0, prefix.length(), prefix) == 0;
 }
 
-
-
-bool is_directory(const std::string &path)
+inline bool is_directory(const std::string &path)
 {
     int status;
     struct stat filestat;
@@ -86,7 +90,7 @@ bool is_directory(const std::string &path)
     return S_ISDIR(filestat.st_mode);
 }
 
-std::string get_variable(const std::string &var)
+inline std::string get_variable(const std::string &var)
 {
     const char *env = std::getenv(var.c_str());
     if(env) {
@@ -95,8 +99,5 @@ std::string get_variable(const std::string &var)
         return "";
 }
 
-void free_cstringlist(cstringlist_t &stringlist)
-{
-    for(auto &item : stringlist)
-        free(item);
-}
+
+#endif
