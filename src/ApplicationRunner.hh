@@ -27,7 +27,6 @@
 #include <sys/stat.h>
 
 #include "util.hh"
-#include "desktop.hh"
 
 class ApplicationRunner
 {

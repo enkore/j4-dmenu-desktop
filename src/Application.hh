@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 #include "util.hh"
-#include "desktop.hh"
+#include "LocaleSuffixes.hh"
 
 namespace ApplicationHelpers
 {

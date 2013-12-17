@@ -8,13 +8,13 @@
 #include <sys/wait.h>
 
 #include "util.hh"
-#include "desktop.hh"
 #include "Dmenu.hh"
 #include "Application.hh"
 #include "ApplicationRunner.hh"
 #include "Applications.hh"
 #include "SearchPath.hh"
 #include "FileFinder.hh"
+#include "Formatters.hh"
 
 class Main
 {

@@ -22,11 +22,19 @@
 
 #include "LocaleSuffixes.hh"
 
-class Application;
+#include "Application.hh"
 
 typedef std::function<std::string(const Application &)> application_formatter;
 
-std::string appformatter_default(const Application &app);
-std::string appformatter_with_binary_name(const Application &app);
+inline std::string appformatter_default(const Application &app)
+{
+    return app.name;
+}
+
+inline std::string appformatter_with_binary_name(const Application &app)
+{
+    return app.name + " (" + split(app.exec, " ").first + ")";
+}
+
 
 #endif

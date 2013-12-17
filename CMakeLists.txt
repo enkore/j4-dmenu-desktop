@@ -47,7 +47,6 @@ add_executable(
     src/TestFileFinder.cc
 
     src/util.cc
-    src/desktop.cc
 )
 
 
@@ -55,7 +54,6 @@ add_executable(
     j4-dmenu-desktop
     src/util.cc
     src/main.cc
-    src/desktop.cc
 )
 
 install (
