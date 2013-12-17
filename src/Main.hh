@@ -134,10 +134,10 @@ private:
 
         for(auto &path : this->search_path) {
             chdir(path.c_str());
-	    FileFinder finder("./", ".desktop");
-	    while(finder++) {
-		handle_file(*finder);
-	    }
+            FileFinder finder("./", ".desktop");
+            while(finder++) {
+                handle_file(*finder);
+            }
         }
 
         free(buf);
@@ -146,21 +146,21 @@ private:
     }
 
     void handle_file(const std::string &file) {
-	Application *dft = new Application(suffixes);
-	bool file_read = dft->read(file.c_str(), &buf, &bufsz);
-	dft->name = this->appformatter(*dft);
+        Application *dft = new Application(suffixes);
+        bool file_read = dft->read(file.c_str(), &buf, &bufsz);
+        dft->name = this->appformatter(*dft);
 
-	if(file_read && dft->name.size()) {
-	    if(apps.count(dft->name)) {
-		delete apps[dft->name];
-	    }
-	    apps[dft->name] = dft;
-	} else {
-	    if(dft->name.size())
-		apps.erase(dft->name);
-	    delete dft;
-	}
-	parsed_files++;
+        if(file_read && dft->name.size()) {
+            if(apps.count(dft->name)) {
+                delete apps[dft->name];
+            }
+            apps[dft->name] = dft;
+        } else {
+            if(dft->name.size())
+                apps.erase(dft->name);
+            delete dft;
+        }
+        parsed_files++;
     }
 
     std::string get_command() {
@@ -194,8 +194,8 @@ private:
     char *buf;
     size_t bufsz = 4096;
 
-    LocaleSuffixes suffixes;    
+    LocaleSuffixes suffixes;
 
-    application_formatter appformatter = appformatter_default;
+    application_formatter appformatter;
 };
 
