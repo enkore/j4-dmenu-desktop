@@ -75,6 +75,8 @@ private:
     }
 
     bool read_args(int argc, char **argv) {
+        std::string formatter = "standard";
+
         while (true) {
             int option_index = 0;
             static struct option long_options[] = {
@@ -100,12 +102,19 @@ private:
                 this->print_usage(stderr);
                 return true;
             case 'b':
-                this->appformatter = appformatter_with_binary_name;
+                formatter = "with_binary_name";
                 break;
             default:
                 exit(1);
             }
         }
+
+        if(!formatters.count(formatter)) {
+            fprintf(stderr, "Formatter '%s' not found", formatter.c_str());
+            exit(1);
+        }
+
+        this->appformatter = formatters.at(formatter);
 
         return false;
     }
