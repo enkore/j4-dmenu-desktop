@@ -45,6 +45,7 @@ add_executable(
     src/TestSearchPath.cc
     src/TestLocaleSuffixes.cc
     src/TestFileFinder.cc
+    src/TestFormatters.cc
 
     src/util.cc
 )
