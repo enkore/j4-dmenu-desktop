@@ -59,3 +59,20 @@ TEST_CASE("Application/valid/gimp", "Tests correct parsing of localization and s
 
     free(buffer);
 }
+
+TEST_CASE("Application/valid/long_line", "Tests correct parsing of file with line longer than buffer")
+{
+    LocaleSuffixes ls("eo");
+    Application app(ls);
+    size_t size = 20;
+    char *buffer = static_cast<char*>(malloc(20));
+    std::string path(test_files + "applications/gimp.desktop");
+
+    REQUIRE( app.read(path.c_str(), &buffer, &size) );
+    REQUIRE( app.name == "Bildmanipulilo (GIMP = GNU Image Manipulation Program)" );
+    REQUIRE( app.exec == "gimp-2.8 %U" );
+    REQUIRE( !app.terminal );
+    REQUIRE( size > 20 );
+
+    free(buffer);
+}
