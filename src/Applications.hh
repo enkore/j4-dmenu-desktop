@@ -38,9 +38,16 @@ public:
                 }
             }
 
-            if(!match_length)
-                // No matching app found, just execute the input in a shell
-                exit(system(choice.c_str()));
+            if(!match_length) {
+		// No matching app found, just execute the input in a shell
+		const char *shell = 0;
+		if((shell = getenv("SHELL")) == 0)
+		    shell = "/bin/sh";
+		
+		fprintf(stderr, "$SHELL=%s\n", shell);
+		
+		exit(execl(shell, shell, "-c",  choice.c_str(), 0));
+	    }
 
             // +1 b/c there must be whitespace we add back later...
             args = choice.substr(match_length+1, choice.length()-1);
