@@ -47,7 +47,7 @@ public:
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
-            return execl(shell, shell, "-c", command.c_str(), 0);
+            return execl(shell, shell, "-i", "-c", command.c_str(), 0);
         }
         return 0;
     }

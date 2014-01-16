@@ -46,7 +46,8 @@ public:
 		
 		fprintf(stderr, "$SHELL=%s\n", shell);
 		
-		exit(execl(shell, shell, "-c",  choice.c_str(), 0));
+		// -i -c was tested with both bash and zsh.
+		exit(execl(shell, shell, "-i", "-c",  choice.c_str(), 0));
 	    }
 
             // +1 b/c there must be whitespace we add back later...
