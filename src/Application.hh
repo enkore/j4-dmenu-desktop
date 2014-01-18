@@ -81,7 +81,7 @@ public:
 #ifdef DEBUG
         char *pwd = new char[100];
         getcwd(pwd, 100);
-        fprintf(stderr, "%s/%s\n", pwd, filename);
+        fprintf(stderr, "%s/%s -> ", pwd, filename);
         delete[] pwd;
 #endif
 
@@ -103,7 +103,7 @@ public:
                 // Split that string in place
                 char *key=line, *value=strchr(line, '=');
                 if (!value) {
-                    printf("%s: malformed file, ignoring\n", filename);
+                    fprintf(stderr, "%s: malformed file, ignoring\n", filename);
                     fclose(file);
                     return false;
                 }
@@ -120,6 +120,9 @@ public:
                         while((suffix = this->locale_suffixes.suffixes[i++])) {
                             if(!strcmp(suffix, langcode)) {
                                 this->name = value;
+#ifdef DEBUG
+                                fprintf(stderr, "[%s] ", suffix);
+#endif
                                 break;
                             }
                         }
@@ -132,6 +135,9 @@ public:
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
                     fclose(file);
+#ifdef DEBUG
+		    fprintf(stderr, "NoDisplay/Hidden\n");
+#endif
                     return false;
                 case "Terminal"_istr:
                     this->terminal = make_istring(value) == "true"_istr;
@@ -143,6 +149,10 @@ public:
 
         if(!this->name.size())
             this->name = fallback_name;
+
+#ifdef DEBUG
+        fprintf(stderr, "%s\n", this->name.c_str());
+#endif
 
         fclose(file);
         return true;
