@@ -47,6 +47,8 @@ public:
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
+	    fprintf(stderr, "%s -i -c '%s'\n", shell, command.c_str());
+
             return execl(shell, shell, "-i", "-c", command.c_str(), 0);
         }
         return 0;
@@ -173,6 +175,8 @@ private:
         choice = dmenu->read_choice(); // Blocks
         if(!choice.size())
             return "";
+
+	fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
         std::tie(app, args) = apps.find(choice);
 

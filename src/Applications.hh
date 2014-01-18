@@ -44,7 +44,7 @@ public:
 		if((shell = getenv("SHELL")) == 0)
 		    shell = "/bin/sh";
 		
-		fprintf(stderr, "$SHELL=%s\n", shell);
+		fprintf(stderr, "%s -i -c '%s'\n", shell, choice.c_str());
 		
 		// -i -c was tested with both bash and zsh.
 		exit(execl(shell, shell, "-i", "-c",  choice.c_str(), 0));
