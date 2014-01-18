@@ -53,7 +53,7 @@ public:
     std::string exec;
 
     // Terminal app
-    bool terminal;
+    bool terminal = false;
 
     bool read(const char *filename, char **linep, size_t *linesz) {
         using namespace ApplicationHelpers;
@@ -84,8 +84,6 @@ public:
         fprintf(stderr, "%s/%s -> ", pwd, filename);
         delete[] pwd;
 #endif
-
-        this->terminal = false;
 
         while((linelen = getline(linep, linesz, file)) != -1) {
             line = *linep;

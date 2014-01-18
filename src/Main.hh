@@ -170,7 +170,7 @@ private:
         std::string args;
         Application *app;
 
-        printf("Read %d .desktop files, found %ld apps.\n", parsed_files, apps.size());
+        printf("Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
 
         choice = dmenu->read_choice(); // Blocks
         if(!choice.size())
@@ -188,14 +188,14 @@ private:
     std::string dmenu_command;
     std::string terminal;
 
-    Dmenu *dmenu;
+    Dmenu *dmenu = 0;
     SearchPath search_path;
 
     int parsed_files = 0;
 
     Applications apps;
 
-    char *buf;
+    char *buf = 0;
     size_t bufsz = 4096;
 
     LocaleSuffixes suffixes;
