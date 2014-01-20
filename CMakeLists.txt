@@ -2,7 +2,25 @@ cmake_minimum_required(VERSION 2.8)
 
 project(j4-dmenu)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -Wextra -O2")
+exec_program(
+  ${CMAKE_CXX_COMPILER}
+  ARGS --version
+  OUTPUT_VARIABLE _compiler_output
+  )
+string(REGEX REPLACE "(\n.*$)" "" cxx_compiler_version "${_compiler_output}")
+string(REGEX REPLACE "([^0-9.])|([0-9.][^0-9.])" "" cxx_compiler_version "${cxx_compiler_version}")
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+  if(${cxx_compiler_version} VERSION_LESS "4.7.0")
+    set(CXX_OPT "-std=c++0x")
+  else()
+    set(CXX_OPT "-std=c++11")
+  endif()
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  set(CXX_OPT "-std=c++11")
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} ${CXX_OPT} -Wall -pedantic -Wextra -O2")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 if(NOT DEFINED NO_TESTS)
