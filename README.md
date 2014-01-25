@@ -9,7 +9,7 @@ and should work just fine on about any desktop environment.
 
 ## Build requirements
 
-* Compiler with basic C++11 support (GCC 4.6 is probably just fine)
+* Compiler with basic C++11 support (GCC 4.77 or later required, Clang works, too)
 * CMake
 
 Building is the usual cmake/make thingy:
