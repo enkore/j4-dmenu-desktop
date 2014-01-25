@@ -1,0 +1,25 @@
+
+r2.6 released 2013-11-28
+	+ fixed quoting
+	+ different output formats
+	+ misc. bug fixes and improvements
+
+r2.7 released 2013-12-04
+	+ removed i3 dependency
+	+ fixed memory leak
+	+ fixed wrong usage of getopt_long()
+	+ fixed GCC 4.7 compatibility
+	+ misc. bug fixes and improvements
+
+r2.8 released 2013-12-09
+	+ various perfomance improvements
+	+ better error messages
+	+ added debugging messages
+	+ fixed mixup of malloc/new[]
+	+ fixed wrong usage of getline()
+
+r2.9 released 2014-01-25
+	+ added test suite, travis integration
+	+ fixed $XDG_DATA_HOME being ignored
+	+ fixed wrong ordering of default search paths
+	+ support shell aliases
