@@ -27,7 +27,7 @@ public:
         return curpath;
     }
 
-    const std::string * operator->() const {
+    const std::string *operator->() const {
         return &curpath;
     }
 
@@ -42,7 +42,7 @@ public:
         if(!entry) {
             closedir(dir);
             dir = NULL;
-	    // If you think of this as a loop then this is a continue;
+	    // If you think of this as a loop then this is a continue
             return (*this)++;
         }
         if(entry->d_name[0] == '.') {
