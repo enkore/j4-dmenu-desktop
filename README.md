@@ -7,9 +7,11 @@ is to find .desktop files and offer you a menu to start an application
 using dmenu. Since r2.7 j4-dmenu-desktop doesn't require i3wm anymore
 and should work just fine on about any desktop environment.
 
+You can also execute shell commands using it.
+
 ## Build requirements
 
-* Compiler with basic C++11 support (GCC 4.6 is probably just fine)
+* Compiler with basic C++11 support (GCC 4.77 or later required, Clang works, too)
 * CMake
 
 Building is the usual cmake/make thingy:
