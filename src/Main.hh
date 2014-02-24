@@ -180,6 +180,8 @@ private:
 
         std::tie(app, args) = apps.find(choice);
 
+	chdir(app->path.c_str());
+
         ApplicationRunner app_runner(terminal, *app, args);
         return app_runner.command();
     }

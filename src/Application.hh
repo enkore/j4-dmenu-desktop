@@ -52,6 +52,9 @@ public:
     // Command line
     std::string exec;
 
+    // Path
+    std::string path;
+
     // Terminal app
     bool terminal = false;
 
@@ -130,6 +133,9 @@ public:
                 case "Exec"_istr:
                     this->exec = value;
                     break;
+		case "Path"_istr:
+		    this->path= value;
+		    break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
                     fclose(file);
@@ -147,6 +153,9 @@ public:
 
         if(!this->name.size())
             this->name = fallback_name;
+
+	if(!this->path.size())
+	    this->path = "/";
 
 #ifdef DEBUG
         fprintf(stderr, "%s\n", this->name.c_str());
