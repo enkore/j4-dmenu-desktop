@@ -71,6 +71,8 @@ private:
         std::string exec(this->app.exec);
 
         // Undo quoting before expanding field codes
+        replace(exec, "\\\\(", "\\(");
+        replace(exec, "\\\\)", "\\)");
         replace(exec, "\\\\ ", "\\ ");
         replace(exec, "\\\\`", "\\`");
         replace(exec, "\\\\$", "\\$");
