@@ -20,6 +20,25 @@ Building is the usual cmake/make thingy:
     make
     sudo make install
 
+## Distribution packages
+
+### Archlinux
+
+The package is provided by the AUR. You can install it with an AUR helper of your choice or manually by invoking the following commands as a regular user. (to build packages from the AUR, the `base-devel` package group is assumed to be installed)
+
+    wget https://aur.archlinux.org/packages/j4/j4-dmenu-desktop-git/j4-dmenu-desktop-git.tar.gz
+    tar xf j4-dmenu-desktop-git.tar.gz
+    cd j4-dmenu-desktop-git
+    makepkg -si
+
+### Gentoo
+
+The package is provided by the `gentoo-el` overlay. You can install it with the following commands as root. (you need to have `layman` installed and configured)
+
+    layman -a gentoo-el
+    echo "=x11-misc/j4-dmenu-desktop-9999 **" >> /etc/portage/package.accept_keywords
+    emerge x11-misc/j4-dmenu-desktop
+
 ## Invocation
 
 Usage:
