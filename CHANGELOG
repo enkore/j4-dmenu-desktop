@@ -23,3 +23,7 @@ r2.9 released 2014-01-25
 	+ fixed $XDG_DATA_HOME being ignored
 	+ fixed wrong ordering of default search paths
 	+ support shell aliases
+
+r2.10 released 2014-04-17
+	+ minor changes regarding quoting
+	+ change to application path if specified as per XDG spec
