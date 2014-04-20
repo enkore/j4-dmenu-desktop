@@ -16,11 +16,12 @@ TEST_CASE("FileFinder/find", "")
 {
     FileFinder ff(TEST_FILES, ".desktop");
     auto files = ff2l(ff);
-    REQUIRE( files.size() == 4 );
-    REQUIRE( files[0] == test_files + "applications/eagle.desktop" );
-    REQUIRE( files[1] == test_files + "applications/gimp.desktop" );
-    REQUIRE( files[2] == test_files + "applications/htop.desktop" );
-    REQUIRE( files[3] == test_files + "file.desktop" );
+    REQUIRE( files.size() == 5 );
+    REQUIRE( files[0] == test_files + "applications/17.desktop" );
+    REQUIRE( files[1] == test_files + "applications/eagle.desktop" );
+    REQUIRE( files[2] == test_files + "applications/gimp.desktop" );
+    REQUIRE( files[3] == test_files + "applications/htop.desktop" );
+    REQUIRE( files[4] == test_files + "file.desktop" );
 }
 
 TEST_CASE("FileFinder/find2", "")

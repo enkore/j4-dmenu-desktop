@@ -76,3 +76,17 @@ TEST_CASE("Application/valid/long_line", "Tests correct parsing of file with lin
 
     free(buffer);
 }
+
+TEST_CASE("Application/flag/hidden", "Regression test for issue #17")
+{
+    LocaleSuffixes ls("en_US");
+    Application app(ls);
+    char *buffer = static_cast<char*>(malloc(4096));
+    size_t size = 4096;
+    std::string path(test_files + "applications/17.desktop");
+
+    REQUIRE( app.read(path.c_str(), &buffer, &size) );
+    //REQUIRE( !app.hidden );
+
+    free(buffer);
+}
