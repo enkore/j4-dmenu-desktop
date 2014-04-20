@@ -27,3 +27,6 @@ r2.9 released 2014-01-25
 r2.10 released 2014-04-17
 	+ minor changes regarding quoting
 	+ change to application path if specified as per XDG spec
+
+r2.11 released 2014-04-20
+	+ fixed unhidden desktop files being regarded as hidden
