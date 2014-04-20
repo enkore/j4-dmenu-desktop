@@ -138,6 +138,9 @@ public:
 		    break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
+		    if(value[0] == 'f') // false
+			break;
+
                     fclose(file);
 #ifdef DEBUG
 		    fprintf(stderr, "NoDisplay/Hidden\n");
