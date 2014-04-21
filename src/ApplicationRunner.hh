@@ -33,7 +33,7 @@ class ApplicationRunner
 public:
     ApplicationRunner(const std::string &terminal_emulator, const Application &app, const std::string &args)
         : app(app), args(args), terminal_emulator(terminal_emulator) {
-
+	quote(this->args);
     }
 
     const std::string command() {
@@ -67,6 +67,14 @@ public:
     }
 
 private:
+    std::string quote(const std::string &s) {
+	std::string string(s);
+	replace(string, "\"", "\\\"");
+	replace(string, "\\", "\\\\");
+	
+	return string;
+    }
+
     const std::string application_command() {
         std::string exec(this->app.exec);
 
@@ -90,7 +98,7 @@ private:
         replace(exec, "%U", this->args);
 
         // The localized name of the application
-        replace(exec, "%c", this->app.name);
+        replace(exec, "%c", "\"" + quote(this->app.name) + "\"");
 
         replace(exec, "%k", "");
         replace(exec, "%i", "");
@@ -102,7 +110,7 @@ private:
 
 
     const Application &app;
-    const std::string &args;
+    std::string args;
 
     const std::string &terminal_emulator;
 };
