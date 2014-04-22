@@ -33,7 +33,6 @@ class ApplicationRunner
 public:
     ApplicationRunner(const std::string &terminal_emulator, const Application &app, const std::string &args)
         : app(app), args(args), terminal_emulator(terminal_emulator) {
-	quote(this->args);
     }
 
     const std::string command() {
