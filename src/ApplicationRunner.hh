@@ -66,7 +66,7 @@ public:
     }
 
 private:
-    std::string quote(const std::string &s) {
+    static std::string quote(const std::string &s) {
 	std::string string(s);
 	replace(string, "\"", "\\\"");
 	replace(string, "\\", "\\\\");
