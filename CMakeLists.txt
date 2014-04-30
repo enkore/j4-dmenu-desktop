@@ -59,6 +59,7 @@ if(NOT DEFINED NO_TESTS)
     j4-dmenu-tests
     src/Test.cc
     src/TestApplication.cc
+    src/TestApplicationRunner.cc
     src/TestSearchPath.cc
     src/TestLocaleSuffixes.cc
     src/TestFileFinder.cc

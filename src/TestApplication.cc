@@ -91,19 +91,3 @@ TEST_CASE("Application/flag/hidden", "Regression test for issue #17, Hidden=fals
 
     free(buffer);
 }
-
-TEST_CASE("Application/flag/escape", "Regression test for issue #18, %c was not escaped")
-{
-    LocaleSuffixes ls("en_US");
-    Application app(ls);
-    char *buffer = static_cast<char*>(malloc(4096));
-    size_t size = 4096;
-    std::string path(test_files + "applications/18.desktop");
-
-    REQUIRE( app.read(path.c_str(), &buffer, &size) );
-
-    ApplicationRunner runner("", app, "");
-    REQUIRE( runner.command() == "1234 --caption \"Regression Test 18\"" );
-
-    free(buffer);
-}
