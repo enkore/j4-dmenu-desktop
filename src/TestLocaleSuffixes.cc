@@ -1,3 +1,4 @@
+#include <string.h>
 
 #include "LocaleSuffixes.hh"
 #include "catch.hpp"

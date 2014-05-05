@@ -1,6 +1,9 @@
 
+#include <stddef.h>
+#include <stdlib.h>
+#include <string>
+
 #include "Application.hh"
-#include "ApplicationRunner.hh"
 #include "LocaleSuffixes.hh"
 #include "catch.hpp"
 
@@ -87,7 +90,6 @@ TEST_CASE("Application/flag/hidden", "Regression test for issue #17, Hidden=fals
     std::string path(test_files + "applications/17.desktop");
 
     REQUIRE( app.read(path.c_str(), &buffer, &size) );
-    //REQUIRE( !app.hidden );
 
     free(buffer);
 }

@@ -1,4 +1,7 @@
 
+#include <stdlib.h>
+#include <list>
+#include <string>
 #include <vector>
 
 #include "SearchPath.hh"

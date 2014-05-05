@@ -1,0 +1,9 @@
+#!/bin/sh
+
+IWYU_COMMAND=$(which include-what-you-use)
+COMPILER_COMMAND=/usr/bin/g++
+
+$COMPILER_COMMAND $@
+STATUS=$?
+$IWYU_COMMAND $@
+exit $STATUS

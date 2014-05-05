@@ -1,3 +1,4 @@
+#include <string> 
 
 #include "Application.hh"
 #include "ApplicationRunner.hh"

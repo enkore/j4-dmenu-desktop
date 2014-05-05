@@ -1,3 +1,8 @@
+
+#include <stddef.h>
+#include <stdlib.h>
+#include <string>
+
 #include "catch.hpp"
 
 #include "Application.hh"

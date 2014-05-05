@@ -1,3 +1,7 @@
+#include <list>
+#include <string>
+#include <vector> 
+
 #include "FileFinder.hh"
 #include "catch.hpp"
 
