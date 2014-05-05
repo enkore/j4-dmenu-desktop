@@ -20,6 +20,7 @@
 
 #include <map>
 #include <string>
+#include <functional>
 
 #include "Application.hh"
 
