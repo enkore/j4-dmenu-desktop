@@ -65,6 +65,8 @@ if(NOT DEFINED NO_TESTS)
     src/TestFileFinder.cc
     src/TestFormatters.cc
     )
+
+  add_dependencies(j4-dmenu-tests catch)
 endif(NOT DEFINED NO_TESTS)
 
 
