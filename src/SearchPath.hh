@@ -27,6 +27,22 @@ public:
         generate();
     }
 
+    /**
+     * Adds specified paths to a searched directory list.
+     *
+     * @param paths colon-separated directory list. 
+     *              E.g.: /first/directory/:/second/directory/:/third/one/
+     */
+    void add_paths(const std::string& paths) {
+        stringlist_t splitted_paths;
+        split(paths, ':', splitted_paths);
+        push_paths(splitted_paths);
+    }
+
+    void clear() {
+        search_path.clear();
+    }
+
     const stringlist_t::iterator begin() {
         return this->search_path.begin();
     }
@@ -36,42 +52,52 @@ public:
     }
 
 private:
+    // Methods
     void generate() {
         stringlist_t sp;
 
-        std::string xdg_data_home = get_variable("XDG_DATA_HOME");
-        if(xdg_data_home.empty())
-            xdg_data_home = std::string(get_variable("HOME")) + "/.local/share/";
+        stringlist_t xdg_data_home =
+            get_xdg_paths("XDG_DATA_HOME", get_variable("HOME") + "/.local/share/");
+        stringlist_t xdg_data_dirs =
+            get_xdg_paths("XDG_DATA_DIRS", "/usr/share/:/usr/local/share/");
 
-        push_var(xdg_data_home, sp);
-
-        std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
-        if(xdg_data_dirs.empty())
-            xdg_data_dirs = "/usr/share/:/usr/local/share/";
-
-        push_var(xdg_data_dirs, sp);
+        sp.insert(sp.end(), xdg_data_home.begin(), xdg_data_home.end());
+        sp.insert(sp.end(), xdg_data_dirs.begin(), xdg_data_dirs.end());
 
         sp.reverse();
+        push_paths(sp);
+    }
 
-        // Fix double slashes, if any
-        for(auto path : sp) {
-            this->search_path.push_back(replace(path, "//", "/"));
-            printf("SearchPath: %s\n", this->search_path.back().c_str());
+    stringlist_t get_xdg_paths(const std::string& var, const std::string& default_path) {
+        std::string xdg_dir = get_variable(var);
+        if (xdg_dir.empty())
+            xdg_dir = default_path;
+
+        stringlist_t ret;
+        split(xdg_dir, ':', ret);
+        ret.reverse();
+        for(std::string& path : ret) {
+            if (!endswith(path, "/applications/"))
+                path += "/applications/";
+        }
+
+        return ret;
+    }
+
+    void push_paths(const stringlist_t &sp) {
+        for (std::string path : sp) {
+            replace(path, "//", "/");
+            if (is_directory(path)) {
+                printf("SearchPath: %s\n", path.c_str());
+                search_path.push_back(std::move(path));
+            }
+            else {
+                printf("SearchPath doesn't exist: %s\n", path.c_str());
+            }
         }
     }
 
-    void push_var(const std::string &string, stringlist_t &sp) {
-        stringlist_t items;
-        split(string, ':', items);
-	items.reverse();
-        for(auto path : items) {
-	    if(!endswith(path, "/applications/"))
-		path += "/applications/";
-            if(is_directory(path.c_str()))	
-                sp.push_back(path);
-        }
-    }
-
+    // Attributes
     stringlist_t search_path;
 };
 

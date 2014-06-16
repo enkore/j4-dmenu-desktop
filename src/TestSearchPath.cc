@@ -34,3 +34,17 @@ TEST_CASE("SearchPath/XDG_DATA_DIRS", "Check SearchPath honors XDG_DATA_DIRS")
     REQUIRE( result[0] == test_files + "usr/share/applications/" );
     REQUIRE( result[1] == test_files + "usr/local/share/applications/" );
 }
+
+TEST_CASE("SearchPath/CustomPath", "Check SearchPath honors custom added path")
+{
+    std::string test_paths = test_files + ":" + test_files + "usr";
+
+    SearchPath sp;
+    sp.clear();
+    sp.add_paths(test_paths);
+    std::vector<std::string> result(sp.begin(), sp.end());
+
+    REQUIRE( result.size() == 2);
+    REQUIRE(result[0] == test_files);
+    REQUIRE(result[1] == test_files + "usr");
+}

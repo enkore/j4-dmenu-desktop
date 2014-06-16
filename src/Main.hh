@@ -69,6 +69,9 @@ private:
                 "\tExecuted with your shell ($SHELL) or /bin/sh\n"
                 "    --display-binary\n"
                 "\tDisplay binary name after each entry (off by default)\n"
+                "    --add-paths=<PATH1:PATH2...>\n"
+                "\tColon separated list of aditional directories to be included in search\n"
+                "\tpath\n"
                 "    --term=<command>\n"
                 "\tSets the terminal emulator used to start terminal apps\n"
                 "    --help\n"
@@ -82,11 +85,12 @@ private:
         while (true) {
             int option_index = 0;
             static struct option long_options[] = {
-                {"dmenu",   required_argument,  0,  'd'},
-                {"term",    required_argument,  0,  't'},
-                {"help",    no_argument,        0,  'h'},
-                {"display-binary", no_argument, 0,  'b'},
-                {0,         0,                  0,  0}
+                {"dmenu",          required_argument,  0,  'd'},
+                {"term",           required_argument,  0,  't'},
+                {"help",           no_argument,        0,  'h'},
+                {"display-binary", no_argument,        0,  'b'},
+                {"add-paths",      required_argument,  0,  'p'},
+                {0, 0, 0, 0}
             };
 
             int c = getopt_long(argc, argv, "d:t:hb", long_options, &option_index);
@@ -105,6 +109,9 @@ private:
                 return true;
             case 'b':
                 formatter = "with_binary_name";
+                break;
+            case 'p':
+                this->search_path.add_paths(std::string(optarg));
                 break;
             default:
                 exit(1);
