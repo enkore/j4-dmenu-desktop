@@ -81,15 +81,32 @@ TEST_CASE("Application/valid/long_line", "Tests correct parsing of file with lin
     free(buffer);
 }
 
-TEST_CASE("Application/flag/hidden", "Regression test for issue #17, Hidden=false was read as Hidden=true")
+TEST_CASE("Application/flag/hidden=false", "Regression test for issue #17, Hidden=false was read as Hidden=true")
 {
     LocaleSuffixes ls("en_US");
     Application app(ls);
     char *buffer = static_cast<char*>(malloc(4096));
     size_t size = 4096;
-    std::string path(test_files + "applications/17.desktop");
+    std::string path(test_files + "applications/visible.desktop");
 
     REQUIRE( app.read(path.c_str(), &buffer, &size) );
+    REQUIRE( app.name == "visibleApp" );
+    REQUIRE( app.exec == "visibleApp" );
+
+    free(buffer);
+}
+
+TEST_CASE("Application/flag/hidden=true", "Test for an issue where the name wasn't set correctly after reading a hidden file")
+{
+    LocaleSuffixes ls("en_US");
+    Application app(ls);
+    char *buffer = static_cast<char*>(malloc(4096));
+    size_t size = 4096;
+    std::string path(test_files + "applications/hidden.desktop");
+
+    REQUIRE( !app.read(path.c_str(), &buffer, &size) );
+    REQUIRE( app.name == "hiddenApp" );
+    REQUIRE( app.exec == "hiddenApp" );
 
     free(buffer);
 }

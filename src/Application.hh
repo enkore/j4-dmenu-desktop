@@ -67,6 +67,10 @@ public:
         //
         // Please don't try this at home.
 
+
+        //Whether the app should be hidden
+        bool hidden = false;
+
         std::string fallback_name;
         bool parse_key_values = false;
         ssize_t linelen;
@@ -138,14 +142,13 @@ public:
 		    break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
-		    if(value[0] == 'f') // false
-			break;
-
-                    fclose(file);
+		    if(value[0] == 't'){ // true
 #ifdef DEBUG
-		    fprintf(stderr, "NoDisplay/Hidden\n");
+		        fprintf(stderr, "NoDisplay/Hidden\n");
 #endif
-                    return false;
+			hidden = true;
+                    }
+                    break;
                 case "Terminal"_istr:
                     this->terminal = make_istring(value) == "true"_istr;
                     break;
@@ -162,6 +165,10 @@ public:
 #endif
 
         fclose(file);
+
+        if(hidden)
+            return false;
+
         return true;
     }
 

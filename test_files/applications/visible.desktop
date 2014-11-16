@@ -1,0 +1,6 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=visibleApp
+Exec=visibleApp
+Hidden=false
