@@ -1,0 +1,7 @@
+[Desktop Entry]
+Version=1.0
+Name=     Htop
+Type=Application
+Comment=Show System Processes
+Terminal=true
+Exec=htop
