@@ -114,6 +114,10 @@ public:
                 }
                 (value++)[0] = 0; // Overwrite = with NUL (terminate key)
 
+                //Cut spaces after the equal sign
+                while(value[0] == ' ')
+                    ++value;
+
                 switch(make_istring(key)) {
                 case "Name"_istr:
                     if(key[4] == '[') {

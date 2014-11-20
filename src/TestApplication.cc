@@ -110,3 +110,18 @@ TEST_CASE("Application/flag/hidden=true", "Test for an issue where the name wasn
 
     free(buffer);
 }
+
+TEST_CASE("Application/spaces_after_equals", "Test whether spaces after the equal sign are ignored")
+{
+    LocaleSuffixes ls("en_US");
+    Application app(ls);
+    char *buffer = static_cast<char*>(malloc(4096));
+    size_t size = 4096;
+    std::string path(test_files + "applications/whitespaces.desktop");
+
+    REQUIRE( app.read(path.c_str(), &buffer, &size) );
+    //It should be "Htop", not "     Htop"
+    REQUIRE( app.name == "Htop" );
+
+    free(buffer);
+}
