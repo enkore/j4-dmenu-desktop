@@ -149,8 +149,8 @@ public:
                     this->exec = value;
                     break;
                 case "Path"_istr:
-		    this->path= value;
-		    break;
+                    this->path= value;
+                    break;
 		case "OnlyShowIn"_istr:
 		    if(environment){
                         stringlist_t values;
