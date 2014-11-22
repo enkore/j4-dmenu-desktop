@@ -18,6 +18,7 @@
 #ifndef APPLICATION_DEF
 #define APPLICATION_DEF
 
+#include <algorithm>
 #include <string.h>
 #include <unistd.h>
 
@@ -58,6 +59,9 @@ public:
     // Terminal app
     bool terminal = false;
 
+    // file id
+    std::string id;
+
     bool read(const char *filename, char **linep, size_t *linesz) {
         using namespace ApplicationHelpers;
 
@@ -91,6 +95,9 @@ public:
         fprintf(stderr, "%s/%s -> ", pwd, filename);
         delete[] pwd;
 #endif
+
+        id = filename + 2; // our internal filenames all start with './'
+        std::replace(id.begin(), id.end(), '/', '-');
 
         while((linelen = getline(linep, linesz, file)) != -1) {
             line = *linep;

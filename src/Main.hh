@@ -34,7 +34,7 @@ public:
 
         // Transfer the list to dmenu
         for(auto &app : apps) {
-            this->dmenu->write(app.first);
+            this->dmenu->write(app.second->name);
         }
 
         this->dmenu->display();
@@ -153,13 +153,13 @@ private:
         dft->name = this->appformatter(*dft);
 
         if(file_read && dft->name.size()) {
-            if(apps.count(dft->name)) {
-                delete apps[dft->name];
+            if(apps.count(dft->id)) {
+                delete apps[dft->id];
             }
-            apps[dft->name] = dft;
+            apps[dft->id] = dft;
         } else {
-            if(dft->name.size())
-                apps.erase(dft->name);
+            if(dft->id.size())
+                apps.erase(dft->id);
             delete dft;
         }
         parsed_files++;
