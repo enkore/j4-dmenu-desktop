@@ -56,18 +56,20 @@ private:
         // Fix double slashes, if any
         for(auto path : sp) {
             this->search_path.push_back(replace(path, "//", "/"));
+#ifdef DEBUG
             printf("SearchPath: %s\n", this->search_path.back().c_str());
+#endif
         }
     }
 
     void push_var(const std::string &string, stringlist_t &sp) {
         stringlist_t items;
         split(string, ':', items);
-	items.reverse();
+        items.reverse();
         for(auto path : items) {
-	    if(!endswith(path, "/applications/"))
-		path += "/applications/";
-            if(is_directory(path.c_str()))	
+            if(!endswith(path, "/applications/"))
+                path += "/applications/";
+            if(is_directory(path.c_str()))
                 sp.push_back(path);
         }
     }

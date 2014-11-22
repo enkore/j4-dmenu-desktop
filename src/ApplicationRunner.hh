@@ -67,11 +67,11 @@ public:
 
 private:
     static std::string quote(const std::string &s) {
-	std::string string(s);
-	replace(string, "\"", "\\\"");
-	replace(string, "\\", "\\\\");
-	
-	return string;
+        std::string string(s);
+        replace(string, "\"", "\\\"");
+        replace(string, "\\", "\\\\");
+
+        return string;
     }
 
     const std::string application_command() {
