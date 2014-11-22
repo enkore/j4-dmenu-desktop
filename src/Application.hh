@@ -148,16 +148,16 @@ public:
                 case "Exec"_istr:
                     this->exec = value;
                     break;
-		case "Path"_istr:
-		    this->path= value;
-		    break;
+                case "Path"_istr:
+                    this->path= value;
+                    break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
-		    if(value[0] == 't'){ // true
+                    if(value[0] == 't'){ // true
 #ifdef DEBUG
-		        fprintf(stderr, "NoDisplay/Hidden\n");
+                        fprintf(stderr, "NoDisplay/Hidden\n");
 #endif
-			hidden = true;
+                        hidden = true;
                     }
                     break;
                 case "Terminal"_istr:
