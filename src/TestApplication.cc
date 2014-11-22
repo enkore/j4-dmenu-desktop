@@ -125,3 +125,53 @@ TEST_CASE("Application/spaces_after_equals", "Test whether spaces after the equa
 
     free(buffer);
 }
+
+TEST_CASE("Application/onlyShowIn", "Test whether the OnlyShowIn tag works")
+{
+    stringlist_t env;
+    LocaleSuffixes ls("en_US");
+    char *buffer = static_cast<char*>(malloc(4096));
+    size_t size = 4096;
+    std::string path(test_files + "applications/onlyShowIn.desktop");
+
+    //Case 1: The app should be shown in this environment
+    env.emplace_back("i3");
+    env.emplace_back("Gnome");
+    Application app(ls, &env);
+    REQUIRE( app.read(path.c_str(), &buffer, &size));
+    REQUIRE( app.name == "Htop" );
+
+    //Case 2: The app should not be shown in this environment
+    env.clear();
+    env.emplace_back("Kde");
+    Application app2(ls, &env);
+    REQUIRE(!app2.read(path.c_str(), &buffer, &size));
+    REQUIRE( app2.name == "Htop");
+
+    free(buffer);
+}
+
+TEST_CASE("Application/notShowIn", "Test whether the NotShowIn tag works")
+{
+    stringlist_t env;
+    LocaleSuffixes ls("en_US");
+    char *buffer = static_cast<char*>(malloc(4096));
+    size_t size = 4096;
+    std::string path(test_files + "applications/notShowIn.desktop");
+
+    //Case 1: The app should be hidden
+    env.emplace_back("i3");
+    env.emplace_back("Gnome");
+    Application app(ls, &env);
+    REQUIRE(! app.read(path.c_str(), &buffer, &size));
+    REQUIRE( app.name == "Htop" );
+
+    //Case 2: The app should be shown in this environment
+    env.clear();
+    env.emplace_back("Gnome");
+    Application app2(ls, &env);
+    REQUIRE( app2.read(path.c_str(), &buffer, &size));
+    REQUIRE( app2.name == "Htop");
+
+    free(buffer);
+}

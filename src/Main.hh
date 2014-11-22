@@ -28,6 +28,20 @@ public:
         if(read_args(argc, argv))
             return 0;
 
+        if(! ignore_environment){
+            std::string env_var = get_variable("XDG_CURRENT_DESKTOP");
+            //XDG_CURRENT_DESKTOP can contain multiple environments seperated by colons
+            split(env_var, ':', environment);
+            if(environment.empty())
+                ignore_environment = true;
+        }
+
+#ifdef DEBUG
+        fprintf(stderr, "desktop environment:\n");
+        for(auto s: environment)
+            fprintf(stderr, "%s\n", s.c_str());
+#endif
+
         this->dmenu = new Dmenu(this->dmenu_command);
 
         collect_files();
@@ -67,6 +81,8 @@ private:
                 "    --dmenu=<command>\n"
                 "\tDetermines the command used to invoke dmenu\n"
                 "\tExecuted with your shell ($SHELL) or /bin/sh\n"
+                "    --ignore-desktop-environment\n"
+                "\tDisables reading $XDG_CURRENT_DESKTOP to determine the desktop environment\n"
                 "    --display-binary\n"
                 "\tDisplay binary name after each entry (off by default)\n"
                 "    --term=<command>\n"
@@ -83,19 +99,23 @@ private:
             int option_index = 0;
             static struct option long_options[] = {
                 {"dmenu",   required_argument,  0,  'd'},
+                {"ignore-desktop-environment",   no_argument,  0,  'i'},
                 {"term",    required_argument,  0,  't'},
                 {"help",    no_argument,        0,  'h'},
                 {"display-binary", no_argument, 0,  'b'},
                 {0,         0,                  0,  0}
             };
 
-            int c = getopt_long(argc, argv, "d:t:hb", long_options, &option_index);
+            int c = getopt_long(argc, argv, "d:t:ihb", long_options, &option_index);
             if(c == -1)
                 break;
 
             switch (c) {
             case 'd':
                 this->dmenu_command = optarg;
+                break;
+            case 'i':
+                ignore_environment = true;
                 break;
             case 't':
                 this->terminal = optarg;
@@ -148,7 +168,7 @@ private:
     }
 
     void handle_file(const std::string &file) {
-        Application *dft = new Application(suffixes);
+        Application *dft = new Application(suffixes, ignore_environment ? 0 : &environment);
         bool file_read = dft->read(file.c_str(), &buf, &bufsz);
         dft->name = this->appformatter(*dft);
 
@@ -190,6 +210,9 @@ private:
 private:
     std::string dmenu_command;
     std::string terminal;
+
+    stringlist_t environment;
+    bool ignore_environment = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;

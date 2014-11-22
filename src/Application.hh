@@ -43,8 +43,8 @@ constexpr uint32_t operator "" _istr(const char *s, size_t)
 class Application
 {
 public:
-    explicit Application(const LocaleSuffixes &locale_suffixes)
-        : locale_suffixes(locale_suffixes) {
+    explicit Application(const LocaleSuffixes &locale_suffixes, const stringlist_t *environment = 0)
+        : locale_suffixes(locale_suffixes), environment(environment) {
     }
 
     // Localized name
@@ -151,6 +151,30 @@ public:
                 case "Path"_istr:
                     this->path= value;
                     break;
+		case "OnlyShowIn"_istr:
+		    if(environment){
+                        stringlist_t values;
+                        split(std::string(value), ';', values);
+                        if(! have_equal_element(*environment, values)){
+                            hidden = true;
+#ifdef DEBUG
+                            fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
+#endif
+                        }
+                    }
+		    break;
+		case "NotShowIn"_istr:
+		    if(environment){
+                        stringlist_t values;
+                        split(std::string(value), ';', values);
+                        if(have_equal_element(*environment, values)){
+                            hidden = true;
+#ifdef DEBUG
+                            fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
+#endif
+                        }
+                    }
+		    break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
                     if(value[0] == 't'){ // true
@@ -185,6 +209,7 @@ public:
 
 private:
     const LocaleSuffixes &locale_suffixes;
+    const stringlist_t *environment;
 };
 
 #endif
