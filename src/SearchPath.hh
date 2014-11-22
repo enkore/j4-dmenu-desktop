@@ -56,7 +56,9 @@ private:
         // Fix double slashes, if any
         for(auto path : sp) {
             this->search_path.push_back(replace(path, "//", "/"));
+#ifdef DEBUG
             printf("SearchPath: %s\n", this->search_path.back().c_str());
+#endif
         }
     }
 
