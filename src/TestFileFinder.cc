@@ -11,7 +11,7 @@ std::vector<std::string> ff2l(FileFinder &ff)
 {
     std::list<std::string> l;
     while (ff++)
-	l.push_back(*ff);
+        l.push_back(*ff);
     l.sort(); // Deterministic ordering
     return std::vector<std::string>(l.begin(), l.end());;
 }

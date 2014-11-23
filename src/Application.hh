@@ -18,6 +18,7 @@
 #ifndef APPLICATION_DEF
 #define APPLICATION_DEF
 
+#include <algorithm>
 #include <string.h>
 #include <unistd.h>
 
@@ -58,6 +59,9 @@ public:
     // Terminal app
     bool terminal = false;
 
+    // file id
+    std::string id;
+
     bool read(const char *filename, char **linep, size_t *linesz) {
         using namespace ApplicationHelpers;
 
@@ -91,6 +95,9 @@ public:
         fprintf(stderr, "%s/%s -> ", pwd, filename);
         delete[] pwd;
 #endif
+
+        id = filename + 2; // our internal filenames all start with './'
+        std::replace(id.begin(), id.end(), '/', '-');
 
         while((linelen = getline(linep, linesz, file)) != -1) {
             line = *linep;
@@ -141,40 +148,40 @@ public:
                 case "Exec"_istr:
                     this->exec = value;
                     break;
-		case "Path"_istr:
-		    this->path= value;
-		    break;
-		case "OnlyShowIn"_istr:
-		    if(environment){
+                case "Path"_istr:
+                    this->path= value;
+                    break;
+                case "OnlyShowIn"_istr:
+                    if(environment) {
                         stringlist_t values;
                         split(std::string(value), ';', values);
-                        if(! have_equal_element(*environment, values)){
+                        if(!have_equal_element(*environment, values)) {
                             hidden = true;
 #ifdef DEBUG
                             fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
 #endif
                         }
                     }
-		    break;
-		case "NotShowIn"_istr:
-		    if(environment){
+                    break;
+                case "NotShowIn"_istr:
+                    if(environment) {
                         stringlist_t values;
                         split(std::string(value), ';', values);
-                        if(have_equal_element(*environment, values)){
+                        if(have_equal_element(*environment, values)) {
                             hidden = true;
 #ifdef DEBUG
                             fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
 #endif
                         }
                     }
-		    break;
+                    break;
                 case "Hidden"_istr:
                 case "NoDisplay"_istr:
-		    if(value[0] == 't'){ // true
+                    if(value[0] == 't'){ // true
 #ifdef DEBUG
-		        fprintf(stderr, "NoDisplay/Hidden\n");
+                        fprintf(stderr, "NoDisplay/Hidden\n");
 #endif
-			hidden = true;
+                        hidden = true;
                     }
                     break;
                 case "Terminal"_istr:

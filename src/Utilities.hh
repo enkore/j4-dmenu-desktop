@@ -46,9 +46,10 @@ inline void split(const std::string &str, char delimiter, stringlist_t &elems)
 
 inline bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2){
     for(auto e1: list1){
-        for(auto e2: list2)
+        for(auto e2: list2){
             if(e1 == e2)
                 return true;
+        }
     }
     return false;
 }

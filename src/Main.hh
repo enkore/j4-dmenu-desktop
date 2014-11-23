@@ -28,12 +28,12 @@ public:
         if(read_args(argc, argv))
             return 0;
 
-        if(! ignore_environment){
+        if(use_xdg_de) {
             std::string env_var = get_variable("XDG_CURRENT_DESKTOP");
             //XDG_CURRENT_DESKTOP can contain multiple environments seperated by colons
             split(env_var, ':', environment);
             if(environment.empty())
-                ignore_environment = true;
+                use_xdg_de = false;
         }
 
 #ifdef DEBUG
@@ -48,7 +48,7 @@ public:
 
         // Transfer the list to dmenu
         for(auto &app : apps) {
-            this->dmenu->write(app.first);
+            this->dmenu->write(app.second->name);
         }
 
         this->dmenu->display();
@@ -61,7 +61,7 @@ public:
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
-	    fprintf(stderr, "%s -i -c '%s'\n", shell, command.c_str());
+            fprintf(stderr, "%s -i -c '%s'\n", shell, command.c_str());
 
             return execl(shell, shell, "-i", "-c", command.c_str(), 0);
         }
@@ -81,8 +81,8 @@ private:
                 "    --dmenu=<command>\n"
                 "\tDetermines the command used to invoke dmenu\n"
                 "\tExecuted with your shell ($SHELL) or /bin/sh\n"
-                "    --ignore-desktop-environment\n"
-                "\tDisables reading $XDG_CURRENT_DESKTOP to determine the desktop environment\n"
+                "    --use-xdg-de\n"
+                "\tEnables reading $XDG_CURRENT_DESKTOP to determine the desktop environment\n"
                 "    --display-binary\n"
                 "\tDisplay binary name after each entry (off by default)\n"
                 "    --term=<command>\n"
@@ -99,14 +99,14 @@ private:
             int option_index = 0;
             static struct option long_options[] = {
                 {"dmenu",   required_argument,  0,  'd'},
-                {"ignore-desktop-environment",   no_argument,  0,  'i'},
+                {"use-xdg-de",   no_argument,   0,  'x'},
                 {"term",    required_argument,  0,  't'},
                 {"help",    no_argument,        0,  'h'},
                 {"display-binary", no_argument, 0,  'b'},
                 {0,         0,                  0,  0}
             };
 
-            int c = getopt_long(argc, argv, "d:t:ihb", long_options, &option_index);
+            int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
             if(c == -1)
                 break;
 
@@ -114,8 +114,8 @@ private:
             case 'd':
                 this->dmenu_command = optarg;
                 break;
-            case 'i':
-                ignore_environment = true;
+            case 'x':
+                use_xdg_de = true;
                 break;
             case 't':
                 this->terminal = optarg;
@@ -168,18 +168,18 @@ private:
     }
 
     void handle_file(const std::string &file) {
-        Application *dft = new Application(suffixes, ignore_environment ? 0 : &environment);
+        Application *dft = new Application(suffixes, use_xdg_de ? &environment : 0);
         bool file_read = dft->read(file.c_str(), &buf, &bufsz);
         dft->name = this->appformatter(*dft);
 
         if(file_read && dft->name.size()) {
-            if(apps.count(dft->name)) {
-                delete apps[dft->name];
+            if(apps.count(dft->id)) {
+                delete apps[dft->id];
             }
-            apps[dft->name] = dft;
+            apps[dft->id] = dft;
         } else {
-            if(dft->name.size())
-                apps.erase(dft->name);
+            if(dft->id.size())
+                apps.erase(dft->id);
             delete dft;
         }
         parsed_files++;
@@ -196,12 +196,12 @@ private:
         if(!choice.size())
             return "";
 
-	fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
+        fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
         std::tie(app, args) = apps.find(choice);
 
-	if(app->path.size())
-	    chdir(app->path.c_str());
+        if(app->path.size())
+            chdir(app->path.c_str());
 
         ApplicationRunner app_runner(terminal, *app, args);
         return app_runner.command();
@@ -212,7 +212,7 @@ private:
     std::string terminal;
 
     stringlist_t environment;
-    bool ignore_environment = false;
+    bool use_xdg_de = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;
