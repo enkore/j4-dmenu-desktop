@@ -44,6 +44,16 @@ inline void split(const std::string &str, char delimiter, stringlist_t &elems)
         elems.push_back(item);
 }
 
+inline bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2){
+    for(auto e1: list1){
+        for(auto e2: list2){
+            if(e1 == e2)
+                return true;
+        }
+    }
+    return false;
+}
+
 inline std::pair<std::string, std::string> split(const std::string &str, const std::string &delimiter)
 {
     size_t pos = 0;
