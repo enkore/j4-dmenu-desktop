@@ -1,5 +1,8 @@
 language: cpp
-script: cmake . && make && ./j4-dmenu-tests
+script:
+ - cmake .
+ - make
+ - ./j4-dmenu-tests
 compiler:
  - clang
 
