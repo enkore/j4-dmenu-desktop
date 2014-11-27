@@ -19,8 +19,6 @@
 #define APPLICATIONRUNNER_DEF
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <unistd.h>
 #include <string.h>
 
@@ -45,16 +43,35 @@ public:
         if(this->app.terminal) {
             // Execute in terminal
 
-            const char *scriptname = tmpnam(0);
-            std::ofstream script(scriptname);
-            script << "#!/bin/sh" << std::endl;
-            script << "rm " << scriptname << std::endl;
-            script << "echo -n \"\\033]2;" << name << "\\007\"" << std::endl;
-            script << "echo -ne \"\\033]2;" << name << "\\007\"" << std::endl;
-            script << "exec " << exec << std::endl;
-            script.close();
+            int fd;
+            FILE *script;
+            char scriptname[] = "/tmp/j4-dmenu-XXXXXX";
 
-            chmod(scriptname, S_IRWXU|S_IRGRP|S_IROTH);
+            if((fd = mkstemp(scriptname)) == -1) {
+                std::cerr << "error creating temporary file in /tmp/: " << strerror(errno) << std::endl;
+                return std::string();
+            }
+
+            if((script = fdopen(fd, "w")) == 0) {
+                std::cerr << "error creating temporary file in /tmp/: " << strerror(errno) << std::endl;
+                return std::string();
+            }
+
+            fprintf(script, "#!/bin/sh\n");
+            fprintf(script, "rm %s\n", scriptname);
+            fprintf(script, "echo -n \"\\033]2;%s\\007\"\n", name.c_str());
+            fprintf(script, "echo -ne \"\\033]2;%s\\007\"\n", name.c_str());
+            fprintf(script, "exec %s", exec.c_str());
+
+            //closes also fd
+            if(fclose(script) != 0) {
+                std::cerr << "error closing temporary file " << scriptname << ": " << strerror(errno) << std::endl;
+                std::cerr << "The file will not be deleted automatically" << std::endl;
+                return std::string();
+            }
+
+            //As mkstemp sets the file permissions to 0600, we need to set it to 0700 to execute the script
+            chmod(scriptname, S_IRWXU);
 
             command << this->terminal_emulator;
             command << " -e \"" << scriptname << "\"";
