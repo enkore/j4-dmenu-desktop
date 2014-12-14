@@ -30,3 +30,15 @@ r2.10 released 2014-04-17
 
 r2.11 released 2014-04-20
 	+ fixed unhidden desktop files being regarded as hidden
+
+r2.12 released 2014-12-14
+	+ fixed quoting issue with localized names
+	+ fixed CMakeLists for multithreaded builds
+	+ fixed overriding files with Hidden and/or NoDisplay keys
+	+ whitespace after "=" is now ignored
+	+ implemented desktop file ID concept of the XDG specification
+	  (supersedes old "override-by-name" semantics)
+	+ added support for OnlyShowIn and NotShowIn tags
+	+ added --use-xdg-de flag to interpret $XDG_CURRENT_DESKTOP
+	  (for OnlyShowIn/NotShowIn)
+	+ temporary files are now created with mkstemp
