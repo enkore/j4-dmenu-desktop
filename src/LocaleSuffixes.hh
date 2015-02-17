@@ -73,7 +73,7 @@ private:
         for(auto &suffix : suffixset) {
             this->suffixes[i++] = strdup(suffix.c_str());
 #ifdef DEBUG
-            printf("LocaleSuffix: %s\n", this->suffixes[i-1]);
+            fprintf(stderr, "LocaleSuffix: %s\n", this->suffixes[i-1]);
 #endif
         }
         this->suffixes[i++] = 0;
