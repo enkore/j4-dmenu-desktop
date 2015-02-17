@@ -50,6 +50,9 @@ public:
     // Localized name
     std::string name;
 
+    // Generic name
+    std::string generic_name;
+
     // Command line
     std::string exec;
 
@@ -75,7 +78,7 @@ public:
         //Whether the app should be hidden
         bool hidden = false;
 
-        std::string fallback_name;
+        std::string fallback_name, fallback_generic_name;
         bool parse_key_values = false;
         ssize_t linelen;
         char *line;
@@ -127,23 +130,16 @@ public:
 
                 switch(make_istring(key)) {
                 case "Name"_istr:
-                    if(key[4] == '[') {
-                        // Don't ask, don't tell.
-                        const char *langcode = key + 5;
-                        const char *suffix;
-                        int i = 0;
-                        value[-2] = 0;
-                        while((suffix = this->locale_suffixes.suffixes[i++])) {
-                            if(!strcmp(suffix, langcode)) {
-                                this->name = value;
-#ifdef DEBUG
-                                fprintf(stderr, "[%s] ", suffix);
-#endif
-                                break;
-                            }
-                        }
-                    } else
+                    if(parse_localestring(key, 4))
+                        this->name = value;
+                    else
                         fallback_name = value;
+                    continue;
+                case "GenericName"_istr:
+                    if(parse_localestring(key, 11))
+                        this->generic_name = value;
+                    else
+                        fallback_generic_name = value;
                     continue;
                 case "Exec"_istr:
                     this->exec = value;
@@ -199,6 +195,13 @@ public:
         fprintf(stderr, "%s\n", this->name.c_str());
 #endif
 
+        if(!this->generic_name.size())
+            this->generic_name = fallback_generic_name;
+
+#ifdef DEBUG
+        fprintf(stderr, "%s\n", this->generic_name.c_str());
+#endif
+
         fclose(file);
 
         if(hidden)
@@ -210,6 +213,24 @@ public:
 private:
     const LocaleSuffixes &locale_suffixes;
     const stringlist_t *environment;
+
+    bool parse_localestring(const char *str, int key_length) {
+        if(str[key_length] == '[') {
+             // Don't ask, don't tell.
+            const char *langcode = str + key_length + 1;
+            const char *suffix;
+            int i = 0;
+            while((suffix = this->locale_suffixes.suffixes[i++])) {
+                if(!strncmp(suffix, langcode, strlen(suffix))) {
+                    return true;
+#ifdef DEBUG
+                    fprintf(stderr, "[%s] ", suffix);
+#endif
+                }
+            }
+        }
+        return false;
+    }
 };
 
 #endif
