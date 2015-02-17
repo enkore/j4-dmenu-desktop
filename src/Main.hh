@@ -49,6 +49,9 @@ public:
         // Transfer the list to dmenu
         for(auto &app : apps) {
             this->dmenu->write(app.second->name);
+            const std::string &generic_name = app.second->generic_name;
+            if(generic_name.size() && app.second->name != generic_name)
+                this->dmenu->write(generic_name);
         }
 
         this->dmenu->display();

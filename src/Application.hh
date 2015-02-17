@@ -79,6 +79,8 @@ public:
         bool hidden = false;
 
         std::string fallback_name, fallback_generic_name;
+        size_t locale_length = 0, locale_generic_length = 0;
+
         bool parse_key_values = false;
         ssize_t linelen;
         char *line;
@@ -130,16 +132,10 @@ public:
 
                 switch(make_istring(key)) {
                 case "Name"_istr:
-                    if(parse_localestring(key, 4))
-                        this->name = value;
-                    else
-                        fallback_name = value;
+                    parse_localestring(key, 4, &locale_length, value, this->name, fallback_name);
                     continue;
                 case "GenericName"_istr:
-                    if(parse_localestring(key, 11))
-                        this->generic_name = value;
-                    else
-                        fallback_generic_name = value;
+                    parse_localestring(key, 11, &locale_generic_length, value, this->generic_name, fallback_generic_name);
                     continue;
                 case "Exec"_istr:
                     this->exec = value;
@@ -214,22 +210,28 @@ private:
     const LocaleSuffixes &locale_suffixes;
     const stringlist_t *environment;
 
-    bool parse_localestring(const char *str, int key_length) {
-        if(str[key_length] == '[') {
-             // Don't ask, don't tell.
-            const char *langcode = str + key_length + 1;
+    void parse_localestring(const char *key, size_t key_length, size_t *best_so_far, const char *value, std::string &field, std::string &fallback) {
+        if(key[key_length] == '[') {
+            // Don't ask, don't tell.
+            const char *langcode = key + key_length + 1; // plus the [
             const char *suffix;
+            const size_t length = strlen(langcode) - 1; // minus the ]
+            if(length < *best_so_far) {
+                return;
+            }
             int i = 0;
             while((suffix = this->locale_suffixes.suffixes[i++])) {
-                if(!strncmp(suffix, langcode, strlen(suffix))) {
-                    return true;
+                if(!strncmp(suffix, langcode, length)) {
 #ifdef DEBUG
                     fprintf(stderr, "[%s] ", suffix);
 #endif
+                    *best_so_far = length;
+                    field = value;
                 }
             }
+        } else {
+            fallback = value;
         }
-        return false;
     }
 };
 

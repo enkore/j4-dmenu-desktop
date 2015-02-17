@@ -28,6 +28,12 @@ public:
                 app = current_app.second;
                 match_length = name.length();
             }
+
+            const std::string &generic_name = current_app.second->generic_name;
+            if(generic_name.size() > match_length && startswith(choice, generic_name)) {
+                app = current_app.second;
+                match_length = generic_name.length();
+            }
         }
 
         if(!match_length) {
