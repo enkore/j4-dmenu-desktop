@@ -50,6 +50,9 @@ public:
     // Localized name
     std::string name;
 
+    // Generic name
+    std::string generic_name;
+
     // Command line
     std::string exec;
 
@@ -75,7 +78,9 @@ public:
         //Whether the app should be hidden
         bool hidden = false;
 
-        std::string fallback_name;
+        std::string fallback_name, fallback_generic_name;
+        size_t locale_length = 0, locale_generic_length = 0;
+
         bool parse_key_values = false;
         ssize_t linelen;
         char *line;
@@ -127,23 +132,10 @@ public:
 
                 switch(make_istring(key)) {
                 case "Name"_istr:
-                    if(key[4] == '[') {
-                        // Don't ask, don't tell.
-                        const char *langcode = key + 5;
-                        const char *suffix;
-                        int i = 0;
-                        value[-2] = 0;
-                        while((suffix = this->locale_suffixes.suffixes[i++])) {
-                            if(!strcmp(suffix, langcode)) {
-                                this->name = value;
-#ifdef DEBUG
-                                fprintf(stderr, "[%s] ", suffix);
-#endif
-                                break;
-                            }
-                        }
-                    } else
-                        fallback_name = value;
+                    parse_localestring(key, 4, &locale_length, value, this->name, fallback_name);
+                    continue;
+                case "GenericName"_istr:
+                    parse_localestring(key, 11, &locale_generic_length, value, this->generic_name, fallback_generic_name);
                     continue;
                 case "Exec"_istr:
                     this->exec = value;
@@ -199,6 +191,13 @@ public:
         fprintf(stderr, "%s\n", this->name.c_str());
 #endif
 
+        if(!this->generic_name.size())
+            this->generic_name = fallback_generic_name;
+
+#ifdef DEBUG
+        fprintf(stderr, "%s\n", this->generic_name.c_str());
+#endif
+
         fclose(file);
 
         if(hidden)
@@ -210,6 +209,30 @@ public:
 private:
     const LocaleSuffixes &locale_suffixes;
     const stringlist_t *environment;
+
+    void parse_localestring(const char *key, size_t key_length, size_t *best_so_far, const char *value, std::string &field, std::string &fallback) {
+        if(key[key_length] == '[') {
+            // Don't ask, don't tell.
+            const char *langcode = key + key_length + 1; // plus the [
+            const char *suffix;
+            const size_t length = strlen(langcode) - 1; // minus the ]
+            if(length < *best_so_far) {
+                return;
+            }
+            int i = 0;
+            while((suffix = this->locale_suffixes.suffixes[i++])) {
+                if(!strncmp(suffix, langcode, length)) {
+#ifdef DEBUG
+                    fprintf(stderr, "[%s] ", suffix);
+#endif
+                    *best_so_far = length;
+                    field = value;
+                }
+            }
+        } else {
+            fallback = value;
+        }
+    }
 };
 
 #endif

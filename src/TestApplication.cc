@@ -58,6 +58,7 @@ TEST_CASE("Application/valid/gimp", "Tests correct parsing of localization and s
 
     REQUIRE( app.read(path.c_str(), &buffer, &size) );
     REQUIRE( app.name == "Bildmanipulilo (GIMP = GNU Image Manipulation Program)" );
+    REQUIRE( app.generic_name == "Bildredaktilo" );
     REQUIRE( app.exec == "gimp-2.8 %U" );
     REQUIRE( !app.terminal );
 
@@ -104,7 +105,7 @@ TEST_CASE("Application/flag/hidden=true", "Test for an issue where the name wasn
     size_t size = 4096;
     std::string path(test_files + "applications/hidden.desktop");
 
-    REQUIRE( !app.read(path.c_str(), &buffer, &size) );
+    REQUIRE(!app.read(path.c_str(), &buffer, &size) );
     REQUIRE( app.name == "hiddenApp" );
     REQUIRE( app.exec == "hiddenApp" );
 
@@ -122,6 +123,7 @@ TEST_CASE("Application/spaces_after_equals", "Test whether spaces after the equa
     REQUIRE( app.read(path.c_str(), &buffer, &size) );
     //It should be "Htop", not "     Htop"
     REQUIRE( app.name == "Htop" );
+    REQUIRE( app.generic_name == "Process Viewer" );
 
     free(buffer);
 }
@@ -140,6 +142,7 @@ TEST_CASE("Application/onlyShowIn", "Test whether the OnlyShowIn tag works")
     Application app(ls, &env);
     REQUIRE( app.read(path.c_str(), &buffer, &size));
     REQUIRE( app.name == "Htop" );
+    REQUIRE( app.generic_name == "Process Viewer" );
 
     //Case 2: The app should not be shown in this environment
     env.clear();
@@ -147,6 +150,7 @@ TEST_CASE("Application/onlyShowIn", "Test whether the OnlyShowIn tag works")
     Application app2(ls, &env);
     REQUIRE(!app2.read(path.c_str(), &buffer, &size));
     REQUIRE( app2.name == "Htop");
+    REQUIRE( app2.generic_name == "Process Viewer" );
 
     free(buffer);
 }
@@ -163,8 +167,9 @@ TEST_CASE("Application/notShowIn", "Test whether the NotShowIn tag works")
     env.emplace_back("i3");
     env.emplace_back("Gnome");
     Application app(ls, &env);
-    REQUIRE(! app.read(path.c_str(), &buffer, &size));
+    REQUIRE(!app.read(path.c_str(), &buffer, &size));
     REQUIRE( app.name == "Htop" );
+    REQUIRE( app.generic_name == "Process Viewer" );
 
     //Case 2: The app should be shown in this environment
     env.clear();
@@ -172,6 +177,7 @@ TEST_CASE("Application/notShowIn", "Test whether the NotShowIn tag works")
     Application app2(ls, &env);
     REQUIRE( app2.read(path.c_str(), &buffer, &size));
     REQUIRE( app2.name == "Htop");
+    REQUIRE( app2.generic_name == "Process Viewer" );
 
     free(buffer);
 }
