@@ -30,7 +30,7 @@ public:
 
         if(use_xdg_de) {
             std::string env_var = get_variable("XDG_CURRENT_DESKTOP");
-            //XDG_CURRENT_DESKTOP can contain multiple environments seperated by colons
+            //XDG_CURRENT_DESKTOP can contain multiple environments separated by colons
             split(env_var, ':', environment);
             if(environment.empty())
                 use_xdg_de = false;
