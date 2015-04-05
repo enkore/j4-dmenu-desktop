@@ -17,7 +17,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CXX_OPT "-std=c++11")
   endif()
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  set(CXX_OPT "-std=c++11 -nostdinc")
+  set(CXX_OPT "-std=c++11 -nostdinc -nostdinc++")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} ${CXX_OPT} -Wall -pedantic -Wextra -O2")
