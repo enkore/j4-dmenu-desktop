@@ -12,7 +12,7 @@ r2.7 released 2013-12-04
 	+ misc. bug fixes and improvements
 
 r2.8 released 2013-12-09
-	+ various perfomance improvements
+	+ various performance improvements
 	+ better error messages
 	+ added debugging messages
 	+ fixed mixup of malloc/new[]
