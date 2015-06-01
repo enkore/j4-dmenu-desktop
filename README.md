@@ -1,5 +1,7 @@
 # j4-dmenu-desktop
 
+[![Build Status](http://golem.enkore.de/job/j4-dmenu-desktop-dev/badge/icon)](http://golem.enkore.de/job/j4-dmenu-desktop-dev/)
+
 j4-dmenu-desktop is a replacement for i3-dmenu-desktop. It's purpose
 is to find .desktop files and offer you a menu to start an application
 using dmenu. Since r2.7 j4-dmenu-desktop doesn't require i3wm anymore
