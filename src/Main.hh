@@ -50,7 +50,8 @@ public:
         collect_files();
 
         // Sort applications by displayed name
-        std::vector<std::pair<std::string, const Application *>> iteration_order; //apps.size(), std::make_pair(std::string(), nullptr));
+        std::vector<std::pair<std::string, const Application *>> iteration_order;
+        iteration_order.reserve(apps.size());
         for(auto &app : apps) {
             iteration_order.push_back({app.first, app.second});
         }
