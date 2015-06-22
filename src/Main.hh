@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <cstring>
 #include <getopt.h>
+#include <vector>
+#include <algorithm>
+#include <locale>
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -46,8 +49,21 @@ public:
 
         collect_files();
 
-        // Transfer the list to dmenu
+        // Sort applications by displayed name
+        std::vector<std::pair<std::string, const Application *>> iteration_order; //apps.size(), std::make_pair(std::string(), nullptr));
         for(auto &app : apps) {
+            iteration_order.push_back({app.first, app.second});
+        }
+
+        std::locale locale("");
+        std::sort(iteration_order.begin(), iteration_order.end(), [locale](
+                      const std::pair<std::string, const Application *> &s1,
+                      const std::pair<std::string, const Application *> &s2) {
+                      return locale(s1.second->name, s2.second->name);
+                  });
+
+        // Transfer the list to dmenu
+        for(auto &app : iteration_order) {
             this->dmenu->write(app.second->name);
             const std::string &generic_name = app.second->generic_name;
             if(generic_name.size() && app.second->name != generic_name)
