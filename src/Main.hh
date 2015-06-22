@@ -197,8 +197,10 @@ private:
             }
             apps[dft->id] = dft;
         } else {
-            if(dft->id.size())
+            if(dft->id.size()) {
+                delete apps[dft->id];
                 apps.erase(dft->id);
+            }
             delete dft;
         }
         parsed_files++;
