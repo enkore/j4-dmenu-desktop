@@ -1,4 +1,7 @@
 
+r2.5 released 2013-11-02
+	+ add --display-binary option
+
 r2.6 released 2013-11-28
 	+ fixed quoting
 	+ different output formats
@@ -42,3 +45,8 @@ r2.12 released 2014-12-14
 	+ added --use-xdg-de flag to interpret $XDG_CURRENT_DESKTOP
 	  (for OnlyShowIn/NotShowIn)
 	+ temporary files are now created with mkstemp
+
+r2.13 released 2015-06-22
+	+ GenericName fields are added to the menu, too
+	+ Added manpage j4-dmenu-desktop(1)
+	+ Menu is now sorted by names
