@@ -18,13 +18,11 @@
 #ifndef DESKTOP_DEF
 #define DESKTOP_DEF
 
-#include <map>
 #include <string>
-#include <functional>
 
 #include "Application.hh"
 
-typedef std::function<std::string(const Application &)> application_formatter;
+using application_formatter = std::string(*)(const Application &);
 
 inline std::string appformatter_default(const Application &app)
 {
@@ -36,9 +34,14 @@ inline std::string appformatter_with_binary_name(const Application &app)
     return app.name + " (" + split(app.exec, " ").first + ")";
 }
 
-static const std::map<std::string, application_formatter> formatters {
-    {"standard", appformatter_default},
-    {"with_binary_name", appformatter_with_binary_name}
+enum class format_type {
+    standard,
+    with_binary_name
+};
+
+static const application_formatter formatters[2] = {
+    appformatter_default,
+    appformatter_with_binary_name
 };
 
 #endif

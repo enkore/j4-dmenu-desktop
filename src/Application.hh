@@ -184,14 +184,14 @@ public:
                 parse_key_values = true;
         }
 
-        if(!this->name.size())
+        if(this->name.empty())
             this->name = fallback_name;
 
 #ifdef DEBUG
         fprintf(stderr, "%s\n", this->name.c_str());
 #endif
 
-        if(!this->generic_name.size())
+        if(this->generic_name.empty())
             this->generic_name = fallback_generic_name;
 
 #ifdef DEBUG
