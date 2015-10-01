@@ -53,7 +53,7 @@ public:
         std::vector<std::pair<std::string, const Application *>> iteration_order;
         iteration_order.reserve(apps.size());
         for(auto &app : apps) {
-            iteration_order.push_back({app.first, app.second});
+            iteration_order.emplace_back(app.first, app.second);
         }
 
         std::locale locale("");
@@ -67,7 +67,7 @@ public:
         for(auto &app : iteration_order) {
             this->dmenu->write(app.second->name);
             const std::string &generic_name = app.second->generic_name;
-            if(generic_name.size() && app.second->name != generic_name)
+            if(!generic_name.empty() && app.second->name != generic_name)
                 this->dmenu->write(generic_name);
         }
 
@@ -76,7 +76,7 @@ public:
         std::string command = get_command();
         delete this->dmenu;
 
-        if(command.size()) {
+        if(!command.empty()) {
             static const char *shell = 0;
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
@@ -192,13 +192,13 @@ private:
         bool file_read = dft->read(file.c_str(), &buf, &bufsz);
         dft->name = this->appformatter(*dft);
 
-        if(file_read && dft->name.size()) {
+        if(file_read && !dft->name.empty()) {
             if(apps.count(dft->id)) {
                 delete apps[dft->id];
             }
             apps[dft->id] = dft;
         } else {
-            if(dft->id.size()) {
+            if(!dft->id.empty()) {
                 delete apps[dft->id];
                 apps.erase(dft->id);
             }
@@ -215,14 +215,14 @@ private:
         printf("Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
 
         choice = dmenu->read_choice(); // Blocks
-        if(!choice.size())
+        if(choice.empty())
             return "";
 
         fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
         std::tie(app, args) = apps.find(choice);
 
-        if(app->path.size())
+        if(!app->path.empty())
             chdir(app->path.c_str());
 
         ApplicationRunner app_runner(terminal, *app, args);
