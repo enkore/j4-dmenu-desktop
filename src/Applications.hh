@@ -15,7 +15,7 @@ public:
         }
     }
 
-    std::pair<Application *, std::string> find(const std::string &choice) {
+    std::pair<Application *, std::string> search(const std::string &choice) {
         Application *app = 0;
         std::string args;
         size_t match_length = 0;

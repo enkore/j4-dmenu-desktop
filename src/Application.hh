@@ -65,6 +65,9 @@ public:
     // file id
     std::string id;
 
+    // usage count (see --usage-log option)
+    unsigned usage_count = 0;
+
     bool read(const char *filename, char **linep, size_t *linesz) {
         using namespace ApplicationHelpers;
 
