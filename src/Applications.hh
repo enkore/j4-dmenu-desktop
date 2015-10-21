@@ -63,14 +63,14 @@ public:
         }
 
         unsigned count;
-        char *name;
-        while(fscanf(fp, "%u,%m[^\n]\n", &count, &name) == 2) {
+        char *name = new char[256];
+        while(fscanf(fp, "%u,%255[^\n]\n", &count, name) == 2) {
             const_iterator it = find(name);
-            free(name);
             if(it == end())
                 continue;
             it->second->usage_count = count;
         }
+        delete[] name;
 
         fclose(fp);
     }
