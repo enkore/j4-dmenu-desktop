@@ -51,10 +51,15 @@ Options:
     --dmenu=<command>
         Determines the command used to invoke dmenu
         Executed with your shell ($SHELL) or /bin/sh
+    --use-xdg-de
+        Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment
     --display-binary
         Display binary name after each entry (off by default)
     --term=<command>
         Sets the terminal emulator used to start terminal apps
+    --usage-log=<file>
+        Must point to a read-writeable file (will create if not exists).
+        In this mode entries are sorted by usage frequency.
     --help
         Display this help message
 
@@ -72,7 +77,6 @@ Add the `-i` option to the dmenu command
     i3-dmenu-desktop --dmenu="cat"  0.37s user 0.02s system 96% cpu 0.404 total
     % time ./j4-dmenu-desktop --dmenu=cat
     ./j4-dmenu-desktop --dmenu=cat  0.01s user 0.01s system 107% cpu 0.015 total
-
 
 More than 25 times faster :)
 
