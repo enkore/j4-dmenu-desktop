@@ -18,7 +18,6 @@
 #include "SearchPath.hh"
 #include "FileFinder.hh"
 #include "Formatters.hh"
-#include "UsageLog.hh"
 
 
 class Main
@@ -66,7 +65,7 @@ public:
         });
 
         if(usage_log) {
-            usage_log->load();
+            apps.load_log(usage_log);
             std::stable_sort(iteration_order.begin(), iteration_order.end(), [](
                 const std::pair<std::string, const Application *> &s1,
                 const std::pair<std::string, const Application *> &s2) {
@@ -162,7 +161,7 @@ private:
                 formatter = format_type::with_binary_name;
                 break;
             case 'l':
-                usage_log = new UsageLog(optarg, apps);
+                usage_log = optarg;
                 break;
             default:
                 exit(1);
@@ -236,8 +235,7 @@ private:
         std::tie(app, args) = apps.search(choice);
 
         if(usage_log) {
-            usage_log->update(app);
-            delete usage_log;
+            apps.update_log(usage_log, app);
         }
 
         if(!app->path.empty())
@@ -268,6 +266,6 @@ private:
 
     application_formatter appformatter;
 
-    UsageLog *usage_log = 0;
+    const char *usage_log = 0;
 };
 
