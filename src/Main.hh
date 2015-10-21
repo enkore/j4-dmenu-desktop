@@ -58,21 +58,21 @@ public:
             iteration_order.emplace_back(app.first, app.second);
         }
 
-	std::locale locale("");
-	std::sort(iteration_order.begin(), iteration_order.end(), [locale](
-	    const std::pair<std::string, const Application *> &s1,
-	    const std::pair<std::string, const Application *> &s2) {
-	        return locale(s1.second->name, s2.second->name);
-	});
+        std::locale locale("");
+        std::sort(iteration_order.begin(), iteration_order.end(), [locale](
+            const std::pair<std::string, const Application *> &s1,
+            const std::pair<std::string, const Application *> &s2) {
+                return locale(s1.second->name, s2.second->name);
+        });
 
-	if(usage_log) {
-	    usage_log->load();
-	    std::stable_sort(iteration_order.begin(), iteration_order.end(), [](
+        if(usage_log) {
+            usage_log->load();
+            std::stable_sort(iteration_order.begin(), iteration_order.end(), [](
                 const std::pair<std::string, const Application *> &s1,
-	        const std::pair<std::string, const Application *> &s2) {
-	            return s1.second->usage_count > s2.second->usage_count;
-	    });
-	}
+                const std::pair<std::string, const Application *> &s2) {
+                    return s1.second->usage_count > s2.second->usage_count;
+            });
+        }
 
         // Transfer the list to dmenu
         for(auto &app : iteration_order) {
@@ -118,9 +118,9 @@ private:
                 "\tDisplay binary name after each entry (off by default)\n"
                 "    --term=<command>\n"
                 "\tSets the terminal emulator used to start terminal apps\n"
-		"    --usage-log=<file>\n"
-		"\tMust point to a read-writeable file (will create if not exists).\n"
-		"\tIn this mode entries are sorted by usage frequency.\n"
+                "    --usage-log=<file>\n"
+                "\tMust point to a read-writeable file (will create if not exists).\n"
+                "\tIn this mode entries are sorted by usage frequency.\n"
                 "    --help\n"
                 "\tDisplay this help message\n"
                );
@@ -137,7 +137,7 @@ private:
                 {"term",    required_argument,  0,  't'},
                 {"help",    no_argument,        0,  'h'},
                 {"display-binary", no_argument, 0,  'b'},
-		{"usage-log", required_argument,0,  'l'},
+                {"usage-log", required_argument,0,  'l'},
                 {0,         0,                  0,  0}
             };
 
@@ -161,9 +161,9 @@ private:
             case 'b':
                 formatter = format_type::with_binary_name;
                 break;
-	    case 'l':
-		usage_log = new UsageLog(optarg, apps);
-		break;
+            case 'l':
+                usage_log = new UsageLog(optarg, apps);
+                break;
             default:
                 exit(1);
             }
@@ -235,10 +235,10 @@ private:
 
         std::tie(app, args) = apps.search(choice);
 
-	if(usage_log) {
-	    usage_log->update(app);
-	    delete usage_log;
-	}
+        if(usage_log) {
+            usage_log->update(app);
+            delete usage_log;
+        }
 
         if(!app->path.empty())
             chdir(app->path.c_str());
