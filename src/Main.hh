@@ -77,7 +77,7 @@ public:
         for(auto &app : iteration_order) {
             this->dmenu->write(app.second->name);
             const std::string &generic_name = app.second->generic_name;
-            if(!generic_name.empty() && app.second->name != generic_name)
+            if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
                 this->dmenu->write(generic_name);
         }
 
@@ -115,6 +115,8 @@ private:
                 "\tEnables reading $XDG_CURRENT_DESKTOP to determine the desktop environment\n"
                 "    --display-binary\n"
                 "\tDisplay binary name after each entry (off by default)\n"
+                "    --no-generic\n"
+                "\tDo not include the generic name of desktop entries\n"
                 "    --term=<command>\n"
                 "\tSets the terminal emulator used to start terminal apps\n"
                 "    --usage-log=<file>\n"
@@ -136,6 +138,7 @@ private:
                 {"term",    required_argument,  0,  't'},
                 {"help",    no_argument,        0,  'h'},
                 {"display-binary", no_argument, 0,  'b'},
+                {"no-generic", no_argument,     0,  'n'},
                 {"usage-log", required_argument,0,  'l'},
                 {0,         0,                  0,  0}
             };
@@ -160,6 +163,8 @@ private:
             case 'b':
                 formatter = format_type::with_binary_name;
                 break;
+            case 'n':
+                exclude_generic = true;
             case 'l':
                 usage_log = optarg;
                 break;
@@ -251,6 +256,7 @@ private:
 
     stringlist_t environment;
     bool use_xdg_de = false;
+    bool exclude_generic = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;

@@ -55,6 +55,8 @@ Options:
         Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment
     --display-binary
         Display binary name after each entry (off by default)
+    --no-generic
+        Do not include the generic name of desktop entries
     --term=<command>
         Sets the terminal emulator used to start terminal apps
     --usage-log=<file>
