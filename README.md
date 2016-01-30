@@ -66,11 +66,23 @@ Options:
         Display this help message
 
 
-## FAQ
+## FAQ / RAQ / RMR
 
 ### Case insensitivity?
 
 Add the `-i` option to the dmenu command
+
+### I want it to display normal binaries, too, yes?
+
+You can put this in a script file and use it instead of calling j4dd directly:
+
+    j4-dmenu-desktop --dmenu="(cat ; (stest -flx $(echo $PATH | tr : ' ') | sort -u)) | dmenu"
+
+Exchanging the `cat` and `(stest ... sort -u)` parts will swap the two parts (j4dd's output and the list of binaries).
+
+### Get the output into a pipe / launching a program by arbitrary user input
+
+[GOTO](https://github.com/enkore/j4-dmenu-desktop/issues/39#issuecomment-177164865)
 
 ### How much faster is it?
 
