@@ -50,3 +50,7 @@ r2.13 released 2015-06-22
 	+ GenericName fields are added to the menu, too
 	+ Added manpage j4-dmenu-desktop(1)
 	+ Menu is now sorted by names
+
+r2.14 released 2016-03-31
+	+ Added --usage-log feature to sort by usage frequency
+	+ Added --no-generic option to exclude GenericName fields
