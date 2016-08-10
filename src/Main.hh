@@ -57,7 +57,7 @@ public:
             iteration_order.emplace_back(app.first, app.second);
         }
 
-        std::locale locale("");
+        std::locale locale(suffixes.locale);
         std::sort(iteration_order.begin(), iteration_order.end(), [locale](
             const std::pair<std::string, const Application *> &s1,
             const std::pair<std::string, const Application *> &s2) {
