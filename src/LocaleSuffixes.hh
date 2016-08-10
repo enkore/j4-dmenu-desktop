@@ -18,6 +18,7 @@
 #ifndef LOCALE_DEF
 #define LOCALE_DEF
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <string>
@@ -26,11 +27,12 @@
 class LocaleSuffixes
 {
 public:
-    LocaleSuffixes() {
-        generate(locale());
+    LocaleSuffixes() : locale(set_locale()) {
+        //locale = set_locale();
+        generate(locale);
     }
-    LocaleSuffixes(const std::string &force_locale) {
-        generate(force_locale);
+    LocaleSuffixes(const std::string &force_locale) : locale(force_locale){
+        generate(locale);
     }
 
     ~LocaleSuffixes() {
@@ -42,9 +44,23 @@ public:
 
     char **suffixes;
     int count;
+
+    std::string locale;
+
+
 private:
-    std::string locale() {
-        return setlocale(LC_MESSAGES, "");
+    std::string set_locale() {
+        char *user_locale = setlocale(LC_MESSAGES, "");
+        if(!user_locale) {
+            fprintf(stderr, "Locale configuration invalid, check locale(1).\n"
+                            "No translated menu entries will be available.\n");
+            user_locale = setlocale(LC_MESSAGES, "C");
+            if(!user_locale) {
+                fprintf(stderr, "POSIX/C locale is not available, setlocale(3) failed. Bailing.\n");
+                abort();
+            }
+        }
+        return user_locale;
     }
 
     void generate(std::string locale) {
