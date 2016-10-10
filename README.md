@@ -38,6 +38,13 @@ The package is provided by the `gentoo-el` overlay. You can install it with the 
     layman -a gentoo-el
     echo "=x11-misc/j4-dmenu-desktop-9999 **" >> /etc/portage/package.accept_keywords
     emerge x11-misc/j4-dmenu-desktop
+    
+### Ubuntu
+
+The package is now in the apt repository. You can install it via
+
+    sudo apt-get install j4-dmenu-desktop
+   
 
 ## Invocation
 
