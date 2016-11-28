@@ -125,7 +125,7 @@ private:
                 "    --term=<command>\n"
                 "\tSets the terminal emulator used to start terminal apps\n"
                 "    --no-templates\n"
-                "\tRemove entry from QubesOS templates.\n"
+                "\tExclude desktop entries from QubesOS templates.\n"
                 "    --usage-log=<file>\n"
                 "\tMust point to a read-writeable file (will create if not exists).\n"
                 "\tIn this mode entries are sorted by usage frequency.\n"
