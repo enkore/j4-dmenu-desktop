@@ -101,3 +101,8 @@ Exchanging the `cat` and `(stest ... sort -u)` parts will swap the two parts (j4
 
 More than 25 times faster :)
 
+### Exemple of i3 config for qubesOS
+
+bindsym $mod+d exec $nsi ~/.i3/j4-dmenu-desktop --no-templates
+bindsym $mod+Shift+d exec $nsi ~/.i3/j4-dmenu-desktop
+
