@@ -75,10 +75,17 @@ public:
 
         // Transfer the list to dmenu
         for(auto &app : iteration_order) {
+
+            //declare templates name to ignore
+            const std::string &td = "debian-";
+            const std::string &tf = "fedora-2";
+            const std::string &tt = "template";
+            
+            //exclude template from list if option enable
+	    if(exclude_templates && (app.second->name.find(td) != std::string::npos || app.second->name.find(tf) != std::string::npos || app.second->name.find(tt) != std::string::npos))
+                continue;
+
             this->dmenu->write(app.second->name);
-            const std::string &generic_name = app.second->generic_name;
-            if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
-                this->dmenu->write(generic_name);
         }
 
         this->dmenu->display();
@@ -115,10 +122,10 @@ private:
                 "\tEnables reading $XDG_CURRENT_DESKTOP to determine the desktop environment\n"
                 "    --display-binary\n"
                 "\tDisplay binary name after each entry (off by default)\n"
-                "    --no-generic\n"
-                "\tDo not include the generic name of desktop entries\n"
                 "    --term=<command>\n"
                 "\tSets the terminal emulator used to start terminal apps\n"
+                "    --no-templates\n"
+                "\tRemove entry from QubesOS templates.\n"
                 "    --usage-log=<file>\n"
                 "\tMust point to a read-writeable file (will create if not exists).\n"
                 "\tIn this mode entries are sorted by usage frequency.\n"
@@ -138,7 +145,7 @@ private:
                 {"term",    required_argument,  0,  't'},
                 {"help",    no_argument,        0,  'h'},
                 {"display-binary", no_argument, 0,  'b'},
-                {"no-generic", no_argument,     0,  'n'},
+                {"no-templates", no_argument,     0,  'q'},
                 {"usage-log", required_argument,0,  'l'},
                 {0,         0,                  0,  0}
             };
@@ -163,8 +170,8 @@ private:
             case 'b':
                 formatter = format_type::with_binary_name;
                 break;
-            case 'n':
-                exclude_generic = true;
+            case 'q':
+                exclude_templates = true;
             case 'l':
                 usage_log = optarg;
                 break;
@@ -256,7 +263,7 @@ private:
 
     stringlist_t environment;
     bool use_xdg_de = false;
-    bool exclude_generic = false;
+    bool exclude_templates = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;
