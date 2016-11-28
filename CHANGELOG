@@ -58,4 +58,3 @@ r2.14 released 2016-03-31
 r2.14-2 released 2016-11-28
 	+ Removed --no-generic
 	* Added --no-templates options to exclude desktops entries from qubes templates
-	+ Added --no-generic option to exclude GenericName fields
