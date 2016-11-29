@@ -73,9 +73,18 @@ public:
             });
         }
 
+	//exclude patterns, fill a array
+        std::list<string> patterns;
+        stringlist_t patterns;
+	split(this->exclude, ',', patterns);
+
         // Transfer the list to dmenu
         for(auto &app : iteration_order) {
-            this->dmenu->write(app.second->name);
+            std::list<string>::const_iterator iterator;
+            for(iterator = patterns.begin(); iterator != patterns.end(); ++iterator) {
+               if(app.second->name.find(*iterator) != std::string::npos)
+                   this->dmenu->write(app.second->name);
+            }
             const std::string &generic_name = app.second->generic_name;
             if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
                 this->dmenu->write(generic_name);
@@ -115,6 +124,8 @@ private:
                 "\tEnables reading $XDG_CURRENT_DESKTOP to determine the desktop environment\n"
                 "    --display-binary\n"
                 "\tDisplay binary name after each entry (off by default)\n"
+                "    --exclude [--exclude=\"template,debian-\"]\n"
+                "\tExclude some patterns.\n"
                 "    --no-generic\n"
                 "\tDo not include the generic name of desktop entries\n"
                 "    --term=<command>\n"
@@ -139,11 +150,12 @@ private:
                 {"help",    no_argument,        0,  'h'},
                 {"display-binary", no_argument, 0,  'b'},
                 {"no-generic", no_argument,     0,  'n'},
+                {"exclude", required_argument,  0,  'q'},
                 {"usage-log", required_argument,0,  'l'},
                 {0,         0,                  0,  0}
             };
 
-            int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
+            int c = getopt_long(argc, argv, "d:t:q:xhb", long_options, &option_index);
             if(c == -1)
                 break;
 
@@ -165,6 +177,8 @@ private:
                 break;
             case 'n':
                 exclude_generic = true;
+            case 'q':
+                this->exclude = optarg;
             case 'l':
                 usage_log = optarg;
                 break;
@@ -253,8 +267,11 @@ private:
 private:
     std::string dmenu_command;
     std::string terminal;
+    std::string exclude;
 
     stringlist_t environment;
+    stringlist_t patterns;
+
     bool use_xdg_de = false;
     bool exclude_generic = false;
 
