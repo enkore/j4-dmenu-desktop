@@ -73,21 +73,43 @@ public:
             });
         }
 
-	//exclude patterns, fill a array
-        std::list<string> patterns;
-        stringlist_t patterns;
-	split(this->exclude, ',', patterns);
-
+        //exclude patterns, fill a array
+        split(this->exclude, ',', patterns);
+        
         // Transfer the list to dmenu
         for(auto &app : iteration_order) {
-            std::list<string>::const_iterator iterator;
+	    const std::string app_name = app.second->name;
+	    const std::string app_gen_name = app.second->generic_name;
+
+	    std::string lower_app_name = app_name;
+	    std::string lower_app_gen_name = app_gen_name;
+	    std::transform(lower_app_name.begin(), lower_app_name.end(), lower_app_name.begin(), ::tolower);
+	    std::transform(lower_app_gen_name.begin(), lower_app_gen_name.end(), lower_app_gen_name.begin(), ::tolower);
+
+
+            std::list<std::string>::const_iterator iterator;
             for(iterator = patterns.begin(); iterator != patterns.end(); ++iterator) {
-               if(app.second->name.find(*iterator) != std::string::npos)
-                   this->dmenu->write(app.second->name);
+		std::string pattern = std::string(*iterator);
+		std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::tolower);
+                if(lower_app_name.find(pattern) != std::string::npos) {
+                    to_exclude = true;
+                }
+
+                if(!exclude_generic) {
+	            if(!app_gen_name.empty() && (lower_app_gen_name.find(pattern) != std::string::npos || lower_app_name != lower_app_gen_name)) {
+		        to_exclude = true;
+	            }
+                }
             }
-            const std::string &generic_name = app.second->generic_name;
-            if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
-                this->dmenu->write(generic_name);
+
+            if(!to_exclude) {
+                this->dmenu->write(app_name);
+                if(!exclude_generic && !app_gen_name.empty() && app_name != app_gen_name) {
+                    this->dmenu->write(app_gen_name);
+                }
+            }
+
+            to_exclude = false;
         }
 
         this->dmenu->display();
@@ -175,10 +197,11 @@ private:
             case 'b':
                 formatter = format_type::with_binary_name;
                 break;
-            case 'n':
-                exclude_generic = true;
             case 'q':
                 this->exclude = optarg;
+                break;
+            case 'n':
+                exclude_generic = true;
             case 'l':
                 usage_log = optarg;
                 break;
@@ -272,8 +295,9 @@ private:
     stringlist_t environment;
     stringlist_t patterns;
 
-    bool use_xdg_de = false;
     bool exclude_generic = false;
+    bool to_exclude = false;
+    bool use_xdg_de = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;
