@@ -80,26 +80,33 @@ public:
         for(auto &app : iteration_order) {
 	    const std::string app_name = app.second->name;
 	    const std::string app_gen_name = app.second->generic_name;
+            bool to_exclude = false;
 
 	    std::string lower_app_name = app_name;
 	    std::string lower_app_gen_name = app_gen_name;
 	    std::transform(lower_app_name.begin(), lower_app_name.end(), lower_app_name.begin(), ::tolower);
 	    std::transform(lower_app_gen_name.begin(), lower_app_gen_name.end(), lower_app_gen_name.begin(), ::tolower);
-
-
             std::list<std::string>::const_iterator iterator;
-            for(iterator = patterns.begin(); iterator != patterns.end(); ++iterator) {
-		std::string pattern = std::string(*iterator);
-		std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::tolower);
-                if(lower_app_name.find(pattern) != std::string::npos) {
-                    to_exclude = true;
-                }
 
-                if(!exclude_generic) {
-	            if(!app_gen_name.empty() && (lower_app_gen_name.find(pattern) != std::string::npos || lower_app_name != lower_app_gen_name)) {
-		        to_exclude = true;
-	            }
-                }
+            if(!this->exclude.empty()) {
+		    for(iterator = patterns.begin(); iterator != patterns.end(); ++iterator) {
+			std::string pattern = std::string(*iterator);
+			std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::tolower);
+			if(lower_app_name.find(pattern) != std::string::npos) {
+			    to_exclude = true;
+			}
+			if(!exclude_generic) {
+			    if(!app_gen_name.empty() && (lower_app_gen_name.find(pattern) != std::string::npos || lower_app_name != lower_app_gen_name)) {
+				to_exclude = true;
+			    }
+			}
+                     }
+            }
+
+            if(!exclude_generic) {
+	         if(!app_gen_name.empty() && lower_app_name != lower_app_gen_name) {
+	             to_exclude = true;
+	         }
             }
 
             if(!to_exclude) {
@@ -172,12 +179,12 @@ private:
                 {"help",    no_argument,        0,  'h'},
                 {"display-binary", no_argument, 0,  'b'},
                 {"no-generic", no_argument,     0,  'n'},
-                {"exclude", required_argument,  0,  'q'},
+                {"exclude", required_argument,  0,  'e'},
                 {"usage-log", required_argument,0,  'l'},
                 {0,         0,                  0,  0}
             };
 
-            int c = getopt_long(argc, argv, "d:t:q:xhb", long_options, &option_index);
+            int c = getopt_long(argc, argv, "d:t:e:xhb", long_options, &option_index);
             if(c == -1)
                 break;
 
@@ -197,7 +204,7 @@ private:
             case 'b':
                 formatter = format_type::with_binary_name;
                 break;
-            case 'q':
+            case 'e':
                 this->exclude = optarg;
                 break;
             case 'n':
@@ -296,7 +303,6 @@ private:
     stringlist_t patterns;
 
     bool exclude_generic = false;
-    bool to_exclude = false;
     bool use_xdg_de = false;
 
     Dmenu *dmenu = 0;
