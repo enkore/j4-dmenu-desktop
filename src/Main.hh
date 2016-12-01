@@ -96,27 +96,25 @@ public:
 			    to_exclude = true;
 			}
 			if(!exclude_generic) {
-			    if(!app_gen_name.empty() && (lower_app_gen_name.find(pattern) != std::string::npos || lower_app_name != lower_app_gen_name)) {
+			    if(!lower_app_gen_name.empty() && (lower_app_gen_name.find(pattern) != std::string::npos || lower_app_name != lower_app_gen_name)) {
 				to_exclude = true;
 			    }
 			}
                      }
             }
 
-            if(!exclude_generic) {
-	         if(!app_gen_name.empty() && lower_app_name != lower_app_gen_name) {
+            if(exclude_generic) {
+	         if(!lower_app_gen_name.empty() && lower_app_name != lower_app_gen_name) {
 	             to_exclude = true;
 	         }
             }
 
             if(!to_exclude) {
                 this->dmenu->write(app_name);
-                if(!exclude_generic && !app_gen_name.empty() && app_name != app_gen_name) {
+                if(!exclude_generic && !lower_app_gen_name.empty() && lower_app_name != lower_app_gen_name) {
                     this->dmenu->write(app_gen_name);
                 }
             }
-
-            to_exclude = false;
         }
 
         this->dmenu->display();
