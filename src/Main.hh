@@ -93,7 +93,7 @@ public:
 
             fprintf(stderr, "%s -i -c '%s'\n", shell, command.c_str());
 
-            return execl(shell, shell, "-i", "-c", command.c_str(), 0);
+            return execl(shell, shell, "-i", "-c", command.c_str(), 0, nullptr);
         }
         return 0;
     }
