@@ -54,3 +54,7 @@ r2.13 released 2015-06-22
 r2.14 released 2016-03-31
 	+ Added --usage-log feature to sort by usage frequency
 	+ Added --no-generic option to exclude GenericName fields
+
+r2.14-2 released 2016-11-28
+	+ Removed --no-generic
+	* Added --no-templates options to exclude desktops entries from qubes templates

@@ -62,8 +62,8 @@ Options:
         Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment
     --display-binary
         Display binary name after each entry (off by default)
-    --no-generic
-        Do not include the generic name of desktop entries
+    --no-templates
+        Do not include desktop entries from QubesOS templates (template pattern are hardcoded)
     --term=<command>
         Sets the terminal emulator used to start terminal apps
     --usage-log=<file>
@@ -100,4 +100,9 @@ Exchanging the `cat` and `(stest ... sort -u)` parts will swap the two parts (j4
     ./j4-dmenu-desktop --dmenu=cat  0.01s user 0.01s system 107% cpu 0.015 total
 
 More than 25 times faster :)
+
+### Exemple of i3 config for qubesOS
+
+bindsym $mod+d exec $nsi ~/.i3/j4-dmenu-desktop --no-templates
+bindsym $mod+Shift+d exec $nsi ~/.i3/j4-dmenu-desktop
 
