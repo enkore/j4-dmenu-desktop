@@ -9,6 +9,11 @@ and should work just fine on about any desktop environment.
 
 You can also execute shell commands using it.
 
+## Project status
+
+I consider j4-dmenu-desktop pretty much feature complete since a few years: larger new features need
+a compelling reason and a good patch.
+
 ## Build requirements
 
 * Compiler with basic C++11 support (GCC 4.77 or later required, Clang works, too)
