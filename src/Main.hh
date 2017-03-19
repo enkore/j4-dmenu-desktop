@@ -91,9 +91,9 @@ public:
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
-            fprintf(stderr, "%s -i -c '%s'\n", shell, command.c_str());
+            fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
 
-            return execl(shell, shell, "-i", "-c", command.c_str(), 0, nullptr);
+            return execl(shell, shell, "-c", command.c_str(), 0, nullptr);
         }
         return 0;
     }
