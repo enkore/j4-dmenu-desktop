@@ -57,4 +57,5 @@ r2.14 released 2016-03-31
 
 r2.15 released 2017-03-19
 	+ fixed bug where using some shells could use a lot of CPU for nothing
-	+ fixed issue with GCC 4.8 (e.g. Ubuntu 14.04)
+	+ fixed issue when locale setup is completely broken (fall back to "C" locale)
+	+ fixed build on FreeBSD
