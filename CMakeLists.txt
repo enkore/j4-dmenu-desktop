@@ -29,7 +29,8 @@ if(NOT DEFINED NO_TESTS)
   ExternalProject_Add(
     catch
     PREFIX ${CMAKE_BINARY_DIR}/catch
-    GIT_REPOSITORY https://github.com/philsquared/Catch.git
+    GIT_TAG Catch1.x
+    GIT_REPOSITORY https://github.com/catchorg/Catch2
     TIMEOUT 10
     UPDATE_COMMAND git pull
     CONFIGURE_COMMAND ""
