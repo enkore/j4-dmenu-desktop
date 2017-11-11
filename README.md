@@ -31,7 +31,7 @@ Building is the usual cmake/make thingy:
 
 The package is provided by the AUR. You can install it with an AUR helper of your choice: `j4-dmenu-desktop-git` or manually by invoking the following commands as a regular user. (to build packages from the AUR, the `base-devel` package group is assumed to be installed)
 
-    wget https://aur.archlinux.org/packages/j4/j4-dmenu-desktop-git/j4-dmenu-desktop-git.tar.gz
+    wget https://aur.archlinux.org/cgit/aur.git/snapshot/j4-dmenu-desktop-git.tar.gz
     tar xf j4-dmenu-desktop-git.tar.gz
     cd j4-dmenu-desktop-git
     makepkg -si
