@@ -59,3 +59,6 @@ r2.15 released 2017-03-19
 	+ fixed bug where using some shells could use a lot of CPU for nothing
 	+ fixed issue when locale setup is completely broken (fall back to "C" locale)
 	+ fixed build on FreeBSD
+
+r2.16 released 2018-01-11
+	+ updated CMakeLists to use Catch 1.x (instead of 2.x)
