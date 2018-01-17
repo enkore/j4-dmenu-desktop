@@ -165,6 +165,7 @@ private:
                 break;
             case 'n':
                 exclude_generic = true;
+                break;
             case 'l':
                 usage_log = optarg;
                 break;
