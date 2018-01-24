@@ -8,7 +8,7 @@ else()
   set(CXX_OPT "-std=c++11")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} ${CXX_OPT} -Wall -pedantic -Wextra -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} -Wall -Wextra -pedantic -O2")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 if(NOT DEFINED NO_TESTS)
