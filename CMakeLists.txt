@@ -23,12 +23,6 @@ if(WITH_TESTS)
   add_executable(
           j4-dmenu-tests
           src/Test.cc
-          src/TestApplication.cc
-          src/TestApplicationRunner.cc
-          src/TestSearchPath.cc
-          src/TestLocaleSuffixes.cc
-          src/TestFileFinder.cc
-          src/TestFormatters.cc
   )
   add_definitions(-DTEST_FILES="${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
 
