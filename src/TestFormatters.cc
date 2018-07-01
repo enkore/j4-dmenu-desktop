@@ -9,9 +9,6 @@
 #include "LocaleSuffixes.hh"
 #include "Formatters.hh"
 
-static const std::string test_files = TEST_FILES;
-
-
 TEST_CASE("Formatters/standard", "")
 {
     LocaleSuffixes ls("en_US");

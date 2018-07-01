@@ -57,7 +57,7 @@ public:
             iteration_order.emplace_back(app.first, app.second);
         }
 
-        std::locale locale(suffixes.locale);
+        std::locale locale(suffixes.locale.c_str());
         std::sort(iteration_order.begin(), iteration_order.end(), [locale](
             const std::pair<std::string, const Application *> &s1,
             const std::pair<std::string, const Application *> &s2) {
@@ -127,9 +127,9 @@ public:
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
-            fprintf(stderr, "%s -i -c '%s'\n", shell, command.c_str());
+            fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
 
-            return execl(shell, shell, "-i", "-c", command.c_str(), 0);
+            return execl(shell, shell, "-c", command.c_str(), 0, nullptr);
         }
         return 0;
     }
@@ -207,6 +207,7 @@ private:
                 break;
             case 'n':
                 exclude_generic = true;
+                break;
             case 'l':
                 usage_log = optarg;
                 break;

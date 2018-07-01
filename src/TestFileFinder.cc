@@ -1,11 +1,9 @@
 #include <list>
 #include <string>
-#include <vector> 
+#include <vector>
 
 #include "FileFinder.hh"
 #include "catch.hpp"
-
-static const std::string test_files = TEST_FILES;
 
 std::vector<std::string> ff2l(FileFinder &ff)
 {

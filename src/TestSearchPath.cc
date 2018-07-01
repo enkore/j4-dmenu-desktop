@@ -7,8 +7,6 @@
 #include "SearchPath.hh"
 #include "catch.hpp"
 
-static const std::string test_files = TEST_FILES;
-
 TEST_CASE("SearchPath/XDG_DATA_HOME", "Check SearchPath honors XDG_DATA_HOME")
 {
     setenv("XDG_DATA_HOME", "/usr/share", 1);
@@ -29,7 +27,7 @@ TEST_CASE("SearchPath/XDG_DATA_DIRS", "Check SearchPath honors XDG_DATA_DIRS")
 
     SearchPath sp;
     std::vector<std::string> result(sp.begin(), sp.end());
-    
+
     REQUIRE( result.size() == 2 );
     REQUIRE( result[0] == test_files + "usr/share/applications/" );
     REQUIRE( result[1] == test_files + "usr/local/share/applications/" );

@@ -1,0 +1,11 @@
+- Compile and commit CHANGELOG
+- Commit message follows the pattern "rX.Y released ISO8601DATE"
+- Tag:
+  git tag -a -m '<CHANGELOG ENTRY>' rX.Y --sign
+- Use GPG key A1774C1B37DC1DCEDB65EE469B8450B91D1362C1
+- git push --tags
+- Create GitHub release
+- Download .tar.gz
+- Compare to repo
+- gpg --detach-sign .tar.gz
+- Upload .tar.gz.sig to GitHub

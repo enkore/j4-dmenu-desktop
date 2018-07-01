@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 
 #include "Utilities.hh"
+#include "Application.hh"
 
 class ApplicationRunner
 {

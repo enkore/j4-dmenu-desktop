@@ -7,8 +7,6 @@
 #include "LocaleSuffixes.hh"
 #include "catch.hpp"
 
-static const std::string test_files = TEST_FILES;
-
 TEST_CASE("Application/invalid_file", "")
 {
     LocaleSuffixes ls("en_US");
