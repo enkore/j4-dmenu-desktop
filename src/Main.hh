@@ -73,12 +73,48 @@ public:
             });
         }
 
+        //exclude patterns, fill a array
+        split(this->exclude, ',', patterns);
+        
         // Transfer the list to dmenu
         for(auto &app : iteration_order) {
-            this->dmenu->write(app.second->name);
-            const std::string &generic_name = app.second->generic_name;
-            if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
-                this->dmenu->write(generic_name);
+	    const std::string app_name = app.second->name;
+	    const std::string app_gen_name = app.second->generic_name;
+            bool to_exclude = false;
+
+	    std::string lower_app_name = app_name;
+	    std::string lower_app_gen_name = app_gen_name;
+	    std::transform(lower_app_name.begin(), lower_app_name.end(), lower_app_name.begin(), ::tolower);
+	    std::transform(lower_app_gen_name.begin(), lower_app_gen_name.end(), lower_app_gen_name.begin(), ::tolower);
+            std::list<std::string>::const_iterator iterator;
+
+            if(!this->exclude.empty()) {
+		    for(iterator = patterns.begin(); iterator != patterns.end(); ++iterator) {
+			std::string pattern = std::string(*iterator);
+			std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::tolower);
+			if(lower_app_name.find(pattern) != std::string::npos) {
+			    to_exclude = true;
+			}
+			if(!exclude_generic) {
+			    if(!lower_app_gen_name.empty() && (lower_app_gen_name.find(pattern) != std::string::npos || lower_app_name != lower_app_gen_name)) {
+				to_exclude = true;
+			    }
+			}
+                     }
+            }
+
+            if(exclude_generic) {
+	         if(!lower_app_gen_name.empty() && lower_app_name != lower_app_gen_name) {
+	             to_exclude = true;
+	         }
+            }
+
+            if(!to_exclude) {
+                this->dmenu->write(app_name);
+                if(!exclude_generic && !lower_app_gen_name.empty() && lower_app_name != lower_app_gen_name) {
+                    this->dmenu->write(app_gen_name);
+                }
+            }
         }
 
         this->dmenu->display();
@@ -115,6 +151,8 @@ private:
                 "\tEnables reading $XDG_CURRENT_DESKTOP to determine the desktop environment\n"
                 "    --display-binary\n"
                 "\tDisplay binary name after each entry (off by default)\n"
+                "    --exclude [--exclude=\"template,debian-\"]\n"
+                "\tExclude some patterns.\n"
                 "    --no-generic\n"
                 "\tDo not include the generic name of desktop entries\n"
                 "    --term=<command>\n"
@@ -139,11 +177,12 @@ private:
                 {"help",    no_argument,        0,  'h'},
                 {"display-binary", no_argument, 0,  'b'},
                 {"no-generic", no_argument,     0,  'n'},
+                {"exclude", required_argument,  0,  'e'},
                 {"usage-log", required_argument,0,  'l'},
                 {0,         0,                  0,  0}
             };
 
-            int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
+            int c = getopt_long(argc, argv, "d:t:e:xhb", long_options, &option_index);
             if(c == -1)
                 break;
 
@@ -162,6 +201,9 @@ private:
                 return true;
             case 'b':
                 formatter = format_type::with_binary_name;
+                break;
+            case 'e':
+                this->exclude = optarg;
                 break;
             case 'n':
                 exclude_generic = true;
@@ -254,10 +296,13 @@ private:
 private:
     std::string dmenu_command;
     std::string terminal;
+    std::string exclude;
 
     stringlist_t environment;
-    bool use_xdg_de = false;
+    stringlist_t patterns;
+
     bool exclude_generic = false;
+    bool use_xdg_de = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;
