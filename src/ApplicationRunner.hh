@@ -60,7 +60,6 @@ public:
 
             fprintf(script, "#!/bin/sh\n");
             fprintf(script, "rm %s\n", scriptname);
-            fprintf(script, "echo -n \"\\033]2;%s\\007\"\n", name.c_str());
             fprintf(script, "echo -ne \"\\033]2;%s\\007\"\n", name.c_str());
             fprintf(script, "exec %s", exec.c_str());
 
