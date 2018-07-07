@@ -49,7 +49,12 @@ The package is provided by the `gentoo-el` overlay. You can install it with the 
 The package is now in the apt repository. You can install it via
 
     sudo apt-get install j4-dmenu-desktop
-   
+
+### Debian
+
+j4-dmenu-desktop is in Debian stable:
+
+    sudo apt install j4-dmenu-desktop
 
 ## Invocation
 
