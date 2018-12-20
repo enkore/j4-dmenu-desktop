@@ -7,8 +7,10 @@
 #include <algorithm>
 #include <locale>
 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 #include "Utilities.hh"
 #include "Dmenu.hh"
@@ -46,7 +48,9 @@ public:
             fprintf(stderr, "%s\n", s.c_str());
 #endif
 
-        this->dmenu = new Dmenu(this->dmenu_command);
+        if(!wait_on) {
+            this->dmenu = new Dmenu(this->dmenu_command);
+        }
 
         collect_files();
 
@@ -73,29 +77,11 @@ public:
             });
         }
 
-        // Transfer the list to dmenu
-        for(auto &app : iteration_order) {
-            this->dmenu->write(app.second->name);
-            const std::string &generic_name = app.second->generic_name;
-            if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
-                this->dmenu->write(generic_name);
+        if(wait_on) {
+            return do_wait_on(iteration_order);
+        } else {
+            return do_dmenu(iteration_order);
         }
-
-        this->dmenu->display();
-
-        std::string command = get_command();
-        delete this->dmenu;
-
-        if(!command.empty()) {
-            static const char *shell = 0;
-            if((shell = getenv("SHELL")) == 0)
-                shell = "/bin/sh";
-
-            fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
-
-            return execl(shell, shell, "-c", command.c_str(), 0, nullptr);
-        }
-        return 0;
     }
 
 private:
@@ -122,6 +108,12 @@ private:
                 "    --usage-log=<file>\n"
                 "\tMust point to a read-writeable file (will create if not exists).\n"
                 "\tIn this mode entries are sorted by usage frequency.\n"
+                "    --wait-on=<path>\n"
+                "\tMust point to a path where a file can be created.\n"
+                "\tIn this mode no menu will be shown. Instead the program waits for <path>\n"
+                "\tto be written to (use echo > path). Every time this happens a menu will be shown.\n"
+                "\tDesktop files are parsed ahead of time.\n"
+                "\tPerfoming 'echo -n q > path' will exit the program.\n"
                 "    --help\n"
                 "\tDisplay this help message\n"
                );
@@ -140,6 +132,7 @@ private:
                 {"display-binary", no_argument, 0,  'b'},
                 {"no-generic", no_argument,     0,  'n'},
                 {"usage-log", required_argument,0,  'l'},
+                {"wait-on", required_argument,  0,  'w'},
                 {0,         0,                  0,  0}
             };
 
@@ -168,6 +161,9 @@ private:
                 break;
             case 'l':
                 usage_log = optarg;
+                break;
+            case 'w':
+                wait_on = optarg;
                 break;
             default:
                 exit(1);
@@ -225,6 +221,73 @@ private:
         parsed_files++;
     }
 
+    int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order) {
+        if(wait_on) {
+            this->dmenu = new Dmenu(this->dmenu_command);
+        }
+
+        // Transfer the list to dmenu
+        for(auto &app : iteration_order) {
+            this->dmenu->write(app.second->name);
+            const std::string &generic_name = app.second->generic_name;
+            if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
+                this->dmenu->write(generic_name);
+        }
+
+        this->dmenu->display();
+
+        std::string command = get_command();
+        delete this->dmenu;
+
+        if(!command.empty()) {
+            static const char *shell = 0;
+            if((shell = getenv("SHELL")) == 0)
+                shell = "/bin/sh";
+
+            fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
+
+            return execl(shell, shell, "-c", command.c_str(), 0, nullptr);
+        }
+        return 0;
+    }
+
+    int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &iteration_order) {
+        int fd;
+        pid_t pid;
+        char data;
+        int child_status; /* dnc */
+        if(mkfifo(wait_on, 0600) && errno != EEXIST) {
+            perror("mkfifo");
+            return 1;
+        }
+        fd = open(wait_on, O_RDWR);
+        if(fd == -1) {
+            perror("open(fifo)");
+            return 1;
+        }
+        while (1) {
+            if(read(fd, &data, sizeof(data)) < 1) {
+                perror("read(fifo)");
+                break;
+            }
+            if(data == 'q') {
+                break;
+            }
+            pid = fork();
+            switch(pid) {
+            case -1:
+                perror("fork");
+                return 1;
+            case 0:
+                close(fd);
+                return do_dmenu(iteration_order);
+            }
+            waitpid(pid, &child_status, 0);
+        }
+        close(fd);
+        return 0;
+    }
+
     std::string get_command() {
         std::string choice;
         std::string args;
@@ -254,6 +317,7 @@ private:
 private:
     std::string dmenu_command;
     std::string terminal;
+    const char *wait_on = 0;
 
     stringlist_t environment;
     bool use_xdg_de = false;
