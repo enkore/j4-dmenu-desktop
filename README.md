@@ -79,6 +79,12 @@ Options:
     --usage-log=<file>
         Must point to a read-writeable file (will create if not exists).
         In this mode entries are sorted by usage frequency.
+    --wait-on=<path>
+        Must point to a path where a file can be created.
+        In this mode no menu will be shown. Instead the program waits for <path>
+        to be written to (use echo > path). Every time this happens a menu will be shown.
+        Desktop files are parsed ahead of time.
+        Perfoming 'echo -n q > path' will exit the program.
     --help
         Display this help message
 
