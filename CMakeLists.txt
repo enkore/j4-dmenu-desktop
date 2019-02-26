@@ -11,7 +11,8 @@ else()
   set(CXX_OPT "-std=c++11")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} -Wall -Wextra -pedantic -O2")
+# _WITH_GETLINE for FreeBSD
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} -Wall -Wextra -pedantic -O2 -D_WITH_GETLINE")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 if(WITH_TESTS)
