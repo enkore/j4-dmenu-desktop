@@ -29,10 +29,16 @@ Building is the usual cmake/make thingy:
 
 ### Archlinux
 
-The package is provided by the AUR. You can install it with an AUR helper of your choice: `j4-dmenu-desktop-git` or manually by invoking the following commands as a regular user. (to build packages from the AUR, the `base-devel` package group is assumed to be installed)
+The package is provided by the AUR. You can install it with an AUR helper of your choice: `j4-dmenu-desktop-git` or `j4-dmenu-desktop`. Else, you may install it manually by invoking the following commands as a regular user. (to build packages from the AUR, the `base-devel` package group is assumed to be installed)
 
     git clone https://aur.archlinux.org/j4-dmenu-desktop.git    
     cd j4-dmenu-desktop
+    makepkg -si
+
+or for the latest:
+
+    git clone https://aur.archlinux.org/j4-dmenu-desktop-git.git
+    cd j4-dmenu-desktop-git
     makepkg -si
 
 ### FreeBSD
