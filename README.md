@@ -49,7 +49,12 @@ j4-dmenu-desktop is now available in the FreeBSD Ports Collection. A prebuilt pa
 
 ### Gentoo
 
-The package is provided by the `gentoo-el` overlay. You can install it with the following commands as root. (you need to have `layman` installed and configured)
+j4-dmenu-desktop is available in Portage for the `amd64` and `x86` architectures. You can install it via
+
+    echo "x11-misc/j4-dmenu-desktop ~amd64 ~x86" >> /etc/portage/package.accept_keywords
+    emerge --ask x11-misc/j4-dmenu-desktop
+
+The package is also provided by the `gentoo-el` overlay. You can install it with the following commands as root. (you need to have `layman` installed and configured)
 
     layman -a gentoo-el
     echo "=x11-misc/j4-dmenu-desktop-9999 **" >> /etc/portage/package.accept_keywords
