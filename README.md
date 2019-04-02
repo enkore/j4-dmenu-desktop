@@ -12,7 +12,7 @@ You can also execute shell commands using it.
 ## Project status
 
 I consider j4-dmenu-desktop pretty much feature complete since a few years: larger new features need
-a compelling reason and a good patch.
+a compelling reason and a good patch. Preferably discuss it before putting more work into it.
 
 ## Build requirements
 
