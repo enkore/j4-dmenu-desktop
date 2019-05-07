@@ -104,6 +104,10 @@ Options:
     --help
         Display this help message
 
+Environment variables
+
+- $SHELL is respected, and if absent /bin/sh is used
+- XDG-spec variables (XDG_CURRENT_DESKTOP, XDG_DATA_HOME, HOME) are respected
 
 ## FAQ / RAQ / RMR
 
