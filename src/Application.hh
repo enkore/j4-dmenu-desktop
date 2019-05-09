@@ -59,6 +59,9 @@ public:
     // Path
     std::string path;
 
+    // Path of .desktop file
+    std::string location;
+
     // Terminal app
     bool terminal = false;
 
