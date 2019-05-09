@@ -116,7 +116,7 @@ private:
         // The localized name of the application
         replace(exec, "%c", "\"" + quote(this->app.name) + "\"");
 
-        replace(exec, "%k", "");
+        replace(exec, "%k", this->app.location);
         replace(exec, "%i", "");
 
         replace(exec, "%%", "%");

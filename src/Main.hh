@@ -192,7 +192,7 @@ private:
             chdir(path.c_str());
             FileFinder finder("./", ".desktop");
             while(finder++) {
-                handle_file(*finder);
+                handle_file(*finder, path);
             }
         }
 
@@ -201,10 +201,11 @@ private:
         chdir(original_wd);
     }
 
-    void handle_file(const std::string &file) {
+    void handle_file(const std::string &file, const std::string &base_path) {
         Application *dft = new Application(suffixes, use_xdg_de ? &environment : 0);
         bool file_read = dft->read(file.c_str(), &buf, &bufsz);
         dft->name = this->appformatter(*dft);
+        dft->location = base_path + file;
 
         if(file_read && !dft->name.empty()) {
             if(apps.count(dft->id)) {
