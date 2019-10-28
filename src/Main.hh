@@ -133,6 +133,7 @@ private:
                 {"no-generic", no_argument,     0,  'n'},
                 {"usage-log", required_argument,0,  'l'},
                 {"wait-on", required_argument,  0,  'w'},
+                {"prefix", required_argument,   0,  'p'},
                 {0,         0,                  0,  0}
             };
 
@@ -165,6 +166,9 @@ private:
             case 'w':
                 wait_on = optarg;
                 break;
+			case 'p':
+				this->prefix = optarg;
+				break;
             default:
                 exit(1);
             }
@@ -237,7 +241,7 @@ private:
 
         this->dmenu->display();
 
-        std::string command = get_command();
+        std::string command = this->prefix+" "+get_command();
         delete this->dmenu;
 
         if(!command.empty()) {
@@ -318,6 +322,7 @@ private:
 private:
     std::string dmenu_command;
     std::string terminal;
+	std::string prefix;
     const char *wait_on = 0;
 
     stringlist_t environment;
