@@ -108,6 +108,8 @@ private:
                 "    --usage-log=<file>\n"
                 "\tMust point to a read-writeable file (will create if not exists).\n"
                 "\tIn this mode entries are sorted by usage frequency.\n"
+				"    --wrapper=<wrapper>\n"
+				"\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
                 "    --wait-on=<path>\n"
                 "\tMust point to a path where a file can be created.\n"
                 "\tIn this mode no menu will be shown. Instead the program waits for <path>\n"
@@ -136,7 +138,7 @@ private:
                 {"usage-log", required_argument,0,  'l'},
                 {"wait-on", required_argument,  0,  'w'},
                 {"no-exec", no_argument,        0,  'e'},
-                {"prefix", required_argument,   0,  'p'},
+                {"wrapper", required_argument,   0,  'W'},
                 {0,         0,                  0,  0}
             };
 
@@ -172,8 +174,8 @@ private:
             case 'e':
                 no_exec = true;
                 break;
-            case 'p':
-                this->prefix = optarg;
+            case 'W':
+                this->wrapper = optarg;
                 break;
             default:
                 exit(1);
@@ -253,8 +255,9 @@ private:
         }
 
         this->dmenu->display();
-
-        std::string command = this->prefix+" "+get_command();
+        std::string command = get_command();
+        if (this->wrapper.length())
+            command = this->wrapper+" \""+command+"\"";
         delete this->dmenu;
 
         if(!command.empty()) {
@@ -344,7 +347,7 @@ private:
 private:
     std::string dmenu_command;
     std::string terminal;
-	std::string prefix;
+	std::string wrapper;
     const char *wait_on = 0;
 
     stringlist_t environment;

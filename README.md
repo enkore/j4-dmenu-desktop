@@ -98,9 +98,8 @@ Options:
         Display binary name after each entry (off by default)
     --no-generic
         Do not include the generic name of desktop entries
-    --prefix=<prefix>
-		Provide a prefix for the command to run.
-		Useful in case you want 'i3 exec'
+	--wrapper=<wrapper>
+		A wrapper binary. Useful in case you want to wrap into 'i3 exec'
     --term=<command>
         Sets the terminal emulator used to start terminal apps
     --usage-log=<file>
