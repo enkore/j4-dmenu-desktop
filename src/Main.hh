@@ -242,8 +242,9 @@ private:
         }
 
         this->dmenu->display();
-
-        std::string command = this->wrapper+" \""+get_command()+"\"";
+        std::string command = get_command();
+        if (this->wrapper.length())
+            command = this->wrapper+" \""+get_command()+"\"";
         delete this->dmenu;
 
         if(!command.empty()) {
