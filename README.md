@@ -72,6 +72,14 @@ j4-dmenu-desktop is in Debian stable:
 
     sudo apt install j4-dmenu-desktop
 
+### Nix / NixOS
+
+j4-dmenu-desktop is in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/j4-dmenu-desktop/default.nix):
+
+    nix-env --install j4-dmenu-desktop
+    # Or use pkgs attribute of the same name in NixOS configuration 
+
+
 ## Invocation
 
 Usage:
