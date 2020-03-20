@@ -256,7 +256,6 @@ private:
         int fd;
         pid_t pid;
         char data;
-        int child_status; /* dnc */
         if(mkfifo(wait_on, 0600) && errno != EEXIST) {
             perror("mkfifo");
             return 1;
@@ -281,9 +280,9 @@ private:
                 return 1;
             case 0:
                 close(fd);
+                setsid();
                 return do_dmenu(iteration_order);
             }
-            waitpid(pid, &child_status, 0);
         }
         close(fd);
         return 0;
