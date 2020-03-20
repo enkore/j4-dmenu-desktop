@@ -94,8 +94,11 @@ public:
         if(!file) {
             char *pwd = new char[100];
             int error = errno;
-            getcwd(pwd, 100);
-            fprintf(stderr, "%s/%s: %s\n", pwd, filename, strerror(error));
+            if(!getcwd(pwd, 100)) {
+                perror("read getcwd for error");
+            } else {
+                fprintf(stderr, "%s/%s: %s\n", pwd, filename, strerror(error));
+            }
             delete[] pwd;
             return false;
         }

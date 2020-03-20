@@ -7,6 +7,26 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
+
+static
+int write_proper(const int fd, const char *buf, size_t size) {
+    while(size) {
+        ssize_t written = write(fd, buf, size);
+        if(written == -1) {
+            if((errno == EINTR) || (errno == EWOULDBLOCK) || (errno == EAGAIN)) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        buf += written;
+        size -= written;
+    }
+
+    return size ? -1 : 0;
+}
+
 class Dmenu
 {
 public:
@@ -16,8 +36,8 @@ public:
     }
 
     void write(const std::string &what) {
-        ::write(this->outpipe[1], what.c_str(), what.size());
-        ::write(this->outpipe[1], "\n", 1);
+        write_proper(this->outpipe[1], what.c_str(), what.size());
+        write_proper(this->outpipe[1], "\n", 1);
     }
 
     void display() {

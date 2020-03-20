@@ -181,7 +181,9 @@ private:
         // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
         // directories
         char original_wd[384];
-        getcwd(original_wd, 384);
+        if(!getcwd(original_wd, 384)) {
+            pfatale("collect_files: getcwd");
+        }
 
         // Allocating the line buffer just once saves lots of MM calls
         // malloc required to avoid mixing malloc/new[] as getdelim may realloc() buf
@@ -189,7 +191,10 @@ private:
         buf[0] = 0;
 
         for(auto &path : this->search_path) {
-            chdir(path.c_str());
+            if(chdir(path.c_str())) {
+                fprintf(stderr, "%s: %s", path.c_str(), strerror(errno));
+                continue;
+            }
             FileFinder finder("./", ".desktop");
             while(finder++) {
                 handle_file(*finder, path);
@@ -198,7 +203,9 @@ private:
 
         free(buf);
 
-        chdir(original_wd);
+        if(chdir(original_wd)) {
+            pfatale("collect_files: chdir(original_cwd)");
+        }
     }
 
     void handle_file(const std::string &file, const std::string &base_path) {
@@ -307,8 +314,11 @@ private:
             apps.update_log(usage_log, app);
         }
 
-        if(!app->path.empty())
-            chdir(app->path.c_str());
+        if(!app->path.empty()) {
+            if(chdir(app->path.c_str())) {
+                perror("chdir into application path");
+            }
+        }
 
         ApplicationRunner app_runner(terminal, *app, args);
         return app_runner.command();
