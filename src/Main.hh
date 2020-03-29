@@ -114,6 +114,8 @@ private:
                 "\tto be written to (use echo > path). Every time this happens a menu will be shown.\n"
                 "\tDesktop files are parsed ahead of time.\n"
                 "\tPerfoming 'echo -n q > path' will exit the program.\n"
+                "    --no-exec\n"
+                "\tDo not execute selected command, send to stdout instead\n"
                 "    --help\n"
                 "\tDisplay this help message\n"
                );
@@ -133,6 +135,7 @@ private:
                 {"no-generic", no_argument,     0,  'n'},
                 {"usage-log", required_argument,0,  'l'},
                 {"wait-on", required_argument,  0,  'w'},
+                {"no-exec", no_argument,        0,  'e'},
                 {0,         0,                  0,  0}
             };
 
@@ -164,6 +167,9 @@ private:
                 break;
             case 'w':
                 wait_on = optarg;
+                break;
+            case 'e':
+                no_exec = true;
                 break;
             default:
                 exit(1);
@@ -247,7 +253,7 @@ private:
         std::string command = get_command();
         delete this->dmenu;
 
-        if(!command.empty()) {
+        if(!no_exec && !command.empty()) {
             static const char *shell = 0;
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
@@ -300,7 +306,7 @@ private:
         std::string args;
         Application *app;
 
-        printf("Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
+        fprintf(stderr, "Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
 
         choice = dmenu->read_choice(); // Blocks
         if(choice.empty())
@@ -332,6 +338,7 @@ private:
     stringlist_t environment;
     bool use_xdg_de = false;
     bool exclude_generic = false;
+    bool no_exec = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;
