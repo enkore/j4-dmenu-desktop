@@ -38,8 +38,6 @@ public:
         std::string exec = this->application_command();
         std::stringstream command;
 
-        puts(exec.c_str());
-
         if(this->app.terminal) {
             // Execute in terminal
 
