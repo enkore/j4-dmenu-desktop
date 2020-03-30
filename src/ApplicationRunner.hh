@@ -36,7 +36,6 @@ public:
 
     const std::string command() {
         std::string exec = this->application_command();
-        const std::string &name = this->app.name;
         std::stringstream command;
 
         puts(exec.c_str());
@@ -58,9 +57,13 @@ public:
                 return std::string();
             }
 
+            // name with ' escaped for use in single-quoted shell string
+            std::string nameesc(this->app.name);
+            replace(nameesc, "'", "'\\''");
+
             fprintf(script, "#!/bin/sh\n");
             fprintf(script, "rm %s\n", scriptname);
-            fprintf(script, "echo -ne \"\\033]2;%s\\007\"\n", name.c_str());
+            fprintf(script, "printf '\\033]2;%%s\\007' '%s'\n", nameesc.c_str());
             fprintf(script, "exec %s", exec.c_str());
 
             //closes also fd
