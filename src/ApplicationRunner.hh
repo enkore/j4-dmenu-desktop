@@ -39,8 +39,6 @@ public:
         const std::string &name = this->app.name;
         std::stringstream command;
 
-        puts(exec.c_str());
-
         if(this->app.terminal) {
             // Execute in terminal
 

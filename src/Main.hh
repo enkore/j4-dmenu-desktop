@@ -253,7 +253,11 @@ private:
         std::string command = get_command();
         delete this->dmenu;
 
-        if(!no_exec && !command.empty()) {
+        if(!command.empty()) {
+            if (no_exec) {
+                printf("%s\n", command.c_str());
+                return 0;
+            }
             static const char *shell = 0;
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
@@ -315,6 +319,9 @@ private:
         fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
         std::tie(app, args) = apps.search(choice);
+        if (!app) {
+            return args;
+        }
 
         if(usage_log) {
             apps.update_log(usage_log, app);
