@@ -43,17 +43,12 @@ public:
                     // Exclude ., .. and hidden files
                     continue;
                 }
-                if(entry->d_type == DT_DIR) {
-                    std::string fullpath(curdir + entry->d_name);
-                    dirstack.push(fullpath + "/");
-                } else {
-                    direntries.emplace_back(*entry);
-                }
+                direntries.emplace_back(entry);
             }
             closedir(dir);
             dir = NULL;
             std::sort(direntries.begin(), direntries.end(),
-                      [](const dirent &a, const dirent &b) {
+                      [](const _dirent &a, const _dirent &b) {
                           return  a.d_ino > b.d_ino;
                       });
             return (*this)++;
@@ -73,6 +68,11 @@ public:
     }
 
 private:
+    struct _dirent {
+        _dirent(const dirent *ent) : d_ino(ent->d_ino), d_name(ent->d_name) {}
+        ino_t d_ino;
+        std::string d_name;
+    };
     void opendir() {
         if(dirstack.empty()) {
             done = true;
@@ -91,7 +91,7 @@ private:
 
     DIR *dir;
     std::stack<std::string> dirstack;
-    std::vector<dirent> direntries;
+    std::vector<_dirent> direntries;
 
     const std::string suffix;
     std::string curpath;
