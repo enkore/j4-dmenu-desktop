@@ -4,6 +4,7 @@
 #include <iterator>
 #include <cstddef>
 #include <stack>
+#include <vector>
 #include <stdexcept>
 #include <dirent.h>
 
@@ -32,35 +33,36 @@ public:
     }
 
     FileFinder& operator++(int) {
-        if(!dir)
+        if(direntries.empty()) {
+            dirent *entry;
             opendir();
-
-        if(done)
-            return *this;
-
-        dirent *entry = readdir(dir);
-        if(!entry) {
+            if(done)
+                return *this;
+            while((entry = readdir(dir))) {
+                if(entry->d_name[0] == '.') {
+                    // Exclude ., .. and hidden files
+                    continue;
+                }
+                if(entry->d_type == DT_DIR) {
+                    std::string fullpath(curdir + entry->d_name);
+                    dirstack.push(fullpath + "/");
+                } else if(endswith(entry->d_name, suffix)) {
+                    direntries.emplace_back(*entry);
+                }
+            }
             closedir(dir);
             dir = NULL;
-            // If you think of this as a loop then this is a continue
+            std::sort(direntries.begin(), direntries.end(),
+                      [](const dirent &a, const dirent &b) {
+                          return  a.d_ino > b.d_ino;
+                      });
             return (*this)++;
-        }
-        if(entry->d_name[0] == '.') {
-            // Exclude ., .. and hidden files
-            return (*this)++;
-        }
 
-        std::string fullpath(curdir + entry->d_name);
-        if(is_directory(fullpath)) {
-            dirstack.push(fullpath + "/");
-            return (*this)++;
-        }
-        if(endswith(fullpath, suffix)) {
-            curpath = fullpath;
+        } else {
+            curpath = curdir + direntries.back().d_name;
+            direntries.pop_back();
             return *this;
         }
-
-        return (*this)++;
     }
 
 private:
@@ -75,12 +77,14 @@ private:
         dir = ::opendir(curdir.c_str());
         if(!dir)
             throw std::runtime_error(curdir + ": opendir() failed");
+        direntries.clear();
     }
 
     bool done;
 
     DIR *dir;
     std::stack<std::string> dirstack;
+    std::vector<dirent> direntries;
 
     const std::string suffix;
     std::string curpath;
