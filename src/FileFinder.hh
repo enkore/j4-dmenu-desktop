@@ -46,7 +46,7 @@ public:
                 if(entry->d_type == DT_DIR) {
                     std::string fullpath(curdir + entry->d_name);
                     dirstack.push(fullpath + "/");
-                } else if(endswith(entry->d_name, suffix)) {
+                } else {
                     direntries.emplace_back(*entry);
                 }
             }
@@ -61,6 +61,13 @@ public:
         } else {
             curpath = curdir + direntries.back().d_name;
             direntries.pop_back();
+            if(is_directory(curpath)) {
+                dirstack.push(curpath + "/");
+                return (*this)++;
+            }
+            if(!endswith(curpath, suffix)) {
+                return (*this)++;
+            }
             return *this;
         }
     }
