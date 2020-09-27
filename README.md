@@ -27,7 +27,8 @@ Building is the usual cmake/make thingy:
 
 ## Distribution packages
 
-### Archlinux
+### Archlinux <a href="https://repology.org/project/j4-dmenu-desktop/versions"><img src="https://repology.org/badge/vertical-allrepos/j4-dmenu-desktop.svg" alt="Packaging status" align="right"></a>
+
 
 The package is provided by the AUR. You can install it with an AUR helper of your choice: `j4-dmenu-desktop-git` or `j4-dmenu-desktop`. Else, you may install it manually by invoking the following commands as a regular user. (to build packages from the AUR, the `base-devel` package group is assumed to be installed)
 
