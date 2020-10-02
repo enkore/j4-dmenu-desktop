@@ -5,7 +5,6 @@
 #include <getopt.h>
 #include <vector>
 #include <algorithm>
-#include <locale>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -61,11 +60,10 @@ public:
             iteration_order.emplace_back(app.first, app.second);
         }
 
-        std::locale locale(suffixes.locale.c_str());
-        std::sort(iteration_order.begin(), iteration_order.end(), [locale](
+        std::sort(iteration_order.begin(), iteration_order.end(), [](
             const std::pair<std::string, const Application *> &s1,
             const std::pair<std::string, const Application *> &s2) {
-                return locale(s1.second->name, s2.second->name);
+                return s1.second->name < s2.second->name;
         });
 
         if(usage_log) {

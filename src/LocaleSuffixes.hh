@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <string>
 #include <set>
-#include <locale>
 
 class LocaleSuffixes
 {
