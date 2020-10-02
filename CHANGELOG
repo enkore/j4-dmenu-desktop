@@ -68,3 +68,14 @@ r2.17 released 2019-02-26
 	+ fixed specifying `--no-generic` after `--usage-log=` breaking usage log
 	+ improved build speed
 	+ added --wait-on feature to daemonize for better responsiveness
+
+r2.18 released 2020-10-02
+	+ Re-add support for %k in .desktopfiles (location of the file)
+	+ --wait-on: child processes detach now, parent does not wait
+	+ use POSIX printf instead of echo (see 2e6308783 for detailed explanation)
+	  (fix for dash/Debian)
+	+ .desktop files are read sorted by inode now, improving performance on
+	  traditional hard drives
+	+ added --no-exec option
+	+ added --wrapper option (e.g. for i3 exec)
+	+ removed last usage of C/C++ locales
