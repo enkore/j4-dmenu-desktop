@@ -27,7 +27,8 @@ Building is the usual cmake/make thingy:
 
 ## Distribution packages
 
-### Archlinux
+### Archlinux <a href="https://repology.org/project/j4-dmenu-desktop/versions"><img src="https://repology.org/badge/vertical-allrepos/j4-dmenu-desktop.svg" alt="Packaging status" align="right"></a>
+
 
 The package is provided by the AUR. You can install it with an AUR helper of your choice: `j4-dmenu-desktop-git` or `j4-dmenu-desktop`. Else, you may install it manually by invoking the following commands as a regular user. (to build packages from the AUR, the `base-devel` package group is assumed to be installed)
 
@@ -72,6 +73,14 @@ j4-dmenu-desktop is in Debian stable:
 
     sudo apt install j4-dmenu-desktop
 
+### Nix / NixOS
+
+j4-dmenu-desktop is in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/j4-dmenu-desktop/default.nix):
+
+    nix-env --install j4-dmenu-desktop
+    # Or use pkgs attribute of the same name in NixOS configuration 
+
+
 ## Invocation
 
 Usage:
@@ -90,6 +99,8 @@ Options:
         Display binary name after each entry (off by default)
     --no-generic
         Do not include the generic name of desktop entries
+	--wrapper=<wrapper>
+		A wrapper binary. Useful in case you want to wrap into 'i3 exec'
     --term=<command>
         Sets the terminal emulator used to start terminal apps
     --usage-log=<file>
@@ -101,6 +112,8 @@ Options:
         to be written to (use echo > path). Every time this happens a menu will be shown.
         Desktop files are parsed ahead of time.
         Perfoming 'echo -n q > path' will exit the program.
+    --no-exec
+        Do not execute selected command, send to stdout instead
     --help
         Display this help message
 

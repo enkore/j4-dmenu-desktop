@@ -36,21 +36,13 @@ public:
             }
         }
 
-        if(!match_length) {
-            // No matching app found, just execute the input in a shell
-            const char *shell = 0;
-            if((shell = getenv("SHELL")) == 0)
-                shell = "/bin/sh";
-
-            fprintf(stderr, "%s -i -c '%s'\n", shell, choice.c_str());
-
-            // -i -c was tested with both bash and zsh.
-            exit(execl(shell, shell, "-i", "-c",  choice.c_str(), 0, nullptr));
+        if(match_length) {
+            // +1 b/c there must be whitespace we add back later...
+            args = choice.substr(match_length, choice.length()-1);
+        } else {
+            // No matching app found, args contains user dmenu choice
+            args = choice;
         }
-
-        // +1 b/c there must be whitespace we add back later...
-        args = choice.substr(match_length, choice.length()-1);
-        //args = choice;
 
         return std::make_pair(app, args);
     }

@@ -5,7 +5,6 @@
 #include <getopt.h>
 #include <vector>
 #include <algorithm>
-#include <locale>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -61,11 +60,10 @@ public:
             iteration_order.emplace_back(app.first, app.second);
         }
 
-        std::locale locale(suffixes.locale.c_str());
-        std::sort(iteration_order.begin(), iteration_order.end(), [locale](
+        std::sort(iteration_order.begin(), iteration_order.end(), [](
             const std::pair<std::string, const Application *> &s1,
             const std::pair<std::string, const Application *> &s2) {
-                return locale(s1.second->name, s2.second->name);
+                return s1.second->name < s2.second->name;
         });
 
         if(usage_log) {
@@ -108,12 +106,16 @@ private:
                 "    --usage-log=<file>\n"
                 "\tMust point to a read-writeable file (will create if not exists).\n"
                 "\tIn this mode entries are sorted by usage frequency.\n"
+				"    --wrapper=<wrapper>\n"
+				"\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
                 "    --wait-on=<path>\n"
                 "\tMust point to a path where a file can be created.\n"
                 "\tIn this mode no menu will be shown. Instead the program waits for <path>\n"
                 "\tto be written to (use echo > path). Every time this happens a menu will be shown.\n"
                 "\tDesktop files are parsed ahead of time.\n"
                 "\tPerfoming 'echo -n q > path' will exit the program.\n"
+                "    --no-exec\n"
+                "\tDo not execute selected command, send to stdout instead\n"
                 "    --help\n"
                 "\tDisplay this help message\n"
                );
@@ -133,6 +135,8 @@ private:
                 {"no-generic", no_argument,     0,  'n'},
                 {"usage-log", required_argument,0,  'l'},
                 {"wait-on", required_argument,  0,  'w'},
+                {"no-exec", no_argument,        0,  'e'},
+                {"wrapper", required_argument,   0,  'W'},
                 {0,         0,                  0,  0}
             };
 
@@ -165,6 +169,12 @@ private:
             case 'w':
                 wait_on = optarg;
                 break;
+            case 'e':
+                no_exec = true;
+                break;
+            case 'W':
+                this->wrapper = optarg;
+                break;
             default:
                 exit(1);
             }
@@ -181,7 +191,9 @@ private:
         // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
         // directories
         char original_wd[384];
-        getcwd(original_wd, 384);
+        if(!getcwd(original_wd, 384)) {
+            pfatale("collect_files: getcwd");
+        }
 
         // Allocating the line buffer just once saves lots of MM calls
         // malloc required to avoid mixing malloc/new[] as getdelim may realloc() buf
@@ -189,7 +201,10 @@ private:
         buf[0] = 0;
 
         for(auto &path : this->search_path) {
-            chdir(path.c_str());
+            if(chdir(path.c_str())) {
+                fprintf(stderr, "%s: %s", path.c_str(), strerror(errno));
+                continue;
+            }
             FileFinder finder("./", ".desktop");
             while(finder++) {
                 handle_file(*finder, path);
@@ -198,7 +213,9 @@ private:
 
         free(buf);
 
-        chdir(original_wd);
+        if(chdir(original_wd)) {
+            pfatale("collect_files: chdir(original_cwd)");
+        }
     }
 
     void handle_file(const std::string &file, const std::string &base_path) {
@@ -236,11 +253,16 @@ private:
         }
 
         this->dmenu->display();
-
         std::string command = get_command();
+        if (this->wrapper.length())
+            command = this->wrapper+" \""+command+"\"";
         delete this->dmenu;
 
         if(!command.empty()) {
+            if (no_exec) {
+                printf("%s\n", command.c_str());
+                return 0;
+            }
             static const char *shell = 0;
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
@@ -256,7 +278,6 @@ private:
         int fd;
         pid_t pid;
         char data;
-        int child_status; /* dnc */
         if(mkfifo(wait_on, 0600) && errno != EEXIST) {
             perror("mkfifo");
             return 1;
@@ -281,9 +302,9 @@ private:
                 return 1;
             case 0:
                 close(fd);
+                setsid();
                 return do_dmenu(iteration_order);
             }
-            waitpid(pid, &child_status, 0);
         }
         close(fd);
         return 0;
@@ -294,7 +315,7 @@ private:
         std::string args;
         Application *app;
 
-        printf("Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
+        fprintf(stderr, "Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
 
         choice = dmenu->read_choice(); // Blocks
         if(choice.empty())
@@ -303,13 +324,19 @@ private:
         fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
         std::tie(app, args) = apps.search(choice);
+        if (!app) {
+            return args;
+        }
 
         if(usage_log) {
             apps.update_log(usage_log, app);
         }
 
-        if(!app->path.empty())
-            chdir(app->path.c_str());
+        if(!app->path.empty()) {
+            if(chdir(app->path.c_str())) {
+                perror("chdir into application path");
+            }
+        }
 
         ApplicationRunner app_runner(terminal, *app, args);
         return app_runner.command();
@@ -318,11 +345,13 @@ private:
 private:
     std::string dmenu_command;
     std::string terminal;
+	std::string wrapper;
     const char *wait_on = 0;
 
     stringlist_t environment;
     bool use_xdg_de = false;
     bool exclude_generic = false;
+    bool no_exec = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;

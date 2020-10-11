@@ -109,5 +109,7 @@ inline std::string get_variable(const std::string &var)
         return "";
 }
 
+#define pfatale(msg) perror(msg); abort();
+
 
 #endif
