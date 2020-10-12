@@ -101,6 +101,9 @@ Options:
         Do not include the generic name of desktop entries
 	--wrapper=<wrapper>
 		A wrapper binary. Useful in case you want to wrap into 'i3 exec'
+	--run-command=<cmd>
+		The command to run instead of the selected binary. You can embed the
+		selected binary name using `{}` keyword
     --term=<command>
         Sets the terminal emulator used to start terminal apps
     --usage-log=<file>
