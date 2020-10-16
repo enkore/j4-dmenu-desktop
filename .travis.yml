@@ -5,4 +5,6 @@ script:
  - ./j4-dmenu-tests
 compiler:
  - clang
-
+arch:
+  - ppc64le
+  - amd64
