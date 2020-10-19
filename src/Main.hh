@@ -266,7 +266,8 @@ private:
 
 		// --run-command switch
 		if (this->run_command.length()){
-			command = replace(this->run_command, this->run_command_token, command);
+			command = replace(command, "'", "'\"'\"'");
+			command = replace(this->run_command, this->run_command_token, "'" + command + "'");
 		}
 
         delete this->dmenu;
