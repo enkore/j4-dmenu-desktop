@@ -33,6 +33,9 @@ public:
         if(read_args(argc, argv))
             return 0;
 
+        // Avoid zombie processes.
+        signal(SIGCHLD, SIG_IGN);
+
         if(use_xdg_de) {
             std::string env_var = get_variable("XDG_CURRENT_DESKTOP");
             //XDG_CURRENT_DESKTOP can contain multiple environments separated by colons
