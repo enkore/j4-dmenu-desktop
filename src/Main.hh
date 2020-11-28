@@ -20,6 +20,9 @@
 #include "FileFinder.hh"
 #include "Formatters.hh"
 
+void sigchld(int) {
+        while (waitpid(-1, NULL, WNOHANG) > 0);
+}
 
 class Main
 {
@@ -32,6 +35,9 @@ public:
     int main(int argc, char **argv) {
         if(read_args(argc, argv))
             return 0;
+
+        // Avoid zombie processes.
+        signal(SIGCHLD, sigchld);
 
         if(use_xdg_de) {
             std::string env_var = get_variable("XDG_CURRENT_DESKTOP");
