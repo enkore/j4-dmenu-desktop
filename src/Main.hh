@@ -106,8 +106,8 @@ private:
                 "    --usage-log=<file>\n"
                 "\tMust point to a read-writeable file (will create if not exists).\n"
                 "\tIn this mode entries are sorted by usage frequency.\n"
-				"    --wrapper=<wrapper>\n"
-				"\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
+                "    --wrapper=<wrapper>\n"
+                "\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
                 "    --wait-on=<path>\n"
                 "\tMust point to a path where a file can be created.\n"
                 "\tIn this mode no menu will be shown. Instead the program waits for <path>\n"
@@ -116,6 +116,8 @@ private:
                 "\tPerfoming 'echo -n q > path' will exit the program.\n"
                 "    --no-exec\n"
                 "\tDo not execute selected command, send to stdout instead\n"
+                "    --add=<name;exec>\n"
+                "\tAdd entry name that executes exec\n"
                 "    --help\n"
                 "\tDisplay this help message\n"
                );
@@ -127,17 +129,18 @@ private:
         while (true) {
             int option_index = 0;
             static struct option long_options[] = {
-                {"dmenu",   required_argument,  0,  'd'},
-                {"use-xdg-de",   no_argument,   0,  'x'},
-                {"term",    required_argument,  0,  't'},
-                {"help",    no_argument,        0,  'h'},
-                {"display-binary", no_argument, 0,  'b'},
-                {"no-generic", no_argument,     0,  'n'},
-                {"usage-log", required_argument,0,  'l'},
-                {"wait-on", required_argument,  0,  'w'},
-                {"no-exec", no_argument,        0,  'e'},
-                {"wrapper", required_argument,   0,  'W'},
-                {0,         0,                  0,  0}
+                {"dmenu",          required_argument, 0, 'd'},
+                {"use-xdg-de",     no_argument,       0, 'x'},
+                {"term",           required_argument, 0, 't'},
+                {"help",           no_argument,       0, 'h'},
+                {"display-binary", no_argument,       0, 'b'},
+                {"no-generic",     no_argument,       0, 'n'},
+                {"usage-log",      required_argument, 0, 'l'},
+                {"wait-on",        required_argument, 0, 'w'},
+                {"no-exec",        no_argument,       0, 'e'},
+                {"wrapper",        required_argument, 0, 'W'},
+                {"add",            required_argument, 0, 'a'},
+                {0,                0,                 0, 0}
             };
 
             int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
@@ -145,6 +148,14 @@ private:
                 break;
 
             switch (c) {
+            case 'a': {
+                char *exec = strchrnul(optarg, ';');
+                auto app = new Application(LocaleSuffixes(), NULL);
+                app->name = std::string(optarg, exec - optarg);
+                app->exec = *exec ? exec + 1 : optarg;
+                this->apps[optarg] = app;
+                break;
+            }
             case 'd':
                 this->dmenu_command = optarg;
                 break;
