@@ -28,7 +28,7 @@ class Main
 {
 public:
     Main()
-        : dmenu_command("dmenu -i"), terminal("i3-sensible-terminal") {
+        : dmenu_command("dmenu -i"), terminal("i3-sensible-terminal"), terminal_args("-e") {
 
     }
 
@@ -95,7 +95,7 @@ private:
                 "A faster replacement for i3-dmenu-desktop\n"
                 "Copyright (c) 2013 Marian Beermann, GPLv3 license\n"
                 "\nUsage:\n"
-                "\tj4-dmenu-desktop [--dmenu=\"dmenu -i\"] [--term=\"i3-sensible-terminal\"]\n"
+                "\tj4-dmenu-desktop [--dmenu=\"dmenu -i\"] [--term=\"i3-sensible-terminal\"] [--term-args=\"-e\"]\n"
                 "\tj4-dmenu-desktop --help\n"
                 "\nOptions:\n"
                 "    --dmenu=<command>\n"
@@ -109,11 +109,13 @@ private:
                 "\tDo not include the generic name of desktop entries\n"
                 "    --term=<command>\n"
                 "\tSets the terminal emulator used to start terminal apps\n"
+                "    --term-args=<arguments>\n"
+                "\tSets the terminal emulator arguments ('-e' by default)\n"
                 "    --usage-log=<file>\n"
                 "\tMust point to a read-writeable file (will create if not exists).\n"
                 "\tIn this mode entries are sorted by usage frequency.\n"
-				"    --wrapper=<wrapper>\n"
-				"\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
+                "    --wrapper=<wrapper>\n"
+                "\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
                 "    --wait-on=<path>\n"
                 "\tMust point to a path where a file can be created.\n"
                 "\tIn this mode no menu will be shown. Instead the program waits for <path>\n"
@@ -133,17 +135,18 @@ private:
         while (true) {
             int option_index = 0;
             static struct option long_options[] = {
-                {"dmenu",   required_argument,  0,  'd'},
-                {"use-xdg-de",   no_argument,   0,  'x'},
-                {"term",    required_argument,  0,  't'},
-                {"help",    no_argument,        0,  'h'},
-                {"display-binary", no_argument, 0,  'b'},
-                {"no-generic", no_argument,     0,  'n'},
-                {"usage-log", required_argument,0,  'l'},
-                {"wait-on", required_argument,  0,  'w'},
-                {"no-exec", no_argument,        0,  'e'},
-                {"wrapper", required_argument,   0,  'W'},
-                {0,         0,                  0,  0}
+                {"dmenu",          required_argument, 0,  'd'},
+                {"use-xdg-de",     no_argument,       0,  'x'},
+                {"term",           required_argument, 0,  't'},
+                {"term-args",      required_argument, 0,  'g'},
+                {"help",           no_argument,       0,  'h'},
+                {"display-binary", no_argument,       0,  'b'},
+                {"no-generic",     no_argument,       0,  'n'},
+                {"usage-log",      required_argument, 0,  'l'},
+                {"wait-on",        required_argument, 0,  'w'},
+                {"no-exec",        no_argument,       0,  'e'},
+                {"wrapper",        required_argument, 0,  'W'},
+                {0,                0,                 0,  0}
             };
 
             int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
@@ -159,6 +162,9 @@ private:
                 break;
             case 't':
                 this->terminal = optarg;
+                break;
+            case 'g':
+                this->terminal_args = optarg;
                 break;
             case 'h':
                 this->print_usage(stderr);
@@ -344,13 +350,14 @@ private:
             }
         }
 
-        ApplicationRunner app_runner(terminal, *app, args);
+        ApplicationRunner app_runner(terminal, terminal_args, *app, args);
         return app_runner.command();
     }
 
 private:
     std::string dmenu_command;
     std::string terminal;
+    std::string terminal_args;
 	std::string wrapper;
     const char *wait_on = 0;
 
