@@ -15,8 +15,13 @@ TEST_CASE("SearchPath/XDG_DATA_HOME", "Check SearchPath honors XDG_DATA_HOME")
     SearchPath sp;
     std::vector<std::string> result(sp.begin(), sp.end());
 
-    REQUIRE( result.size() == 1 );
-    REQUIRE( result[0] == "/usr/share/applications/" );
+    struct stat dirdata;
+    if (stat("/usr/share/applications", &dirdata) == 0 && S_ISDIR(dirdata.st_mode)) { // test if /usr/share/applications is valid
+        REQUIRE( result.size() == 1 );
+        REQUIRE( result.front() == "/usr/share/applications/" );
+    } else {
+        REQUIRE( result.size() == 0 );
+    }
 }
 
 TEST_CASE("SearchPath/XDG_DATA_DIRS", "Check SearchPath honors XDG_DATA_DIRS")
