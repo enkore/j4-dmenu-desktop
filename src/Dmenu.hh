@@ -79,7 +79,7 @@ private:
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
-            return execl(shell, shell, "-c", this->dmenu_command.c_str(), 0, nullptr);
+            return execl(shell, shell, "-c", this->dmenu_command.c_str(), 0, nullptr); // double nulls are needed because of https://github.com/enkore/j4-dmenu-desktop/pull/66#issuecomment-273126739
         }
 
         close(this->inpipe[1]);
