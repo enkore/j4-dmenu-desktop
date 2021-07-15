@@ -113,8 +113,8 @@ private:
                 "    --usage-log=<file>\n"
                 "\tMust point to a read-writeable file (will create if not exists).\n"
                 "\tIn this mode entries are sorted by usage frequency.\n"
-				"    --wrapper=<wrapper>\n"
-				"\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
+                "    --wrapper=<wrapper>\n"
+                "\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
                 "    --wait-on=<path>\n"
                 "\tMust point to a path where a file can be created.\n"
                 "\tIn this mode no menu will be shown. Instead the program waits for <path>\n"
@@ -352,7 +352,7 @@ private:
 private:
     std::string dmenu_command;
     std::string terminal;
-	std::string wrapper;
+    std::string wrapper;
     const char *wait_on = 0;
 
     stringlist_t environment;

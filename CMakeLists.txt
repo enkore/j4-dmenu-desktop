@@ -64,7 +64,7 @@ add_executable(
 )
 
 install (
-	TARGETS j4-dmenu-desktop
+    TARGETS j4-dmenu-desktop
         RUNTIME DESTINATION bin
-	)
+    )
 
