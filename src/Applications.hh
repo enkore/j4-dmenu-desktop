@@ -15,7 +15,7 @@ public:
         }
     }
 
-    std::pair<Application *, std::string> search(const std::string &choice) {
+    std::pair<Application *, std::string> search(const std::string &choice, bool exclude_generic) {
         Application *app = 0;
         std::string args;
         size_t match_length = 0;
@@ -28,11 +28,12 @@ public:
                 app = current_app.second;
                 match_length = name.length();
             }
-
-            const std::string &generic_name = current_app.second->generic_name;
-            if(generic_name.size() > match_length && startswith(choice, generic_name)) {
-                app = current_app.second;
-                match_length = generic_name.length();
+            if (!exclude_generic) {
+                const std::string &generic_name = current_app.second->generic_name;
+                if(generic_name.size() > match_length && startswith(choice, generic_name)) {
+                    app = current_app.second;
+                    match_length = generic_name.length();
+                }
             }
         }
 
