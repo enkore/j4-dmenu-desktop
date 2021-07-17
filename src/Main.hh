@@ -330,7 +330,7 @@ private:
 
         fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
-        std::tie(app, args) = apps.search(choice);
+        std::tie(app, args) = apps.search(choice, exclude_generic);
         if (!app) {
             return args;
         }
@@ -376,4 +376,3 @@ private:
 
     const char *usage_log = 0;
 };
-
