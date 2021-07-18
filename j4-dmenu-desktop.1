@@ -1,55 +1,53 @@
-.TH J4\-DMENU\-DESKTOP 1
-.SH NAME
-j4-dmenu-desktop \- faster replacement for i3\-dmenu\-desktop 
-.SH DESCRIPTION
-j4\-dmenu\-desktop is a faster replacement for i3-dmenu-desktop. 
-
-It's purpose is to find .desktop files and offer you a menu to start an 
-application using dmenu.
-
-.SH "SYNOPSIS"
-.IP
-\fBj4\-dmenu\-desktop\fR [\fB\-\-dmenu\fR="dmenu \-i"] [\fB\-\-term\fR="i3\-sensible\-terminal"]
-.SH OPTIONS
-.IP \fB\-\-dmenu=\fR<command>
-Determines the command used to invoke dmenu
-Executed with your shell ($SHELL) or \fI\,/bin/sh\/\fP
-.IP \fB\-\-use\-xdg\-de\fR
-Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment
-.IP \fB\-\-display\-binary\fR
-Display binary name after each entry (off by default)
-.IP \fB\-\-no\-generic\fR
-Do not include the generic name of desktop entries
-.IP \fB\-\-term=\fR<command>
-Sets the terminal emulator used to start terminal apps
-.IP \fB\-\-usage\-log=\fR<file>
-Must point to a read-writeable file (will create if not exists).
-In this mode entries are sorted by usage frequency.
-.IP \fB\-\-wait\-on=\fR<path>
-Must point to a path where a file can be created.
-In this mode no menu will be shown. Instead the program waits for <path>
-to be written to (use echo > path). Every time this happens a menu will be shown.
-Desktop files are parsed ahead of time.
-Perfoming 'echo -n q > path' will exit the program.
-.IP \fB\-\-no\-exec\fR
-Do not execute selected command, send to stdout instead
-.IP \fB\-\-help\fR
-Display this help message
-
-.SH "SEE ALSO"
-https://github.com/enkore/j4\-dmenu\-desktop
-.SH COPYRIGHT
-Copyright (C) 2013 enkore <public+j4\-dmenu\-desktop@enkore.de>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+.Dd $Mdocdate: July 18 2021$
+.Dt J4-DMENU-DESKTOP 1
+.Os
+.Sh NAME
+.Nm j4-dmenu-desktop
+.Nd fast desktop menu
+.Sh SYNOPSIS
+.Nm
+.Op OPTIONS
+.Sh DESCRIPTION
+.Nm
+is a faster replacement for i3-dmenu-desktop.
+.Pp
+It's purpose is to find .desktop files and offer you a menu to start an application using dmenu.
+.Pp
+The arguments are as follows:
+.Bl -tag -width indent
+.It Fl b , Fl Fl display-binary
+Display binary name after each entry (off by default).
+.It Fl d , Fl Fl dmenu Ar command
+Determines the command used to invoke dmenu. Executed with your shell ($SHELL) or
+.Pa /bin/sh .
+.It Fl Fl no-exec
+Do not execute selected command, send to stdout instead.
+.It Fl Fl no-generic
+Do not include the generic name of desktop entries.
+.It Fl t , Fl Fl term Ar command
+Sets the terminal emulator used to start terminal apps.
+.It Fl Fl usage-log Ar file
+Must point to a read-writeable file (will create if not exists). In this mode entries are sorted by usage frequency.
+.It Fl x , Fl Fl use-xdg-de
+Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment.
+.It Fl Fl wait-on Ar path
+Must point to a path where a file can be created. In this mode no menu will be shown. Instead the program waits for
+.Ar path
+to be written to (use echo > path). Every time this happens a menu will be shown. Desktop files are parsed ahead of time. Performing 'echo -n q > path' will exit the program.
+.It Fl Fl wrapper Ar wrapper
+A wrapper binary. Useful in case you want to wrap into 'i3 exec'.
+.It Fl h , Fl Fl help
+Display help message.
+.El
+.Sh SEE ALSO
+.Lk https://github.com/enkore/j4-dmenu-desktop
+.Sh COPYRIGHT
+Copyright (C) 2013 enkore
+.Eo < Mt public+j4-dmenu-desktop@enkore.de Ec >
+.Pp
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+.Pp
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+.Pp
+You should have received a copy of the GNU General Public License along with this program. If not, see
+.Eo < Lk http://www.gnu.org/licenses/ Ec > .
