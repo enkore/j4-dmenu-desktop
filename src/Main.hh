@@ -115,6 +115,9 @@ private:
                 "\tIn this mode entries are sorted by usage frequency.\n"
 				"    --wrapper=<wrapper>\n"
 				"\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
+				"    --run-command=<cmd>\n"
+				"\tThe command to run instead of the selected binary. You can embed the"
+				" selected binary name using `{}` keyword"
                 "    --wait-on=<path>\n"
                 "\tMust point to a path where a file can be created.\n"
                 "\tIn this mode no menu will be shown. Instead the program waits for <path>\n"
@@ -144,6 +147,7 @@ private:
                 {"wait-on", required_argument,  0,  'w'},
                 {"no-exec", no_argument,        0,  'e'},
                 {"wrapper", required_argument,   0,  'W'},
+                {"run-command", required_argument,   0,  'r'},
                 {0,         0,                  0,  0}
             };
 
@@ -182,6 +186,9 @@ private:
             case 'W':
                 this->wrapper = optarg;
                 break;
+			case 'r':
+				this->run_command = optarg;
+				break;
             default:
                 exit(1);
             }
@@ -263,6 +270,13 @@ private:
         std::string command = get_command();
         if (this->wrapper.length())
             command = this->wrapper+" \""+command+"\"";
+
+		// --run-command switch
+		if (this->run_command.length()){
+			command = replace(command, "'", "'\"'\"'");
+			command = replace(this->run_command, this->run_command_token, "'" + command + "'");
+		}
+
         delete this->dmenu;
 
         if(!command.empty()) {
@@ -353,6 +367,9 @@ private:
     std::string dmenu_command;
     std::string terminal;
 	std::string wrapper;
+	std::string run_command;
+
+	const std::string run_command_token = "{}";
     const char *wait_on = 0;
 
     stringlist_t environment;
