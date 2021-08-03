@@ -30,8 +30,8 @@
 class ApplicationRunner
 {
 public:
-    ApplicationRunner(const std::string &terminal_emulator, const Application &app, const std::string &args)
-        : app(app), args(args), terminal_emulator(terminal_emulator) {
+    ApplicationRunner(const std::string &terminal_emulator, const std::string &terminal_args, const Application &app, const std::string &args)
+        : app(app), args(args), terminal_emulator(terminal_emulator), terminal_args(terminal_args) {
     }
 
     const std::string command() {
@@ -74,8 +74,8 @@ public:
             //As mkstemp sets the file permissions to 0600, we need to set it to 0700 to execute the script
             chmod(scriptname, S_IRWXU);
 
-            command << this->terminal_emulator;
-            command << " -e \"" << scriptname << "\"";
+            command << this->terminal_emulator << " " << this->terminal_args << " ";
+            command << "\"" << scriptname << "\"";
         } else {
             command << exec;
         };
@@ -130,6 +130,7 @@ private:
     std::string args;
 
     const std::string &terminal_emulator;
+    const std::string &terminal_args;
 };
 
 #endif

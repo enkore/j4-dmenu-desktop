@@ -85,7 +85,7 @@ j4-dmenu-desktop is in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pk
 
 Usage:
 
-    j4-dmenu-desktop [--dmenu="dmenu -i"] [--term="i3-sensible-terminal"]
+    j4-dmenu-desktop [--dmenu="dmenu -i"] [--term="i3-sensible-terminal"] [--term-args="-e"]
     j4-dmenu-desktop --help
 
 Options:
@@ -99,10 +99,12 @@ Options:
         Display binary name after each entry (off by default)
     --no-generic
         Do not include the generic name of desktop entries
-	--wrapper=<wrapper>
-		A wrapper binary. Useful in case you want to wrap into 'i3 exec'
+    --wrapper=<wrapper>
+        A wrapper binary. Useful in case you want to wrap into 'i3 exec'
     --term=<command>
         Sets the terminal emulator used to start terminal apps
+    --term-args=<args>
+        Sets the terminal emulator arguments ('-e' by default)
     --usage-log=<file>
         Must point to a read-writeable file (will create if not exists).
         In this mode entries are sorted by usage frequency.
@@ -111,7 +113,7 @@ Options:
         In this mode no menu will be shown. Instead the program waits for <path>
         to be written to (use echo > path). Every time this happens a menu will be shown.
         Desktop files are parsed ahead of time.
-        Perfoming 'echo -n q > path' will exit the program.
+        Performing 'echo -n q > path' will exit the program.
     --no-exec
         Do not execute selected command, send to stdout instead
     --help
