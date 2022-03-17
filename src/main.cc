@@ -282,7 +282,7 @@ int main(int argc, char **argv)
             break;
         case 'h':
             this->print_usage(stderr);
-            return true;
+            exit(0);
         case 'b':
             formatter = format_type::with_binary_name;
             break;
@@ -307,8 +307,6 @@ int main(int argc, char **argv)
     }
 
     this->appformatter = formatters[static_cast<int>(formatter)];
-
-    return false;
 
     // Avoid zombie processes.
     signal(SIGCHLD, sigchld);
