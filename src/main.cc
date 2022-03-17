@@ -127,6 +127,27 @@ bool read_args(int argc, char **argv) {
     return false;
 }
 
+void handle_file(const std::string &file, const std::string &base_path) {
+    Application *dft = new Application(suffixes, use_xdg_de ? &environment : 0);
+    bool file_read = dft->read(file.c_str(), &buf, &bufsz);
+    dft->name = this->appformatter(*dft);
+    dft->location = base_path + file;
+
+    if(file_read && !dft->name.empty()) {
+        if(apps.count(dft->id)) {
+            delete apps[dft->id];
+        }
+        apps[dft->id] = dft;
+    } else {
+        if(!dft->id.empty()) {
+            delete apps[dft->id];
+            apps.erase(dft->id);
+        }
+        delete dft;
+    }
+    parsed_files++;
+}
+
 void collect_files() {
     // We switch the working directory to easier get relative paths
     // This way desktop files that are customized in more important directories
@@ -160,25 +181,36 @@ void collect_files() {
     }
 }
 
-void handle_file(const std::string &file, const std::string &base_path) {
-    Application *dft = new Application(suffixes, use_xdg_de ? &environment : 0);
-    bool file_read = dft->read(file.c_str(), &buf, &bufsz);
-    dft->name = this->appformatter(*dft);
-    dft->location = base_path + file;
+std::string get_command() {
+    std::string choice;
+    std::string args;
+    Application *app;
 
-    if(file_read && !dft->name.empty()) {
-        if(apps.count(dft->id)) {
-            delete apps[dft->id];
-        }
-        apps[dft->id] = dft;
-    } else {
-        if(!dft->id.empty()) {
-            delete apps[dft->id];
-            apps.erase(dft->id);
-        }
-        delete dft;
+    fprintf(stderr, "Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
+
+    choice = dmenu->read_choice(); // Blocks
+    if(choice.empty())
+        return "";
+
+    fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
+
+    std::tie(app, args) = apps.search(choice, exclude_generic);
+    if (!app) {
+        return args;
     }
-    parsed_files++;
+
+    if(usage_log) {
+        apps.update_log(usage_log, app);
+    }
+
+    if(!app->path.empty()) {
+        if(chdir(app->path.c_str())) {
+            perror("chdir into application path");
+        }
+    }
+
+    ApplicationRunner app_runner(terminal, *app, args);
+    return app_runner.command();
 }
 
 int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order) {
@@ -250,38 +282,6 @@ int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &i
     }
     close(fd);
     return 0;
-}
-
-std::string get_command() {
-    std::string choice;
-    std::string args;
-    Application *app;
-
-    fprintf(stderr, "Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
-
-    choice = dmenu->read_choice(); // Blocks
-    if(choice.empty())
-        return "";
-
-    fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
-
-    std::tie(app, args) = apps.search(choice, exclude_generic);
-    if (!app) {
-        return args;
-    }
-
-    if(usage_log) {
-        apps.update_log(usage_log, app);
-    }
-
-    if(!app->path.empty()) {
-        if(chdir(app->path.c_str())) {
-            perror("chdir into application path");
-        }
-    }
-
-    ApplicationRunner app_runner(terminal, *app, args);
-    return app_runner.command();
 }
 
 int main(int argc, char **argv)
