@@ -63,10 +63,10 @@ void print_usage(FILE* f) {
            );
 }
 
-void handle_file(const std::string &file, const std::string &base_path) {
+void handle_file(const std::string &file, const std::string &base_path, char *buf, size_t *bufsz, Applications &apps, application_formatter appformatter, LocaleSuffixes &suffixes, bool use_xdg_de, stringlist_t &environment) {
     Application *dft = new Application(suffixes, use_xdg_de ? &environment : 0);
-    bool file_read = dft->read(file.c_str(), &buf, &bufsz);
-    dft->name = this->appformatter(*dft);
+    bool file_read = dft->read(file.c_str(), &buf, bufsz);
+    dft->name = appformatter(*dft);
     dft->location = base_path + file;
 
     if(file_read && !dft->name.empty()) {
@@ -81,10 +81,9 @@ void handle_file(const std::string &file, const std::string &base_path) {
         }
         delete dft;
     }
-    parsed_files++;
 }
 
-void collect_files() {
+void collect_files(Applications &apps, int *parsed_files, application_formatter appformatter, SearchPath &search_path, LocaleSuffixes &suffixes, bool use_xdg_de, stringlist_t &environment) {
     // We switch the working directory to easier get relative paths
     // This way desktop files that are customized in more important directories
     // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
@@ -96,17 +95,22 @@ void collect_files() {
 
     // Allocating the line buffer just once saves lots of MM calls
     // malloc required to avoid mixing malloc/new[] as getdelim may realloc() buf
+
+    char *buf;
+    size_t bufsz = 4096;
+
     buf = static_cast<char*>(malloc(bufsz));
     buf[0] = 0;
 
-    for(auto &path : this->search_path) {
+    for(auto &path : search_path) {
         if(chdir(path.c_str())) {
             fprintf(stderr, "%s: %s", path.c_str(), strerror(errno));
             continue;
         }
         FileFinder finder("./", ".desktop");
         while(finder++) {
-            handle_file(*finder, path);
+            handle_file(*finder, path, buf, &bufsz, apps, appformatter, suffixes, use_xdg_de, environment);
+            (*parsed_files)++;
         }
     }
 
@@ -239,9 +243,6 @@ int main(int argc, char **argv)
 
     Applications apps;
 
-    char *buf = 0;
-    size_t bufsz = 4096;
-
     LocaleSuffixes suffixes;
 
     application_formatter appformatter;
@@ -329,7 +330,7 @@ int main(int argc, char **argv)
         dmenu = new Dmenu(dmenu_command);
     }
 
-    collect_files();
+    collect_files(apps, &parsed_files, appformatter, search_path, suffixes, use_xdg_de, environment);
 
     // Sort applications by displayed name
     std::vector<std::pair<std::string, const Application *>> iteration_order;
