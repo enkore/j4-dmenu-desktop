@@ -132,9 +132,10 @@ std::string get_command(int parsed_files, Applications &apps, Dmenu *dmenu, bool
     if(choice.empty())
         return "";
 
+    std::tie(app, args) = apps.search(choice, exclude_generic);
+
     fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
-    std::tie(app, args) = apps.search(choice, exclude_generic);
     if (!app) {
         return args;
     }
