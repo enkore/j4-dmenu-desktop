@@ -63,70 +63,6 @@ void print_usage(FILE* f) {
            );
 }
 
-bool read_args(int argc, char **argv) {
-    format_type formatter = format_type::standard;
-
-    while (true) {
-        int option_index = 0;
-        static struct option long_options[] = {
-            {"dmenu",   required_argument,  0,  'd'},
-            {"use-xdg-de",   no_argument,   0,  'x'},
-            {"term",    required_argument,  0,  't'},
-            {"help",    no_argument,        0,  'h'},
-            {"display-binary", no_argument, 0,  'b'},
-            {"no-generic", no_argument,     0,  'n'},
-            {"usage-log", required_argument,0,  'l'},
-            {"wait-on", required_argument,  0,  'w'},
-            {"no-exec", no_argument,        0,  'e'},
-            {"wrapper", required_argument,   0,  'W'},
-            {0,         0,                  0,  0}
-        };
-
-        int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
-        if(c == -1)
-            break;
-
-        switch (c) {
-        case 'd':
-            this->dmenu_command = optarg;
-            break;
-        case 'x':
-            use_xdg_de = true;
-            break;
-        case 't':
-            this->terminal = optarg;
-            break;
-        case 'h':
-            this->print_usage(stderr);
-            return true;
-        case 'b':
-            formatter = format_type::with_binary_name;
-            break;
-        case 'n':
-            exclude_generic = true;
-            break;
-        case 'l':
-            usage_log = optarg;
-            break;
-        case 'w':
-            wait_on = optarg;
-            break;
-        case 'e':
-            no_exec = true;
-            break;
-        case 'W':
-            this->wrapper = optarg;
-            break;
-        default:
-            exit(1);
-        }
-    }
-
-    this->appformatter = formatters[static_cast<int>(formatter)];
-
-    return false;
-}
-
 void handle_file(const std::string &file, const std::string &base_path) {
     Application *dft = new Application(suffixes, use_xdg_de ? &environment : 0);
     bool file_read = dft->read(file.c_str(), &buf, &bufsz);
@@ -312,8 +248,67 @@ int main(int argc, char **argv)
 
     const char *usage_log = 0;
 
-    if(read_args(argc, argv))
-        return 0;
+    format_type formatter = format_type::standard;
+
+    while (true) {
+        int option_index = 0;
+        static struct option long_options[] = {
+            {"dmenu",   required_argument,  0,  'd'},
+            {"use-xdg-de",   no_argument,   0,  'x'},
+            {"term",    required_argument,  0,  't'},
+            {"help",    no_argument,        0,  'h'},
+            {"display-binary", no_argument, 0,  'b'},
+            {"no-generic", no_argument,     0,  'n'},
+            {"usage-log", required_argument,0,  'l'},
+            {"wait-on", required_argument,  0,  'w'},
+            {"no-exec", no_argument,        0,  'e'},
+            {"wrapper", required_argument,   0,  'W'},
+            {0,         0,                  0,  0}
+        };
+
+        int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
+        if(c == -1)
+            break;
+
+        switch (c) {
+        case 'd':
+            this->dmenu_command = optarg;
+            break;
+        case 'x':
+            use_xdg_de = true;
+            break;
+        case 't':
+            this->terminal = optarg;
+            break;
+        case 'h':
+            this->print_usage(stderr);
+            return true;
+        case 'b':
+            formatter = format_type::with_binary_name;
+            break;
+        case 'n':
+            exclude_generic = true;
+            break;
+        case 'l':
+            usage_log = optarg;
+            break;
+        case 'w':
+            wait_on = optarg;
+            break;
+        case 'e':
+            no_exec = true;
+            break;
+        case 'W':
+            this->wrapper = optarg;
+            break;
+        default:
+            exit(1);
+        }
+    }
+
+    this->appformatter = formatters[static_cast<int>(formatter)];
+
+    return false;
 
     // Avoid zombie processes.
     signal(SIGCHLD, sigchld);
