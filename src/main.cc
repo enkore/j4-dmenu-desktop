@@ -121,7 +121,7 @@ void collect_files(Applications &apps, int *parsed_files, application_formatter 
     }
 }
 
-std::string get_command() {
+std::string get_command(int parsed_files, Applications &apps, Dmenu *dmenu, bool exclude_generic, const char *usage_log, std::string &terminal) {
     std::string choice;
     std::string args;
     Application *app;
@@ -153,24 +153,24 @@ std::string get_command() {
     return app_runner.command();
 }
 
-int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order) {
+int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const std::string &dmenu_command, bool wait_on, bool exclude_generic, int parsed_files, Dmenu *dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
     if(wait_on) {
-        this->dmenu = new Dmenu(this->dmenu_command);
+        dmenu = new Dmenu(dmenu_command);
     }
 
     // Transfer the list to dmenu
     for(auto &app : iteration_order) {
-        this->dmenu->write(app.second->name);
+        dmenu->write(app.second->name);
         const std::string &generic_name = app.second->generic_name;
         if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
-            this->dmenu->write(generic_name);
+            dmenu->write(generic_name);
     }
 
-    this->dmenu->display();
-    std::string command = get_command();
-    if (this->wrapper.length())
-        command = this->wrapper+" \""+command+"\"";
-    delete this->dmenu;
+    dmenu->display();
+    std::string command = get_command(parsed_files, apps, dmenu, exclude_generic, usage_log, terminal);
+    if (wrapper.length())
+        command = wrapper + " \"" + command + "\"";
+    delete dmenu;
 
     if(!command.empty()) {
         if (no_exec) {
@@ -188,7 +188,7 @@ int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &ite
     return 0;
 }
 
-int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &iteration_order) {
+int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const std::string &dmenu_command, const char *wait_on, bool exclude_generic, int parsed_files, Dmenu *dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
     int fd;
     pid_t pid;
     char data;
@@ -217,7 +217,7 @@ int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &i
         case 0:
             close(fd);
             setsid();
-            return do_dmenu(iteration_order);
+            return do_dmenu(iteration_order, dmenu_command, true, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
         }
     }
     close(fd);
@@ -355,8 +355,8 @@ int main(int argc, char **argv)
     }
 
     if(wait_on) {
-        return do_wait_on(iteration_order);
+        return do_wait_on(iteration_order, dmenu_command, wait_on, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
     } else {
-        return do_dmenu(iteration_order);
+        return do_dmenu(iteration_order, dmenu_command, false, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
     }
 }
