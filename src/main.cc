@@ -326,7 +326,7 @@ int main(int argc, char **argv)
 #endif
 
     if(!wait_on) {
-        this->dmenu = new Dmenu(this->dmenu_command);
+        dmenu = new Dmenu(dmenu_command);
     }
 
     collect_files();
