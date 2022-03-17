@@ -272,16 +272,16 @@ int main(int argc, char **argv)
 
         switch (c) {
         case 'd':
-            this->dmenu_command = optarg;
+            dmenu_command = optarg;
             break;
         case 'x':
             use_xdg_de = true;
             break;
         case 't':
-            this->terminal = optarg;
+            terminal = optarg;
             break;
         case 'h':
-            this->print_usage(stderr);
+            print_usage(stderr);
             exit(0);
         case 'b':
             formatter = format_type::with_binary_name;
@@ -299,14 +299,14 @@ int main(int argc, char **argv)
             no_exec = true;
             break;
         case 'W':
-            this->wrapper = optarg;
+            wrapper = optarg;
             break;
         default:
             exit(1);
         }
     }
 
-    this->appformatter = formatters[static_cast<int>(formatter)];
+    appformatter = formatters[static_cast<int>(formatter)];
 
     // Avoid zombie processes.
     signal(SIGCHLD, sigchld);
