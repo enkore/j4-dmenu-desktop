@@ -55,7 +55,7 @@ void print_usage(FILE* f) {
             "\t\tIn this mode no menu will be shown. Instead the program waits for <path>\n"
             "\t\tto be written to (use echo > path). Every time this happens a menu will be shown.\n"
             "\t\tDesktop files are parsed ahead of time.\n"
-            "\t\tPerfoming 'echo -n q > path' will exit the program.\n"
+            "\t\tPerforming 'echo -n q > path' will exit the program.\n"
             "\t--wrapper=<wrapper>\n"
             "\t\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
             "\t-h, --help\n"
