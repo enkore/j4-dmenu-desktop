@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
@@ -6,7 +5,6 @@
 
 #include <sys/stat.h>
 #include <sys/wait.h>
-
 
 static
 int write_proper(const int fd, const char *buf, size_t size) {

@@ -1,4 +1,3 @@
-
 #ifndef APPLICATIONS_DEF
 #define APPLICATIONS_DEF
 
@@ -98,4 +97,3 @@ public:
 };
 
 #endif
-
