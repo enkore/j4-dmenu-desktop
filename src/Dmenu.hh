@@ -29,7 +29,7 @@ class Dmenu
 {
 public:
     Dmenu(const std::string &dmenu_command)
-        : dmenu_command(dmenu_command), pid(0) {
+        : dmenu_command(dmenu_command) {
         this->create();
     }
 
@@ -92,5 +92,5 @@ private:
 
     int inpipe[2];
     int outpipe[2];
-    int pid;
+    int pid = 0;
 };
