@@ -30,7 +30,6 @@ class Dmenu
 public:
     Dmenu(const std::string &dmenu_command)
         : dmenu_command(dmenu_command) {
-        this->create();
     }
 
     void write(const std::string &what) {
