@@ -34,14 +34,4 @@ inline std::string appformatter_with_binary_name(const Application &app)
     return app.name + " (" + split(app.exec, " ").first + ")";
 }
 
-enum class format_type {
-    standard,
-    with_binary_name
-};
-
-static const application_formatter formatters[2] = {
-    appformatter_default,
-    appformatter_with_binary_name
-};
-
 #endif

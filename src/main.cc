@@ -240,11 +240,9 @@ int main(int argc, char **argv)
 
     LocaleSuffixes suffixes;
 
-    application_formatter appformatter;
+    application_formatter appformatter = appformatter_default;
 
     const char *usage_log = 0;
-
-    format_type formatter = format_type::standard;
 
     while (true) {
         int option_index = 0;
@@ -280,7 +278,7 @@ int main(int argc, char **argv)
             print_usage(stderr);
             exit(0);
         case 'b':
-            formatter = format_type::with_binary_name;
+            appformatter = appformatter_with_binary_name;
             break;
         case 'n':
             exclude_generic = true;
@@ -303,8 +301,6 @@ int main(int argc, char **argv)
     }
 
     Dmenu dmenu(dmenu_command, shell);
-
-    appformatter = formatters[static_cast<int>(formatter)];
 
     // Avoid zombie processes.
     signal(SIGCHLD, sigchld);
