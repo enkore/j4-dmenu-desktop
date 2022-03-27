@@ -35,13 +35,16 @@
 
 typedef std::list<std::string> stringlist_t;
 
-inline void split(const std::string &str, char delimiter, stringlist_t &elems)
+inline stringlist_t split(const std::string &str, char delimiter)
 {
     std::stringstream ss(str);
     std::string item;
+    stringlist_t result;
 
     while (std::getline(ss, item, delimiter))
-        elems.push_back(item);
+        result.push_back(item);
+
+    return result;
 }
 
 inline bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2){
