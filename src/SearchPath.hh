@@ -63,14 +63,12 @@ private:
     }
 
     void push_var(const std::string &string, stringlist_t &sp) {
-        stringlist_t items;
-        split(string, ':', items);
-        items.reverse();
-        for(auto path : items) {
-            if(!endswith(path, "/applications/"))
-                path += "/applications/";
-            if(is_directory(path.c_str()))
-                sp.push_back(path);
+        stringlist_t items = split(string, ':');
+        for(auto path = items.rbegin(); path != items.rend(); path++) { // parse items backwards
+            if(!endswith(*path, "/applications/"))
+                *path += "/applications/";
+            if(is_directory(*path))
+                sp.push_back(*path);
         }
     }
 
