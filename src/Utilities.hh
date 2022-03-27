@@ -54,14 +54,6 @@ inline bool have_equal_element(const stringlist_t &list1, const stringlist_t &li
     return false;
 }
 
-inline std::pair<std::string, std::string> split(const std::string &str, const std::string &delimiter)
-{
-    size_t pos = 0;
-    pos = str.find(delimiter);
-    return std::make_pair(str.substr(0, pos), str.substr(pos+1, str.length()));
-}
-
-
 inline std::string &replace(std::string &str, const std::string &substr, const std::string &substitute)
 {
     if(substr.empty())

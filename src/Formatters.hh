@@ -31,7 +31,8 @@ inline std::string appformatter_default(const Application &app)
 
 inline std::string appformatter_with_binary_name(const Application &app)
 {
-    return app.name + " (" + split(app.exec, " ").first + ")";
+    // get name and the first part of exec
+    return app.name + " (" + app.exec.substr(0, app.exec.find(' ')) + ")";
 }
 
 #endif
