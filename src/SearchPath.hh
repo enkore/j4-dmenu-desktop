@@ -41,7 +41,7 @@ private:
 
         std::string xdg_data_home = get_variable("XDG_DATA_HOME");
         if(xdg_data_home.empty())
-            xdg_data_home = std::string(get_variable("HOME")) + "/.local/share/";
+            xdg_data_home = get_variable("HOME") + "/.local/share/";
 
         push_var(xdg_data_home, sp);
 
