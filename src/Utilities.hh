@@ -57,16 +57,15 @@ inline bool have_equal_element(const stringlist_t &list1, const stringlist_t &li
     return false;
 }
 
-inline std::string &replace(std::string &str, const std::string &substr, const std::string &substitute)
+inline void replace(std::string &str, const std::string &substr, const std::string &substitute)
 {
     if(substr.empty())
-        return str;
+        return;
     size_t start_pos = 0;
     while((start_pos = str.find(substr, start_pos)) != std::string::npos) {
         str.replace(start_pos, substr.length(), substitute);
         start_pos += substitute.length();
     }
-    return str;
 }
 
 inline bool endswith(const std::string &str, const std::string &suffix)

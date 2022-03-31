@@ -37,39 +37,34 @@ public:
 
 private:
     void generate() {
-        stringlist_t sp;
-
         std::string xdg_data_home = get_variable("XDG_DATA_HOME");
         if(xdg_data_home.empty())
             xdg_data_home = get_variable("HOME") + "/.local/share/";
 
-        push_var(xdg_data_home, sp);
+        add_dir(xdg_data_home);
 
         std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
         if(xdg_data_dirs.empty())
             xdg_data_dirs = "/usr/share/:/usr/local/share/";
 
-        push_var(xdg_data_dirs, sp);
+        auto dirs = split(xdg_data_dirs, ':');
+        for (auto &path : dirs)
+            add_dir(path);
 
-        sp.reverse();
-
-        // Fix double slashes, if any
-        for(auto path : sp) {
-            this->search_path.push_back(replace(path, "//", "/"));
 #ifdef DEBUG
-            fprintf(stderr, "SearchPath: %s\n", this->search_path.back().c_str());
-#endif
+        for (const std::string &path : this->search_path) {
+            fprintf(stderr, "SearchPath: %s\n", path.c_str());
         }
+#endif
     }
 
-    void push_var(const std::string &string, stringlist_t &sp) {
-        stringlist_t items = split(string, ':');
-        for(auto path = items.crbegin(); path != items.crend(); path++) { // parse items backwards
-            if(!endswith(*path, "/applications/"))
-                *path += "/applications/";
-            if(is_directory(*path))
-                sp.push_back(*path);
-        }
+    void add_dir(std::string str) {
+        if (!endswith(str, "/applications/"))
+            str += "/applications/";
+        if (!is_directory(str))
+            return;
+        replace(str, "//", "/"); // Fix double slashes, if any
+        this->search_path.push_back(str);
     }
 
     stringlist_t search_path;
