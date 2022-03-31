@@ -55,11 +55,13 @@ public:
 
 private:
     void add_dir(std::string str) {
-        if (!endswith(str, "/applications/"))
-            str += "/applications/";
+        if (str.back() == '/') // fix double slashes
+            str.pop_back();
+        if (!endswith(str, "/applications"))
+            str += "/applications";
         if (!is_directory(str))
             return;
-        replace(str, "//", "/"); // Fix double slashes, if any
+        str += '/';
         this->search_path.push_back(str);
     }
 
