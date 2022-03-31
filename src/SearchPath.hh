@@ -24,19 +24,6 @@ class SearchPath
 {
 public:
     SearchPath() {
-        generate();
-    }
-
-    const stringlist_t::iterator begin() {
-        return this->search_path.begin();
-    }
-
-    const stringlist_t::iterator end() {
-        return this->search_path.end();
-    }
-
-private:
-    void generate() {
         std::string xdg_data_home = get_variable("XDG_DATA_HOME");
         if(xdg_data_home.empty())
             xdg_data_home = get_variable("HOME") + "/.local/share/";
@@ -58,6 +45,15 @@ private:
 #endif
     }
 
+    const stringlist_t::iterator begin() {
+        return this->search_path.begin();
+    }
+
+    const stringlist_t::iterator end() {
+        return this->search_path.end();
+    }
+
+private:
     void add_dir(std::string str) {
         if (!endswith(str, "/applications/"))
             str += "/applications/";
