@@ -20,52 +20,37 @@
 
 #include "Utilities.hh"
 
-class SearchPath
-{
-public:
-    SearchPath() {
-        std::string xdg_data_home = get_variable("XDG_DATA_HOME");
-        if(xdg_data_home.empty())
-            xdg_data_home = get_variable("HOME") + "/.local/share/";
+void add_applications_dir(std::string &str) {
+    if (str.back() == '/') // fix double slashes
+        str.pop_back();
+    if (!endswith(str, "/applications"))
+        str += "/applications";
+    str += '/';
+}
 
-        add_dir(xdg_data_home);
+stringlist_t get_search_path() {
+    stringlist_t result;
 
-        std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
-        if(xdg_data_dirs.empty())
-            xdg_data_dirs = "/usr/share/:/usr/local/share/";
+    std::string xdg_data_home = get_variable("XDG_DATA_HOME");
+    if(xdg_data_home.empty())
+        xdg_data_home = get_variable("HOME") + "/.local/share/";
 
-        auto dirs = split(xdg_data_dirs, ':');
-        for (auto &path : dirs)
-            add_dir(path);
+    add_applications_dir(xdg_data_home);
+    if (is_directory(xdg_data_home))
+        result.push_back(xdg_data_home);
 
-#ifdef DEBUG
-        for (const std::string &path : this->search_path) {
-            fprintf(stderr, "SearchPath: %s\n", path.c_str());
-        }
-#endif
+    std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
+    if(xdg_data_dirs.empty())
+        xdg_data_dirs = "/usr/share/:/usr/local/share/";
+
+    auto dirs = split(xdg_data_dirs, ':');
+    for (auto &path : dirs) {
+        add_applications_dir(path);
+        if (is_directory(path))
+            result.push_back(path);
     }
 
-    const stringlist_t::iterator begin() {
-        return this->search_path.begin();
-    }
-
-    const stringlist_t::iterator end() {
-        return this->search_path.end();
-    }
-
-private:
-    void add_dir(std::string str) {
-        if (str.back() == '/') // fix double slashes
-            str.pop_back();
-        if (!endswith(str, "/applications"))
-            str += "/applications";
-        if (!is_directory(str))
-            return;
-        str += '/';
-        this->search_path.push_back(str);
-    }
-
-    stringlist_t search_path;
-};
+    return result;
+}
 
 #endif

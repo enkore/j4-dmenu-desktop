@@ -83,7 +83,7 @@ void handle_file(const std::string &file, const std::string &base_path, char *bu
     }
 }
 
-void collect_files(Applications &apps, int *parsed_files, application_formatter appformatter, SearchPath &search_path, LocaleSuffixes &suffixes, bool use_xdg_de, stringlist_t &environment) {
+void collect_files(Applications &apps, int *parsed_files, application_formatter appformatter, const stringlist_t &search_path, LocaleSuffixes &suffixes, bool use_xdg_de, stringlist_t &environment) {
     // We switch the working directory to easier get relative paths
     // This way desktop files that are customized in more important directories
     // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
@@ -102,7 +102,7 @@ void collect_files(Applications &apps, int *parsed_files, application_formatter 
     buf = static_cast<char*>(malloc(bufsz));
     buf[0] = 0;
 
-    for(auto &path : search_path) {
+    for(const auto &path : search_path) {
         if(chdir(path.c_str())) {
             fprintf(stderr, "%s: %s", path.c_str(), strerror(errno));
             continue;
@@ -232,7 +232,13 @@ int main(int argc, char **argv)
     bool exclude_generic = false;
     bool no_exec = false;
 
-    SearchPath search_path;
+    stringlist_t search_path = get_search_path();
+
+#ifdef DEBUG
+    for (const std::string &path : search_path) {
+        fprintf(stderr, "SearchPath: %s\n", path.c_str());
+    }
+#endif
 
     int parsed_files = 0;
 
