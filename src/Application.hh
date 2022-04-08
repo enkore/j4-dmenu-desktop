@@ -85,8 +85,7 @@ public:
         //Whether the app should be hidden
         bool hidden = false;
 
-        std::string fallback_name, fallback_generic_name;
-        size_t locale_length = 0, locale_generic_length = 0;
+        int locale_match = -1, locale_generic_match = -1;
 
         bool parse_key_values = false;
         ssize_t linelen;
@@ -142,10 +141,10 @@ public:
 
                 switch(make_istring(key)) {
                 case "Name"_istr:
-                    parse_localestring(key, 4, &locale_length, value, this->name, fallback_name);
+                    parse_localestring(key, 4, locale_match, value, this->name);
                     continue;
                 case "GenericName"_istr:
-                    parse_localestring(key, 11, &locale_generic_length, value, this->generic_name, fallback_generic_name);
+                    parse_localestring(key, 11, locale_generic_match, value, this->generic_name);
                     continue;
                 case "Exec"_istr:
                     this->exec = value;
@@ -192,17 +191,8 @@ public:
                 parse_key_values = true;
         }
 
-        if(this->name.empty())
-            this->name = fallback_name;
-
 #ifdef DEBUG
         fprintf(stderr, "%s", this->name.c_str());
-#endif
-
-        if(this->generic_name.empty())
-            this->generic_name = fallback_generic_name;
-
-#ifdef DEBUG
         fprintf(stderr, " (%s)\n", this->generic_name.c_str());
 #endif
 
@@ -218,27 +208,22 @@ private:
     const LocaleSuffixes &locale_suffixes;
     const stringlist_t *environment;
 
-    void parse_localestring(const char *key, size_t key_length, size_t *best_so_far, const char *value, std::string &field, std::string &fallback) {
+    // Value is assigned to field if the new match is less or equal the current match.
+    // Newer entries of same match override older ones.
+    void parse_localestring(const char *key, int key_length, int &match, const char *value, std::string &field) {
         if(key[key_length] == '[') {
-            // Don't ask, don't tell.
-            const char *langcode = key + key_length + 1; // plus the [
-            const char *suffix;
-            const size_t length = strlen(langcode) - 1; // minus the ]
-            if(length < *best_so_far) {
+            std::string locale(key + key_length + 1, strlen(key + key_length + 1) - 1);
+
+            int new_match = locale_suffixes.match(locale);
+            if (new_match == -1)
                 return;
+            if (new_match <= match || match == -1) {
+                match = new_match;
+                field = value;
             }
-            int i = 0;
-            while((suffix = this->locale_suffixes.suffixes[i++])) {
-                if(!strncmp(suffix, langcode, length)) {
-#ifdef DEBUG
-                    fprintf(stderr, "[%s] ", suffix);
-#endif
-                    *best_so_far = length;
-                    field = value;
-                }
-            }
-        } else {
-            fallback = value;
+        } else if (match == -1 || match == 4) {
+            match = 4; // The maximum match of LocaleSuffixes.match() is 3. 4 means default value.
+            field = value;
         }
     }
 };
