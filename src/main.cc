@@ -83,7 +83,7 @@ void handle_file(const std::string &file, const std::string &base_path, char *bu
     }
 }
 
-void collect_files(Applications &apps, int *parsed_files, application_formatter appformatter, const stringlist_t &search_path, LocaleSuffixes &suffixes, bool use_xdg_de, stringlist_t &environment) {
+int collect_files(Applications &apps, application_formatter appformatter, const stringlist_t &search_path, LocaleSuffixes &suffixes, bool use_xdg_de, stringlist_t &environment) {
     // We switch the working directory to easier get relative paths
     // This way desktop files that are customized in more important directories
     // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
@@ -92,6 +92,8 @@ void collect_files(Applications &apps, int *parsed_files, application_formatter 
     if(!getcwd(original_wd, 384)) {
         pfatale("collect_files: getcwd");
     }
+
+    int parsed_files = 0;
 
     // Allocating the line buffer just once saves lots of MM calls
     // malloc required to avoid mixing malloc/new[] as getdelim may realloc() buf
@@ -110,7 +112,7 @@ void collect_files(Applications &apps, int *parsed_files, application_formatter 
         FileFinder finder("./", ".desktop");
         while(finder++) {
             handle_file(*finder, path, buf, &bufsz, apps, appformatter, suffixes, use_xdg_de, environment);
-            (*parsed_files)++;
+            parsed_files++;
         }
     }
 
@@ -119,6 +121,8 @@ void collect_files(Applications &apps, int *parsed_files, application_formatter 
     if(chdir(original_wd)) {
         pfatale("collect_files: chdir(original_cwd)");
     }
+
+    return parsed_files;
 }
 
 std::string get_command(int parsed_files, Applications &apps, const std::string &choice, bool exclude_generic, const char *usage_log, std::string &terminal) {
@@ -240,8 +244,6 @@ int main(int argc, char **argv)
     }
 #endif
 
-    int parsed_files = 0;
-
     Applications apps;
 
     LocaleSuffixes suffixes;
@@ -328,7 +330,7 @@ int main(int argc, char **argv)
     if(!wait_on)
         dmenu.run();
 
-    collect_files(apps, &parsed_files, appformatter, search_path, suffixes, use_xdg_de, environment);
+    int parsed_files = collect_files(apps, appformatter, search_path, suffixes, use_xdg_de, environment);
 
     // Sort applications by displayed name
     std::vector<std::pair<std::string, const Application *>> iteration_order;
