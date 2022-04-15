@@ -63,8 +63,8 @@ void print_usage(FILE* f) {
            );
 }
 
-void handle_file(const std::string &file, const std::string &base_path, char *buf, size_t *bufsz, Applications &apps, application_formatter appformatter, LocaleSuffixes &suffixes, bool use_xdg_de, stringlist_t &environment) {
-    Application *dft = new Application(suffixes, use_xdg_de ? &environment : 0);
+void handle_file(const std::string &file, const std::string &base_path, char *buf, size_t *bufsz, Applications &apps, application_formatter appformatter, LocaleSuffixes &suffixes, stringlist_t &desktopenvs) {
+    Application *dft = new Application(suffixes, desktopenvs);
     bool file_read = dft->read(file.c_str(), &buf, bufsz);
     dft->name = appformatter(*dft);
     dft->location = base_path + file;
@@ -83,7 +83,7 @@ void handle_file(const std::string &file, const std::string &base_path, char *bu
     }
 }
 
-int collect_files(Applications &apps, application_formatter appformatter, const stringlist_t &search_path, LocaleSuffixes &suffixes, bool use_xdg_de, stringlist_t &environment) {
+int collect_files(Applications &apps, application_formatter appformatter, const stringlist_t &search_path, LocaleSuffixes &suffixes, stringlist_t &environment) {
     // We switch the working directory to easier get relative paths
     // This way desktop files that are customized in more important directories
     // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
@@ -111,7 +111,7 @@ int collect_files(Applications &apps, application_formatter appformatter, const 
         }
         FileFinder finder("./", ".desktop");
         while(finder++) {
-            handle_file(*finder, path, buf, &bufsz, apps, appformatter, suffixes, use_xdg_de, environment);
+            handle_file(*finder, path, buf, &bufsz, apps, appformatter, suffixes, environment);
             parsed_files++;
         }
     }
@@ -231,7 +231,7 @@ int main(int argc, char **argv)
     if (shell == NULL)
         shell = "/bin/sh";
 
-    stringlist_t environment;
+    stringlist_t desktopenvs;
     bool use_xdg_de = false;
     bool exclude_generic = false;
     bool no_exec = false;
@@ -313,24 +313,20 @@ int main(int argc, char **argv)
     // Avoid zombie processes.
     signal(SIGCHLD, sigchld);
 
-    if(use_xdg_de) {
-        std::string env_var = get_variable("XDG_CURRENT_DESKTOP");
-        //XDG_CURRENT_DESKTOP can contain multiple environments separated by colons
-        environment = split(env_var, ':');
-        if(environment.empty())
-            use_xdg_de = false;
+    if (use_xdg_de) {
+        desktopenvs = split(get_variable("XDG_CURRENT_DESKTOP"), ':');
     }
 
 #ifdef DEBUG
-    fprintf(stderr, "desktop environment:\n");
-    for(auto s: environment)
+    fprintf(stderr, "desktop environments:\n");
+    for(auto s: desktopenvs)
         fprintf(stderr, "%s\n", s.c_str());
 #endif
 
     if(!wait_on)
         dmenu.run();
 
-    int parsed_files = collect_files(apps, appformatter, search_path, suffixes, use_xdg_de, environment);
+    int parsed_files = collect_files(apps, appformatter, search_path, suffixes, desktopenvs);
 
     // Sort applications by displayed name
     std::vector<std::pair<std::string, const Application *>> iteration_order;

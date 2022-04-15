@@ -44,8 +44,8 @@ constexpr uint32_t operator "" _istr(const char *s, size_t)
 class Application
 {
 public:
-    explicit Application(const LocaleSuffixes &locale_suffixes, const stringlist_t *environment = 0)
-        : locale_suffixes(locale_suffixes), environment(environment) {
+    explicit Application(const LocaleSuffixes &locale_suffixes, const stringlist_t &environments)
+        : locale_suffixes(locale_suffixes), desktopenvs(environments) {
     }
 
     // Localized name
@@ -153,9 +153,9 @@ public:
                     this->path= value;
                     break;
                 case "OnlyShowIn"_istr:
-                    if(environment) {
+                    if(!desktopenvs.empty()) {
                         stringlist_t values = split(std::string(value), ';');
-                        if(!have_equal_element(*environment, values)) {
+                        if(!have_equal_element(desktopenvs, values)) {
                             hidden = true;
 #ifdef DEBUG
                             fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
@@ -164,9 +164,9 @@ public:
                     }
                     break;
                 case "NotShowIn"_istr:
-                    if(environment) {
+                    if(!desktopenvs.empty()) {
                         stringlist_t values = split(std::string(value), ';');
-                        if(have_equal_element(*environment, values)) {
+                        if(have_equal_element(desktopenvs, values)) {
                             hidden = true;
 #ifdef DEBUG
                             fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
@@ -206,7 +206,7 @@ public:
 
 private:
     const LocaleSuffixes &locale_suffixes;
-    const stringlist_t *environment;
+    const stringlist_t &desktopenvs;
 
     // Value is assigned to field if the new match is less or equal the current match.
     // Newer entries of same match override older ones.
