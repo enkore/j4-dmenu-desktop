@@ -27,21 +27,6 @@
 #include "Utilities.hh"
 #include "LocaleSuffixes.hh"
 
-namespace ApplicationHelpers
-{
-
-static inline constexpr uint32_t make_istring(const char *s)
-{
-    return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
-}
-
-constexpr uint32_t operator "" _istr(const char *s, size_t)
-{
-    return make_istring(s);
-}
-
-}
-
 class Application
 {
 public:
@@ -74,8 +59,6 @@ public:
     unsigned usage_count = 0;
 
     bool read(const char *filename, char **linep, size_t *linesz) {
-        using namespace ApplicationHelpers;
-
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // !!   The code below is extremely hacky. But fast.    !!
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -140,20 +123,15 @@ public:
                 while(value[0] == ' ')
                     ++value;
 
-                switch(make_istring(key)) {
-                case "Name"_istr:
+                if (strncmp(key, "Name", 4) == 0)
                     parse_localestring(key, 4, locale_match, value, this->name);
-                    continue;
-                case "GenericName"_istr:
+                else if (strncmp(key, "GenericName", 11) == 0)
                     parse_localestring(key, 11, locale_generic_match, value, this->generic_name);
-                    continue;
-                case "Exec"_istr:
+                else if (strcmp(key, "Exec") == 0)
                     this->exec = value;
-                    break;
-                case "Path"_istr:
-                    this->path= value;
-                    break;
-                case "OnlyShowIn"_istr:
+                else if (strcmp(key, "Path") == 0)
+                    this->path = value;
+                else if (strcmp(key, "OnlyShowIn") == 0) {
                     if(!desktopenvs.empty()) {
                         stringlist_t values = split(std::string(value), ';');
                         if(!have_equal_element(desktopenvs, values)) {
@@ -163,8 +141,8 @@ public:
 #endif
                         }
                     }
-                    break;
-                case "NotShowIn"_istr:
+                }
+                else if (strcmp(key, "NotShowIn") == 0) {
                     if(!desktopenvs.empty()) {
                         stringlist_t values = split(std::string(value), ';');
                         if(have_equal_element(desktopenvs, values)) {
@@ -174,19 +152,17 @@ public:
 #endif
                         }
                     }
-                    break;
-                case "Hidden"_istr:
-                case "NoDisplay"_istr:
-                    if(value[0] == 't'){ // true
+                }
+                else if (strcmp(key, "Hidden") == 0 || strcmp(key, "NoDisplay") == 0) {
+                    if(strcmp(value, "true") == 0) {
 #ifdef DEBUG
                         fprintf(stderr, "NoDisplay/Hidden\n");
 #endif
                         hidden = true;
                     }
-                    break;
-                case "Terminal"_istr:
-                    this->terminal = make_istring(value) == "true"_istr;
-                    break;
+                }
+                else if (strcmp(key, "Terminal") == 0) {
+                    this->terminal = strcmp(value, "true") == 0;
                 }
             } else if(!strcmp(line, "[Desktop Entry]"))
                 parse_key_values = true;
