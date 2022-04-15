@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <cstring>
 #include <unistd.h>
+#include <limits.h>
 
 #include "Utilities.hh"
 #include "LocaleSuffixes.hh"
@@ -92,22 +93,22 @@ public:
         char *line;
         FILE *file = fopen(filename, "r");
         if(!file) {
-            char *pwd = new char[100];
+            char pwd[PATH_MAX];
             int error = errno;
-            if(!getcwd(pwd, 100)) {
+            if(!getcwd(pwd, PATH_MAX)) {
                 perror("read getcwd for error");
             } else {
                 fprintf(stderr, "%s/%s: %s\n", pwd, filename, strerror(error));
             }
-            delete[] pwd;
             return false;
         }
 
 #ifdef DEBUG
-        char *pwd = new char[100];
-        getcwd(pwd, 100);
-        fprintf(stderr, "%s/%s -> ", pwd, filename);
-        delete[] pwd;
+        char pwd[PATH_MAX];
+        if (!getcwd(pwd, PATH_MAX))
+            fprintf("Couldn't retreive CWD: %s\n", strerror(errno));
+        else
+            fprintf(stderr, "%s/%s -> ", pwd, filename);
 #endif
 
         id = filename + 2; // our internal filenames all start with './'
