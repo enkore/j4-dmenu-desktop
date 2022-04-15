@@ -88,9 +88,9 @@ int collect_files(Applications &apps, application_formatter appformatter, const 
     // This way desktop files that are customized in more important directories
     // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
     // directories
-    char original_wd[384];
-    if(!getcwd(original_wd, 384)) {
-        pfatale("collect_files: getcwd");
+    int original_wd = open(".", O_RDONLY);
+    if(original_wd == -1) {
+        pfatale("collect_files: open");
     }
 
     int parsed_files = 0;
@@ -118,9 +118,10 @@ int collect_files(Applications &apps, application_formatter appformatter, const 
 
     free(buf);
 
-    if(chdir(original_wd)) {
+    if(fchdir(original_wd)) {
         pfatale("collect_files: chdir(original_cwd)");
     }
+    close(original_wd);
 
     return parsed_files;
 }
