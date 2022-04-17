@@ -83,7 +83,7 @@ public:
         if (!getcwd(pwd, PATH_MAX))
             fprintf("Couldn't retreive CWD: %s\n", strerror(errno));
         else
-            fprintf(stderr, "%s/%s -> ", pwd, filename);
+            fprintf(stderr, "%s/%s -> ", pwd, filename + 2); // remove "./"
 #endif
 
         id = filename + 2; // our internal filenames all start with './'
