@@ -19,6 +19,7 @@
 #define APPLICATION_DEF
 
 #include <algorithm>
+#include <stdexcept>
 #include <cstdint>
 #include <cstring>
 #include <unistd.h>
@@ -27,13 +28,15 @@
 #include "Utilities.hh"
 #include "LocaleSuffixes.hh"
 
+struct disabled_error : public std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
+
 class Application
 {
+    using application_formatter = std::string(*)(const Application &);
 public:
-    explicit Application(const LocaleSuffixes &locale_suffixes, const stringlist_t &environments)
-        : locale_suffixes(locale_suffixes), desktopenvs(environments) {
-    }
-
     // Localized name
     std::string name;
 
@@ -58,16 +61,13 @@ public:
     // usage count (see --usage-log option)
     unsigned usage_count = 0;
 
-    bool read(const char *filename, char **linep, size_t *linesz) {
+    Application(const char *filename, char **linep, size_t *linesz, application_formatter format, const LocaleSuffixes &locale_suffixes, const stringlist_t &desktopenvs)
+    {
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // !!   The code below is extremely hacky. But fast.    !!
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //
         // Please don't try this at home.
-
-
-        //Whether the app should be hidden
-        bool hidden = false;
 
         int locale_match = -1, locale_generic_match = -1;
 
@@ -75,16 +75,8 @@ public:
         ssize_t linelen;
         char *line;
         FILE *file = fopen(filename, "r");
-        if(!file) {
-            char pwd[PATH_MAX];
-            int error = errno;
-            if(!getcwd(pwd, PATH_MAX)) {
-                perror("read getcwd for error");
-            } else {
-                fprintf(stderr, "%s/%s: %s\n", pwd, filename, strerror(error));
-            }
-            return false;
-        }
+        if(!file)
+            throw std::runtime_error((std::string)"Couldn't open desktop file - " + strerror(errno));
 
 #ifdef DEBUG
         char pwd[PATH_MAX];
@@ -113,9 +105,8 @@ public:
                 // Split that string in place
                 char *key=line, *value=strchr(line, '=');
                 if (!value) {
-                    fprintf(stderr, "%s: malformed file, ignoring\n", filename);
                     fclose(file);
-                    return false;
+                    throw std::runtime_error("Malformed file.");
                 }
                 (value++)[0] = 0; // Overwrite = with NUL (terminate key)
 
@@ -124,9 +115,9 @@ public:
                     ++value;
 
                 if (strncmp(key, "Name", 4) == 0)
-                    parse_localestring(key, 4, locale_match, value, this->name);
+                    parse_localestring(key, 4, locale_match, value, this->name, locale_suffixes);
                 else if (strncmp(key, "GenericName", 11) == 0)
-                    parse_localestring(key, 11, locale_generic_match, value, this->generic_name);
+                    parse_localestring(key, 11, locale_generic_match, value, this->generic_name, locale_suffixes);
                 else if (strcmp(key, "Exec") == 0)
                     this->exec = value;
                 else if (strcmp(key, "Path") == 0)
@@ -135,10 +126,11 @@ public:
                     if(!desktopenvs.empty()) {
                         stringlist_t values = split(std::string(value), ';');
                         if(!have_equal_element(desktopenvs, values)) {
-                            hidden = true;
 #ifdef DEBUG
                             fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
 #endif
+                            fclose(file);
+                            throw disabled_error("Refusing to parse desktop file whose OnlyShowIn field doesn't match current desktop.");
                         }
                     }
                 }
@@ -146,10 +138,11 @@ public:
                     if(!desktopenvs.empty()) {
                         stringlist_t values = split(std::string(value), ';');
                         if(have_equal_element(desktopenvs, values)) {
-                            hidden = true;
 #ifdef DEBUG
                             fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
 #endif
+                            fclose(file);
+                            throw disabled_error("Refusing to parse desktop file whose NotShowIn field matches current desktop.");
                         }
                     }
                 }
@@ -158,7 +151,8 @@ public:
 #ifdef DEBUG
                         fprintf(stderr, "NoDisplay/Hidden\n");
 #endif
-                        hidden = true;
+                        fclose(file);
+                        throw disabled_error("Refusing to parse Hidden or NoDisplay desktop file.");
                     }
                 }
                 else if (strcmp(key, "Terminal") == 0) {
@@ -175,19 +169,13 @@ public:
 
         fclose(file);
 
-        if(hidden)
-            return false;
-
-        return true;
+        this->name = format(*this);
     }
 
 private:
-    const LocaleSuffixes &locale_suffixes;
-    const stringlist_t &desktopenvs;
-
     // Value is assigned to field if the new match is less or equal the current match.
     // Newer entries of same match override older ones.
-    void parse_localestring(const char *key, int key_length, int &match, const char *value, std::string &field) {
+    void parse_localestring(const char *key, int key_length, int &match, const char *value, std::string &field, const LocaleSuffixes &locale_suffixes) {
         if(key[key_length] == '[') {
             std::string locale(key + key_length + 1, strlen(key + key_length + 1) - 1);
 

@@ -64,22 +64,21 @@ void print_usage(FILE* f) {
 }
 
 void handle_file(const std::string &file, const std::string &base_path, char *buf, size_t *bufsz, Applications &apps, application_formatter appformatter, LocaleSuffixes &suffixes, stringlist_t &desktopenvs) {
-    Application *dft = new Application(suffixes, desktopenvs);
-    bool file_read = dft->read(file.c_str(), &buf, bufsz);
-    dft->name = appformatter(*dft);
-    dft->location = base_path + file;
-
-    if(file_read && !dft->name.empty()) {
-        if(apps.count(dft->id)) {
+    try {
+        Application *dft = new Application(file.c_str(), &buf, bufsz, appformatter, suffixes, desktopenvs);
+        dft->location = base_path + file;
+        if (dft->name.empty())
+            return;
+        if (apps.count(dft->id))
             delete apps[dft->id];
-        }
         apps[dft->id] = dft;
-    } else {
-        if(!dft->id.empty()) {
-            delete apps[dft->id];
-            apps.erase(dft->id);
-        }
-        delete dft;
+    }
+    catch (disabled_error &)
+    {
+    }
+    catch (std::runtime_error &e)
+    {
+        fprintf(stderr, "%s%s: %s\n", base_path.c_str(), file.c_str() + 2, e.what()); // file always starts with "./", base_path always had leading slash
     }
 }
 
