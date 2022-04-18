@@ -103,16 +103,26 @@ public:
                     break;
 
                 // Split that string in place
-                char *key=line, *value=strchr(line, '=');
-                if (!value) {
+                char *key = line, *value = strpbrk(line, " =");
+                if (!value || value == line) {
                     fclose(file);
                     throw std::runtime_error("Malformed file.");
                 }
-                (value++)[0] = 0; // Overwrite = with NUL (terminate key)
-
-                //Cut spaces after the equal sign
-                while(value[0] == ' ')
-                    ++value;
+                // Cut spaces before equal sign
+                if (*value != '=') {
+                    *value++ = '\0';
+                    value = strchr(value, '=');
+                    if (!value) {
+                        fclose(file);
+                        throw std::runtime_error("Malformed file.");
+                    }
+                }
+                else
+                    *value = '\0';
+                value++;
+                // Cut spaces after equal sign
+                while (*value == ' ')
+                    value++;
 
                 if (strncmp(key, "Name", 4) == 0)
                     parse_localestring(key, 4, locale_match, value, this->name, locale_suffixes);
