@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <memory>
 #include <cstdint>
 #include <cstring>
 #include <unistd.h>
@@ -32,6 +33,11 @@ struct disabled_error : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
+
+void close_file(FILE * f)
+{
+    fclose(f);
+}
 
 class Application
 {
@@ -74,7 +80,7 @@ public:
         bool parse_key_values = false;
         ssize_t linelen;
         char *line;
-        FILE *file = fopen(filename, "r");
+        std::unique_ptr<FILE, decltype(&close_file)> file(fopen(filename, "r"), &close_file);
         if(!file)
             throw std::runtime_error((std::string)"Couldn't open desktop file - " + strerror(errno));
 
@@ -89,7 +95,7 @@ public:
         id = filename + 2; // our internal filenames all start with './'
         std::replace(id.begin(), id.end(), '/', '-');
 
-        while((linelen = getline(linep, linesz, file)) != -1) {
+        while((linelen = getline(linep, linesz, file.get())) != -1) {
             line = *linep;
             line[--linelen] = 0; // Chop off \n
 
@@ -104,18 +110,14 @@ public:
 
                 // Split that string in place
                 char *key = line, *value = strpbrk(line, " =");
-                if (!value || value == line) {
-                    fclose(file);
+                if (!value || value == line)
                     throw std::runtime_error("Malformed file.");
-                }
                 // Cut spaces before equal sign
                 if (*value != '=') {
                     *value++ = '\0';
                     value = strchr(value, '=');
-                    if (!value) {
-                        fclose(file);
+                    if (!value)
                         throw std::runtime_error("Malformed file.");
-                    }
                 }
                 else
                     *value = '\0';
@@ -139,7 +141,6 @@ public:
 #ifdef DEBUG
                             fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
 #endif
-                            fclose(file);
                             throw disabled_error("Refusing to parse desktop file whose OnlyShowIn field doesn't match current desktop.");
                         }
                     }
@@ -151,7 +152,6 @@ public:
 #ifdef DEBUG
                             fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
 #endif
-                            fclose(file);
                             throw disabled_error("Refusing to parse desktop file whose NotShowIn field matches current desktop.");
                         }
                     }
@@ -161,7 +161,6 @@ public:
 #ifdef DEBUG
                         fprintf(stderr, "NoDisplay/Hidden\n");
 #endif
-                        fclose(file);
                         throw disabled_error("Refusing to parse Hidden or NoDisplay desktop file.");
                     }
                 }
@@ -176,9 +175,6 @@ public:
         fprintf(stderr, "%s", this->name.c_str());
         fprintf(stderr, " (%s)\n", this->generic_name.c_str());
 #endif
-
-        fclose(file);
-
         this->name = format(*this);
     }
 
