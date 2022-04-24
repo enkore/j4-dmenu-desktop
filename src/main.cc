@@ -36,6 +36,8 @@ void print_usage(FILE* f) {
             "\nOptions:\n"
             "\t-b, --display-binary\n"
             "\t\tDisplay binary name after each entry (off by default)\n"
+            "\t-f, --display-binary-base\n"
+            "\t\tDisplay basename of binary name after each entry (off by default)\n"
             "\t-d, --dmenu=<command>\n"
             "\t\tDetermines the command used to invoke dmenu\n"
             "\t\tExecuted with your shell ($SHELL) or /bin/sh\n"
@@ -255,20 +257,21 @@ int main(int argc, char **argv)
     while (true) {
         int option_index = 0;
         static struct option long_options[] = {
-            {"dmenu",   required_argument,  0,  'd'},
-            {"use-xdg-de",   no_argument,   0,  'x'},
-            {"term",    required_argument,  0,  't'},
-            {"help",    no_argument,        0,  'h'},
-            {"display-binary", no_argument, 0,  'b'},
-            {"no-generic", no_argument,     0,  'n'},
-            {"usage-log", required_argument,0,  'l'},
-            {"wait-on", required_argument,  0,  'w'},
-            {"no-exec", no_argument,        0,  'e'},
-            {"wrapper", required_argument,   0,  'W'},
-            {0,         0,                  0,  0}
+            {"dmenu",               required_argument, 0,  'd'},
+            {"use-xdg-de",          no_argument,       0,  'x'},
+            {"term",                required_argument, 0,  't'},
+            {"help",                no_argument,       0,  'h'},
+            {"display-binary",      no_argument,       0,  'b'},
+            {"display-binary-base", no_argument,       0,  'f'},
+            {"no-generic",          no_argument,       0,  'n'},
+            {"usage-log",           required_argument, 0,  'l'},
+            {"wait-on",             required_argument, 0,  'w'},
+            {"no-exec",             no_argument,       0,  'e'},
+            {"wrapper",             required_argument, 0,  'W'},
+            {0,                     0,                 0,  0}
         };
 
-        int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
+        int c = getopt_long(argc, argv, "d:t:xhbf", long_options, &option_index);
         if(c == -1)
             break;
 
@@ -287,6 +290,9 @@ int main(int argc, char **argv)
             exit(0);
         case 'b':
             appformatter = appformatter_with_binary_name;
+            break;
+        case 'f':
+            appformatter = appformatter_with_base_binary_name;
             break;
         case 'n':
             exclude_generic = true;

@@ -35,4 +35,19 @@ inline std::string appformatter_with_binary_name(const Application &app)
     return app.name + " (" + app.exec.substr(0, app.exec.find(' ')) + ")";
 }
 
+std::string appformatter_with_base_binary_name(const Application &app)
+{
+    auto command_end = app.exec.find(' ');
+    auto last_slash = app.exec.rfind('/', command_end);
+
+    if (last_slash == std::string::npos)
+        last_slash = 0; // exec is relative, it doesn't contain slashes in path
+    else
+        last_slash++;
+    if (command_end != std::string::npos)
+        command_end -= last_slash; // make command_end an offset from last_slash
+
+    return app.name + " (" + app.exec.substr(last_slash, command_end) + ")";
+}
+
 #endif
