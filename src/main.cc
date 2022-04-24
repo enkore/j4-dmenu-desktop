@@ -67,13 +67,16 @@ void print_usage(FILE* f) {
 
 void handle_file(const std::string &file, const std::string &base_path, char *buf, size_t *bufsz, Applications &apps, application_formatter appformatter, LocaleSuffixes &suffixes, stringlist_t &desktopenvs) {
     try {
+        std::string id(file, 2, std::string::npos); // all internal filenames all start with "./"
+        std::replace(id.begin(), id.end(), '/', '-');
+
         Application *dft = new Application(file.c_str(), &buf, bufsz, appformatter, suffixes, desktopenvs);
         dft->location = base_path + file;
         if (dft->name.empty())
             return;
-        if (apps.count(dft->id))
-            delete apps[dft->id];
-        apps[dft->id] = dft;
+        if (apps.count(id))
+            delete apps[id];
+        apps[id] = dft;
     }
     catch (disabled_error &)
     {
