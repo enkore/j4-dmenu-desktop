@@ -6,6 +6,7 @@
 static const std::string test_files = TEST_FILES;
 
 #include "TestApplication.cc"
+#include "TestApplications.cc"
 #include "TestApplicationRunner.cc"
 #include "TestSearchPath.cc"
 #include "TestLocaleSuffixes.cc"
