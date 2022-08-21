@@ -34,6 +34,11 @@ struct disabled_error : public std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
+struct escape_error : public std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
+
 void close_file(FILE * f)
 {
     fclose(f);
@@ -130,46 +135,54 @@ public:
                 while (*value == ' ')
                     value++;
 
-                if (strncmp(key, "Name", 4) == 0)
-                    parse_localestring(key, 4, locale_match, value, this->name, locale_suffixes);
-                else if (strncmp(key, "GenericName", 11) == 0)
-                    parse_localestring(key, 11, locale_generic_match, value, this->generic_name, locale_suffixes);
-                else if (strcmp(key, "Exec") == 0)
-                    this->exec = value;
-                else if (strcmp(key, "Path") == 0)
-                    this->path = value;
-                else if (strcmp(key, "OnlyShowIn") == 0) {
-                    if(!desktopenvs.empty()) {
-                        stringlist_t values = split(std::string(value), ';');
-                        if(!have_equal_element(desktopenvs, values)) {
+                try
+                {
+                    if (strncmp(key, "Name", 4) == 0)
+                        parse_localestring(key, 4, locale_match, value, this->name, locale_suffixes);
+                    else if (strncmp(key, "GenericName", 11) == 0)
+                        parse_localestring(key, 11, locale_generic_match, value, this->generic_name, locale_suffixes);
+                    else if (strcmp(key, "Exec") == 0)
+                        this->exec = expand("Exec", value);
+                    else if (strcmp(key, "Path") == 0)
+                        this->path = expand("Path", value);
+                    else if (strcmp(key, "OnlyShowIn") == 0) {
+                        if(!desktopenvs.empty()) {
+                            stringlist_t values = expandlist("OnlyShowIn", value);
+                            if(!have_equal_element(desktopenvs, values)) {
 #ifdef DEBUG
-                            fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
+                                fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
 #endif
-                            throw disabled_error("Refusing to parse desktop file whose OnlyShowIn field doesn't match current desktop.");
+                                throw disabled_error("Refusing to parse desktop file whose OnlyShowIn field doesn't match current desktop.");
+                            }
                         }
                     }
-                }
-                else if (strcmp(key, "NotShowIn") == 0) {
-                    if(!desktopenvs.empty()) {
-                        stringlist_t values = split(std::string(value), ';');
-                        if(have_equal_element(desktopenvs, values)) {
+                    else if (strcmp(key, "NotShowIn") == 0) {
+                        if(!desktopenvs.empty()) {
+                            stringlist_t values = expandlist("NotShowIn", value);
+                            if(have_equal_element(desktopenvs, values)) {
 #ifdef DEBUG
-                            fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
+                                fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
 #endif
-                            throw disabled_error("Refusing to parse desktop file whose NotShowIn field matches current desktop.");
+                                throw disabled_error("Refusing to parse desktop file whose NotShowIn field matches current desktop.");
+                            }
                         }
                     }
-                }
-                else if (strcmp(key, "Hidden") == 0 || strcmp(key, "NoDisplay") == 0) {
-                    if(strcmp(value, "true") == 0) {
+                    else if (strcmp(key, "Hidden") == 0 || strcmp(key, "NoDisplay") == 0) {
+                        if(strcmp(value, "true") == 0) {
 #ifdef DEBUG
-                        fprintf(stderr, "NoDisplay/Hidden\n");
+                            fprintf(stderr, "NoDisplay/Hidden\n");
 #endif
-                        throw disabled_error("Refusing to parse Hidden or NoDisplay desktop file.");
+                            throw disabled_error("Refusing to parse Hidden or NoDisplay desktop file.");
+                        }
+                    }
+                    else if (strcmp(key, "Terminal") == 0) {
+                        this->terminal = strcmp(value, "true") == 0;
                     }
                 }
-                else if (strcmp(key, "Terminal") == 0) {
-                    this->terminal = strcmp(value, "true") == 0;
+                catch (const escape_error & e)
+                {
+                    fprintf(stderr, "%s: %s\n", id.c_str(), e.what());
+                    throw;
                 }
             } else if(!strcmp(line, "[Desktop Entry]"))
                 parse_key_values = true;
@@ -183,6 +196,92 @@ public:
     }
 
 private:
+    static char convert(char escape)
+    {
+        switch (escape)
+        {
+            case 's':
+                return ' ';
+            case 'n':
+                return '\n';
+            case 't':
+                return '\t';
+            case 'r':
+                return '\r';
+            case '\\':
+                return '\\';
+        }
+        throw escape_error((std::string)"Tried to interpret invalid escape sequence \\" + escape + ".");
+    }
+
+    std::string expand(const char * key, const char * value)
+    {
+        size_t len = strlen(value);
+        std::string result;
+        result.reserve(len);
+        bool escape = false; // if true then the next character should be escaped
+        try
+        {
+            for (size_t i = 0; i < len; i++) {
+                if (escape) {
+                    result += convert(value[i]);
+                    escape = false;
+                }
+                else {
+                    if (value[i] == '\\')
+                        escape = true;
+                    else
+                        result += value[i];
+                }
+            }
+            if (escape)
+                throw escape_error("Invalid escape character at end of line.");
+        }
+        catch (const escape_error & e) {
+            throw escape_error((std::string)key + ": " + e.what());
+        }
+        return result;
+    }
+
+    stringlist_t expandlist(const char * key, const char * value)
+    {
+        stringlist_t result;
+        std::string curr;
+        bool escape = false;
+        try
+        {
+            do {
+                if (escape) {
+                    if (*value == ';') // lists also allow ; to be escaped because it has special meaning in
+                        curr += ';';   // lists, so this will handle the escaping of it
+                    else
+                        curr += convert(*value);
+                    escape = false;
+                }
+                else {
+                    switch (*value) {
+                        case '\\':
+                            escape = true;
+                            break;
+                        case ';':
+                            result.push_back(std::move(curr));
+                            curr.clear();
+                            break;
+                        default:
+                            curr += *value;
+                            break;
+                    }
+                }
+            } while (*++value != '\0');
+            if (escape)
+                throw escape_error("Invalid escape character at end of line.");
+        }
+        catch (const escape_error & e) {
+            throw escape_error((std::string)key + ": " + e.what());
+        }
+        return result;
+    }
+
     // Value is assigned to field if the new match is less or equal the current match.
     // Newer entries of same match override older ones.
     void parse_localestring(const char *key, int key_length, int &match, const char *value, std::string &field, const LocaleSuffixes &locale_suffixes) {
@@ -194,11 +293,11 @@ private:
                 return;
             if (new_match <= match || match == -1) {
                 match = new_match;
-                field = value;
+                field = expand(key, value);
             }
         } else if (match == -1 || match == 4) {
             match = 4; // The maximum match of LocaleSuffixes.match() is 3. 4 means default value.
-            field = value;
+            field = expand(key, value);
         }
     }
 };

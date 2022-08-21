@@ -440,6 +440,10 @@ public:
         {
             return;
         }
+        catch (escape_error &)
+        {
+            return;
+        }
 
         auto & appc = tryfind->second;
 
