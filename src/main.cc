@@ -99,21 +99,24 @@ int collect_files(Applications &apps, const stringlist_t & search_path) {
     return parsed_files;
 }
 
-std::string get_command(int parsed_files, Applications &apps, const std::string &choice, std::string &terminal) {
+std::pair<std::string, bool> get_command(int parsed_files, Applications &apps, const std::string &choice, const std::string & wrapper) {
     std::string args;
     Application *app;
 
     fprintf(stderr, "Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
 
     if(choice.empty())
-        return "";
+        return std::make_pair("", false);
 
     std::tie(app, args) = apps.get(choice);
 
     fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
     if (!app) {
-        return args;
+        if (wrapper.empty())
+            return std::make_pair(args, false);
+        else
+            return std::make_pair(wrapper + " \"" + args + "\"", false);
     }
 
     apps.update_log(usage_log);
@@ -124,8 +127,11 @@ std::string get_command(int parsed_files, Applications &apps, const std::string 
         }
     }
 
-    ApplicationRunner app_runner(terminal, *app, args);
-    return app_runner.command();
+    std::string command = application_command(*app, args);
+    if (wrapper.empty())
+        return std::make_pair(command, app->terminal);
+    else
+        return std::make_pair(wrapper + " \"" + command + "\"", app->terminal);
 }
 
 int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &apps, std::string &terminal, std::string &wrapper, bool no_exec, const char *usage_log) {
@@ -134,9 +140,18 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &ap
         dmenu.write(name);
 
     dmenu.display();
-    std::string command = get_command(parsed_files, apps, dmenu.read_choice(), terminal); // read_choice blocks
-    if (wrapper.length())
-        command = wrapper + " \"" + command + "\"";
+
+    std::string command;
+    bool isterminal;
+
+    try
+    {
+        std::tie(command, isterminal) = get_command(parsed_files, apps, dmenu.read_choice(), wrapper); // read_choice blocks
+    }
+    catch (const std::runtime_error & e) { // invalid field code in Exec, the standard says that the implementation shall not process these
+        fprintf(stderr, "%s\n", e.what());
+        return 1;
+    }
 
     if(!command.empty()) {
         if (no_exec) {
@@ -144,9 +159,14 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &ap
             return 0;
         }
 
-        fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
-
-        return execl(shell, shell, "-c", command.c_str(), 0, nullptr);
+        if (isterminal) {
+            fprintf(stderr, "%s -e %s -c '%s'\n", terminal.c_str(), shell, command.c_str());
+            return execlp(terminal.c_str(), terminal.c_str(), "-e", shell, "-c", command.c_str(), (char *) NULL);
+        }
+        else {
+            fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
+            return execl(shell, shell, "-c", command.c_str(), (char *) NULL);
+        }
     }
     return 0;
 }
