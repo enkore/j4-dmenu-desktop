@@ -11,13 +11,11 @@
 TEST_CASE("Formatters/standard", "")
 {
     LocaleSuffixes ls("en_US");
-    Application app(ls);
     char *buffer = static_cast<char*>(malloc(4096));
     size_t size = 4096;
-    std::string path(test_files + "applications/eagle.desktop");
+    Application app(TEST_FILES"applications/eagle.desktop", &buffer, &size, appformatter_default, ls, {});
 
-    REQUIRE( app.read(path.c_str(), &buffer, &size) );
-    REQUIRE( appformatter_default(app) == "Eagle" );
+    REQUIRE( app.name == "Eagle" );
 
     free(buffer);
 }
@@ -25,13 +23,11 @@ TEST_CASE("Formatters/standard", "")
 TEST_CASE("Formatters/with_binary", "")
 {
     LocaleSuffixes ls("en_US");
-    Application app(ls);
     char *buffer = static_cast<char*>(malloc(4096));
     size_t size = 4096;
-    std::string path(test_files + "applications/eagle.desktop");
+    Application app(TEST_FILES"applications/eagle.desktop", &buffer, &size, appformatter_with_binary_name, ls, {});
 
-    REQUIRE( app.read(path.c_str(), &buffer, &size) );
-    REQUIRE( appformatter_with_binary_name(app) == "Eagle (eagle)" );
+    REQUIRE( app.name == "Eagle (eagle)" );
 
     free(buffer);
 }
