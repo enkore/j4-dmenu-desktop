@@ -96,7 +96,7 @@ TEST_CASE("Application/flag/hidden=true", "Test for an issue where the name wasn
     free(buffer);
 }
 
-TEST_CASE("Application/spaces_after_equals", "Test whether spaces after the equal sign are ignored")
+TEST_CASE("Application/spaces_around_equals", "Test whether spaces around the equal sign are ignored")
 {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char*>(malloc(4096));
