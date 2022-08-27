@@ -64,9 +64,6 @@ public:
     // file id
     std::string id;
 
-    // usage count (see --usage-log option)
-    unsigned usage_count = 0;
-
     bool operator==(const Application & other) const
     {
         return name == other.name && generic_name == other.generic_name && exec == other.exec && path == other.path
