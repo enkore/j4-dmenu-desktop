@@ -65,29 +65,7 @@ void print_usage(FILE* f) {
            );
 }
 
-void handle_file(const std::string &file, const std::string &base_path, char *buf, size_t *bufsz, Applications &apps, application_formatter appformatter, LocaleSuffixes &suffixes, stringlist_t &desktopenvs) {
-    try {
-        std::string id(file, 2, std::string::npos); // all internal filenames all start with "./"
-        std::replace(id.begin(), id.end(), '/', '-');
-
-        Application *dft = new Application(file.c_str(), &buf, bufsz, appformatter, suffixes, desktopenvs);
-        dft->location = base_path + file;
-        if (dft->name.empty())
-            return;
-        if (apps.count(id))
-            delete apps[id];
-        apps[id] = dft;
-    }
-    catch (disabled_error &)
-    {
-    }
-    catch (std::runtime_error &e)
-    {
-        fprintf(stderr, "%s%s: %s\n", base_path.c_str(), file.c_str() + 2, e.what()); // file always starts with "./", base_path always had leading slash
-    }
-}
-
-int collect_files(Applications &apps, application_formatter appformatter, const stringlist_t &search_path, LocaleSuffixes &suffixes, stringlist_t &environment) {
+int collect_files(Applications &apps, const stringlist_t & search_path) {
     // We switch the working directory to easier get relative paths
     // This way desktop files that are customized in more important directories
     // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
@@ -99,28 +77,17 @@ int collect_files(Applications &apps, application_formatter appformatter, const 
 
     int parsed_files = 0;
 
-    // Allocating the line buffer just once saves lots of MM calls
-    // malloc required to avoid mixing malloc/new[] as getdelim may realloc() buf
-
-    char *buf;
-    size_t bufsz = 4096;
-
-    buf = static_cast<char*>(malloc(bufsz));
-    buf[0] = 0;
-
-    for(const auto &path : search_path) {
-        if(chdir(path.c_str())) {
-            fprintf(stderr, "%s: %s", path.c_str(), strerror(errno));
+    for (Applications::size_type i = 0; i < search_path.size(); i++) {
+        if(chdir(search_path[i].c_str())) {
+            fprintf(stderr, "%s: %s", search_path[i].c_str(), strerror(errno));
             continue;
         }
         FileFinder finder("./", ".desktop");
         while(finder++) {
-            handle_file(*finder, path, buf, &bufsz, apps, appformatter, suffixes, environment);
+            apps.add(*finder, i, search_path[i]);
             parsed_files++;
         }
     }
-
-    free(buf);
 
     if(fchdir(original_wd)) {
         pfatale("collect_files: chdir(original_cwd)");
@@ -130,7 +97,7 @@ int collect_files(Applications &apps, application_formatter appformatter, const 
     return parsed_files;
 }
 
-std::string get_command(int parsed_files, Applications &apps, const std::string &choice, bool exclude_generic, const char *usage_log, std::string &terminal) {
+std::string get_command(int parsed_files, Applications &apps, const std::string &choice, std::string &terminal) {
     std::string args;
     Application *app;
 
@@ -139,7 +106,7 @@ std::string get_command(int parsed_files, Applications &apps, const std::string 
     if(choice.empty())
         return "";
 
-    std::tie(app, args) = apps.search(choice, exclude_generic);
+    std::tie(app, args) = apps.get(choice);
 
     fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
 
@@ -147,9 +114,7 @@ std::string get_command(int parsed_files, Applications &apps, const std::string 
         return args;
     }
 
-    if(usage_log) {
-        apps.update_log(usage_log, app);
-    }
+    apps.update_log(usage_log);
 
     if(!app->path.empty()) {
         if(chdir(app->path.c_str())) {
@@ -161,17 +126,13 @@ std::string get_command(int parsed_files, Applications &apps, const std::string 
     return app_runner.command();
 }
 
-int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const char *shell, bool exclude_generic, int parsed_files, Dmenu &dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
+int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &apps, std::string &terminal, std::string &wrapper, bool no_exec, const char *usage_log) {
     // Transfer the list to dmenu
-    for(auto &app : iteration_order) {
-        dmenu.write(app.second->name);
-        const std::string &generic_name = app.second->generic_name;
-        if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
-            dmenu.write(generic_name);
-    }
+    for(auto &name : apps)
+        dmenu.write(name);
 
     dmenu.display();
-    std::string command = get_command(parsed_files, apps, dmenu.read_choice(), exclude_generic, usage_log, terminal); // read_choice blocks
+    std::string command = get_command(parsed_files, apps, dmenu.read_choice(), terminal); // read_choice blocks
     if (wrapper.length())
         command = wrapper + " \"" + command + "\"";
 
@@ -249,8 +210,6 @@ int main(int argc, char **argv)
     }
 #endif
 
-    Applications apps;
-
     LocaleSuffixes suffixes;
 
     application_formatter appformatter = appformatter_default;
@@ -317,8 +276,6 @@ int main(int argc, char **argv)
         }
     }
 
-    Dmenu dmenu(dmenu_command, shell);
-
     // Avoid zombie processes.
     signal(SIGCHLD, sigchld);
 
@@ -332,36 +289,20 @@ int main(int argc, char **argv)
         fprintf(stderr, "%s\n", s.c_str());
 #endif
 
+    Applications apps(appformatter, desktopenvs, suffixes, exclude_generic, usage_log != NULL);
+
+    Dmenu dmenu(dmenu_command, shell);
+
     if(!wait_on)
         dmenu.run();
 
-    int parsed_files = collect_files(apps, appformatter, search_path, suffixes, desktopenvs);
+    int parsed_files = collect_files(apps, search_path);
 
-    // Sort applications by displayed name
-    std::vector<std::pair<std::string, const Application *>> iteration_order;
-    iteration_order.reserve(apps.size());
-    for(auto &app : apps) {
-        iteration_order.emplace_back(app.first, app.second);
-    }
-
-    std::sort(iteration_order.begin(), iteration_order.end(), [](
-        const std::pair<std::string, const Application *> &s1,
-        const std::pair<std::string, const Application *> &s2) {
-            return s1.second->name < s2.second->name;
-    });
-
-    if(usage_log) {
-        apps.load_log(usage_log);
-        std::stable_sort(iteration_order.begin(), iteration_order.end(), [](
-            const std::pair<std::string, const Application *> &s1,
-            const std::pair<std::string, const Application *> &s2) {
-                return s1.second->usage_count > s2.second->usage_count;
-        });
-    }
+    apps.load_log(usage_log); // load the log if it's enabled
 
     if(wait_on) {
-        return do_wait_on(iteration_order, shell, wait_on, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+        return do_wait_on(shell, wait_on, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
     } else {
-        return do_dmenu(iteration_order, shell, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+        return do_dmenu(shell, parsed_files, dmenu, apps, terminal, wrapper, no_exec, usage_log);
     }
 }
