@@ -20,7 +20,7 @@
 
 #include <cstdlib>
 #include <map>
-#include <list>
+#include <vector>
 #include <set>
 #include <string>
 #include <utility>
@@ -33,7 +33,7 @@
 #include <string.h>
 
 
-typedef std::list<std::string> stringlist_t;
+typedef std::vector<std::string> stringlist_t;
 
 inline stringlist_t split(const std::string &str, char delimiter)
 {
