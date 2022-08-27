@@ -82,9 +82,11 @@ int collect_files(Applications &apps, const stringlist_t & search_path) {
             fprintf(stderr, "%s: %s", search_path[i].c_str(), strerror(errno));
             continue;
         }
-        FileFinder finder("./", ".desktop");
-        while(finder++) {
-            apps.add(*finder, i, search_path[i]);
+        FileFinder finder("./");
+        while(++finder) {
+            if (finder.isdir() || !endswith(finder.path(), ".desktop"))
+                continue;
+            apps.add(finder.path().substr(2), i, search_path[i]);
             parsed_files++;
         }
     }
