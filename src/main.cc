@@ -66,35 +66,17 @@ void print_usage(FILE* f) {
 }
 
 int collect_files(Applications &apps, const stringlist_t & search_path) {
-    // We switch the working directory to easier get relative paths
-    // This way desktop files that are customized in more important directories
-    // (like $XDG_DATA_HOME/applications/) overwrite those found in system-wide
-    // directories
-    int original_wd = open(".", O_RDONLY);
-    if(original_wd == -1) {
-        pfatale("collect_files: open");
-    }
-
     int parsed_files = 0;
 
     for (Applications::size_type i = 0; i < search_path.size(); i++) {
-        if(chdir(search_path[i].c_str())) {
-            fprintf(stderr, "%s: %s", search_path[i].c_str(), strerror(errno));
-            continue;
-        }
-        FileFinder finder("./");
+        FileFinder finder(search_path[i]);
         while(++finder) {
             if (finder.isdir() || !endswith(finder.path(), ".desktop"))
                 continue;
-            apps.add(finder.path().substr(2), i, search_path[i]);
+            apps.add(finder.path().substr(search_path[i].length()), i, search_path[i]);
             parsed_files++;
         }
     }
-
-    if(fchdir(original_wd)) {
-        pfatale("collect_files: chdir(original_cwd)");
-    }
-    close(original_wd);
 
     return parsed_files;
 }
