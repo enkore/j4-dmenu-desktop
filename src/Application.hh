@@ -67,6 +67,7 @@ public:
     bool terminal = false;
 
     // file id
+    // It isn't set by Application, it is a helper variable managed by Applications
     std::string id;
 
     bool operator==(const Application & other) const
@@ -97,10 +98,6 @@ public:
 #ifdef DEBUG
         fprintf(stderr, "%s -> ", pwd, filename);
 #endif
-
-        size_t filenamelen = strlen(filename);
-        id.reserve(filenamelen);
-        std::replace_copy(filename, filename + filenamelen, std::back_inserter(id), '/', '-');
 
         while((linelen = getline(linep, linesz, file.get())) != -1) {
             line = *linep;

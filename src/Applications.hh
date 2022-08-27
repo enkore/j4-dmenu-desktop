@@ -449,6 +449,7 @@ public:
 
         auto & appc = tryfind->second;
 
+        appc.app.id = id;
         appc.listed = sortedhistmap[0].insert(sortedhistmap[0].end(), appc.app.id);
 
         add_generic(appc, false);
