@@ -12,7 +12,7 @@ else()
 endif()
 
 # _WITH_GETLINE for FreeBSD
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} -Wall -Wextra -pedantic -O2 -D_WITH_GETLINE")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} -Wall -Wextra -pedantic -Wno-missing-field-initializers -O2 -D_WITH_GETLINE")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 if(WITH_TESTS)
