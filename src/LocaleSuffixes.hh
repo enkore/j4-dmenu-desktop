@@ -89,6 +89,11 @@ public:
         return -1;
     }
 
+    bool operator==(const LocaleSuffixes & other) const
+    {
+         return length == other.length && std::equal(suffixes, suffixes + length, other.suffixes);
+    }
+
 private:
     std::string suffixes[4];
     // There are three possible values of length:

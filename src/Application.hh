@@ -67,6 +67,12 @@ public:
     // usage count (see --usage-log option)
     unsigned usage_count = 0;
 
+    bool operator==(const Application & other) const
+    {
+        return name == other.name && generic_name == other.generic_name && exec == other.exec && path == other.path
+            && location == other.location && terminal == other.terminal && id == other.id;
+    }
+
     Application(const char *filename, char **linep, size_t *linesz, application_formatter format, const LocaleSuffixes &locale_suffixes, const stringlist_t &desktopenvs)
     {
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -89,11 +95,12 @@ public:
         if (!getcwd(pwd, PATH_MAX))
             fprintf("Couldn't retreive CWD: %s\n", strerror(errno));
         else
-            fprintf(stderr, "%s/%s -> ", pwd, filename + 2); // remove "./"
+            fprintf(stderr, "%s/%s -> ", pwd, filename);
 #endif
 
-        id = filename + 2; // our internal filenames all start with './'
-        std::replace(id.begin(), id.end(), '/', '-');
+        size_t filenamelen = strlen(filename);
+        id.reserve(filenamelen);
+        std::replace_copy(filename, filename + filenamelen, std::back_inserter(id), '/', '-');
 
         while((linelen = getline(linep, linesz, file.get())) != -1) {
             line = *linep;
