@@ -414,7 +414,9 @@ public:
         idmap.erase(appiter);
     }
 
-    void add(const std::string & filename, int rank)
+    // add or overwrite the file filename
+    // providing a path and a filename instead of the absolute path is done to be able to distinguish the desktop file ID
+    void add(const std::string & filename, int rank, const std::string & path)
     {
         std::string id;
         id.reserve(filename.size());
@@ -431,10 +433,10 @@ public:
                 deletename(tryfind->second);
 
                 tryfind->second.rank = rank;
-                tryfind->second.app = Application(filename.c_str(), &linep, &linesz, format, suffixes, desktopenvs);
+                tryfind->second.app = Application((path + filename).c_str(), &linep, &linesz, format, suffixes, desktopenvs);
             }
             else
-                tryfind = getiter(idmap.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(rank, Application(filename.c_str(), &linep, &linesz, format, suffixes, desktopenvs))));
+                tryfind = getiter(idmap.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(rank, Application((path + filename).c_str(), &linep, &linesz, format, suffixes, desktopenvs))));
         }
         catch (disabled_error &) // if the desktop file is disabled, do nothing
         {

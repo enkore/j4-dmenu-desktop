@@ -75,7 +75,7 @@ public:
             && location == other.location && terminal == other.terminal && id == other.id;
     }
 
-    Application(const char *filename, char **linep, size_t *linesz, application_formatter format, const LocaleSuffixes &locale_suffixes, const stringlist_t &desktopenvs)
+    Application(const char *path, char **linep, size_t *linesz, application_formatter format, const LocaleSuffixes &locale_suffixes, const stringlist_t &desktopenvs)
     {
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // !!   The code below is extremely hacky. But fast.    !!
@@ -83,21 +83,19 @@ public:
         //
         // Please don't try this at home.
 
+        this->location = path;
+
         int locale_match = -1, locale_generic_match = -1;
 
         bool parse_key_values = false;
         ssize_t linelen;
         char *line;
-        std::unique_ptr<FILE, decltype(&close_file)> file(fopen(filename, "r"), &close_file);
+        std::unique_ptr<FILE, decltype(&close_file)> file(fopen(path, "r"), &close_file);
         if(!file)
             throw std::runtime_error((std::string)"Couldn't open desktop file - " + strerror(errno));
 
 #ifdef DEBUG
-        char pwd[PATH_MAX];
-        if (!getcwd(pwd, PATH_MAX))
-            fprintf("Couldn't retreive CWD: %s\n", strerror(errno));
-        else
-            fprintf(stderr, "%s/%s -> ", pwd, filename);
+        fprintf(stderr, "%s -> ", pwd, filename);
 #endif
 
         size_t filenamelen = strlen(filename);
@@ -181,7 +179,7 @@ public:
                 }
                 catch (const escape_error & e)
                 {
-                    fprintf(stderr, "%s: %s\n", id.c_str(), e.what());
+                    fprintf(stderr, "%s: %s\n", location.c_str(), e.what());
                     throw;
                 }
             } else if(!strcmp(line, "[Desktop Entry]"))
