@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <signal.h>
 
 #include "Utilities.hh"
@@ -153,10 +154,9 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &ap
     return 0;
 }
 
-int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const char *shell, const char *wait_on, bool exclude_generic, int parsed_files, Dmenu &dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
+int do_wait_on(NotifyBase & notify, const char * shell, const char *wait_on, int parsed_files, Dmenu &dmenu, Applications &apps, std::string &terminal, std::string &wrapper, bool no_exec, const stringlist_t & search_path)
+{
     int fd;
-    pid_t pid;
-    char data;
     if(mkfifo(wait_on, 0600) && errno != EEXIST) {
         perror("mkfifo");
         return 1;
@@ -166,24 +166,51 @@ int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &i
         perror("open(fifo)");
         return 1;
     }
+    pollfd watch[] = {
+        { fd, POLLIN, 0 },
+        { notify.getfd(), POLLIN, 0 },
+    };
     while (1) {
-        if(read(fd, &data, sizeof(data)) < 1) {
-            perror("read(fifo)");
-            break;
+        watch[0].revents = watch[1].revents = 0;
+        int ret;
+        while ((ret = poll(watch, 2, -1)) == -1 && errno == EINTR) ;
+        if (ret == -1)
+            pfatale("poll");
+        if (watch[1].revents & POLLIN) {
+            for (const auto & i : notify.getchanges()) {
+                if (!endswith(i.name, ".desktop"))
+                    continue;
+                switch (i.status)
+                {
+                    case NotifyBase::changetype::modified:
+                        apps.add(i.name, i.rank, search_path[i.rank]);
+                        break;
+                    case NotifyBase::changetype::deleted:
+                        apps.remove(i.name, i.rank);
+                        break;
+                }
+            }
         }
-        if(data == 'q') {
-            break;
-        }
-        pid = fork();
-        switch(pid) {
-        case -1:
-            perror("fork");
-            return 1;
-        case 0:
-            close(fd);
-            setsid();
-            dmenu.run();
-            return do_dmenu(iteration_order, shell, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+        if (watch[0].revents & POLLIN)
+        {
+            char data;
+            if(read(fd, &data, sizeof(data)) < 1) {
+                perror("read(fifo)");
+                break;
+            }
+            if(data == 'q')
+                return 0;
+            pid_t pid = fork();
+            switch(pid) {
+            case -1:
+                perror("fork");
+                return 1;
+            case 0:
+                close(fd);
+                setsid();
+                dmenu.run();
+                return do_dmenu(shell, parsed_files, dmenu, apps, terminal, wrapper, no_exec);
+            }
         }
     }
     close(fd);
