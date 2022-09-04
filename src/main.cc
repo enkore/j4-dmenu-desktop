@@ -22,6 +22,13 @@
 #include "FileFinder.hh"
 #include "Formatters.hh"
 
+#include "Notify.hh"
+#ifdef USE_KQUEUE
+#include "NotifyKqueue.hh"
+#else
+#include "NotifyInotify.hh"
+#endif
+
 void sigchld(int) {
         while (waitpid(-1, NULL, WNOHANG) > 0);
 }
@@ -332,7 +339,12 @@ int main(int argc, char **argv)
     apps.load_log(usage_log); // load the log if it's enabled
 
     if(wait_on) {
-        return do_wait_on(shell, wait_on, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+#ifdef USE_KQUEUE
+        NotifyKqueue notify(search_path);
+#else
+        NotifyInotify notify(search_path);
+#endif
+        return do_wait_on(notify, shell, wait_on, parsed_files, dmenu, apps, terminal, wrapper, no_exec, search_path, usage_log);
     } else {
         return do_dmenu(shell, parsed_files, dmenu, apps, terminal, wrapper, no_exec, usage_log);
     }

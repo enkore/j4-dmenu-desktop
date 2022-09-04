@@ -15,6 +15,19 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPT} -Wall -Wextra -pedantic -Wno-missing-field-initializers -O2 -D_WITH_GETLINE")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
+if (CMAKE_HOST_SYSTEM_NAME STREQUAL FreeBSD)
+    option(USE_KQUEUE "Use the kqueue event notification mechanism instead of Inotify" ON)
+else()
+    option(USE_KQUEUE "Use the kqueue event notification mechanism instead of Inotify" OFF)
+endif()
+
+if (USE_KQUEUE)
+    find_package(Threads REQUIRED)
+endif()
+
+configure_file(src/Notify.hh.in Notify.hh)
+include_directories("${PROJECT_BINARY_DIR}")
+
 if(WITH_TESTS)
   enable_testing(true)
   add_test(
@@ -62,6 +75,17 @@ add_executable(
     j4-dmenu-desktop
     src/main.cc
 )
+
+if (USE_KQUEUE)
+    if(THREADS_HAVE_PTHREAD_ARG)
+      target_compile_options(j4-dmenu-desktop PUBLIC "-pthread")
+      target_compile_options(j4-dmenu-tests PUBLIC "-pthread")
+    endif()
+    if(CMAKE_THREAD_LIBS_INIT)
+      target_link_libraries(j4-dmenu-desktop "${CMAKE_THREAD_LIBS_INIT}")
+      target_link_libraries(j4-dmenu-tests "${CMAKE_THREAD_LIBS_INIT}")
+    endif()
+endif()
 
 install (
     TARGETS j4-dmenu-desktop
