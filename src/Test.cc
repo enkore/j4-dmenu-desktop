@@ -10,3 +10,4 @@
 #include "TestLocaleSuffixes.cc"
 #include "TestFileFinder.cc"
 #include "TestFormatters.cc"
+#include "TestNotify.cc"
