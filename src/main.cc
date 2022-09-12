@@ -69,7 +69,14 @@ void print_usage(FILE* f) {
             "\t--wrapper=<wrapper>\n"
             "\t\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
             "\t-h, --help\n"
-            "\t\tDisplay this help message\n"
+            "\t\tDisplay this help message\n\n"
+            "j4-dmenu-desktop is compiled with "
+#ifdef USE_KQUEUE
+            "kqueue"
+#else
+            "inotify"
+#endif
+            " support.\n"
            );
 }
 
