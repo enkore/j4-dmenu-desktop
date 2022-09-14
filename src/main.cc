@@ -30,7 +30,7 @@
 #endif
 
 void sigchld(int) {
-        while (waitpid(-1, NULL, WNOHANG) > 0);
+    while (waitpid(-1, NULL, WNOHANG) > 0);
 }
 
 void print_usage(FILE* f) {
