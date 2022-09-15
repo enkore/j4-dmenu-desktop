@@ -96,7 +96,7 @@ int collect_files(Applications &apps, const stringlist_t & search_path) {
     return parsed_files;
 }
 
-std::pair<std::string, bool> get_command(int parsed_files, Applications &apps, const std::string &choice, const std::string & wrapper) {
+std::pair<std::string, bool> get_command(int parsed_files, Applications &apps, const std::string &choice, const std::string & wrapper, const char *usage_log) {
     std::string args;
     Application *app;
 
@@ -143,7 +143,7 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &ap
 
     try
     {
-        std::tie(command, isterminal) = get_command(parsed_files, apps, dmenu.read_choice(), wrapper); // read_choice blocks
+        std::tie(command, isterminal) = get_command(parsed_files, apps, dmenu.read_choice(), wrapper, usage_log); // read_choice blocks
     }
     catch (const std::runtime_error & e) { // invalid field code in Exec, the standard says that the implementation shall not process these
         fprintf(stderr, "%s\n", e.what());
@@ -168,7 +168,7 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &ap
     return 0;
 }
 
-int do_wait_on(NotifyBase & notify, const char * shell, const char *wait_on, int parsed_files, Dmenu &dmenu, Applications &apps, std::string &terminal, std::string &wrapper, bool no_exec, const stringlist_t & search_path)
+int do_wait_on(NotifyBase & notify, const char * shell, const char *wait_on, int parsed_files, Dmenu &dmenu, Applications &apps, std::string &terminal, std::string &wrapper, bool no_exec, const stringlist_t & search_path, const char *usage_log)
 {
     int fd;
     if(mkfifo(wait_on, 0600) && errno != EEXIST) {
@@ -223,7 +223,7 @@ int do_wait_on(NotifyBase & notify, const char * shell, const char *wait_on, int
                 close(fd);
                 setsid();
                 dmenu.run();
-                return do_dmenu(shell, parsed_files, dmenu, apps, terminal, wrapper, no_exec);
+                return do_dmenu(shell, parsed_files, dmenu, apps, terminal, wrapper, no_exec, usage_log);
             }
         }
     }
