@@ -171,7 +171,10 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &ap
 int do_wait_on(NotifyBase & notify, const char * shell, const char *wait_on, int parsed_files, Dmenu &dmenu, Applications &apps, std::string &terminal, std::string &wrapper, bool no_exec, const stringlist_t & search_path, const char *usage_log)
 {
     // Avoid zombie processes.
-    signal(SIGCHLD, sigchld);
+    struct sigaction act = {{0}}; // double curly braces fix a warning fixes -Wmissing-braces on FreeBSD
+    act.sa_handler = sigchld;
+    if (sigaction(SIGCHLD, &act, NULL) == -1)
+        pfatale("sigaction");
 
     int fd;
     if(mkfifo(wait_on, 0600) && errno != EEXIST) {
