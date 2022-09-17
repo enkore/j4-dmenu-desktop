@@ -231,7 +231,6 @@ int main(int argc, char **argv)
     bool exclude_generic = false;
     bool no_exec = false;
 
-    Dmenu *dmenu = 0;
     SearchPath search_path;
 
     int parsed_files = 0;
@@ -301,6 +300,8 @@ int main(int argc, char **argv)
             exit(1);
         }
     }
+
+    Dmenu dmenu(dmenu_command, shell);
 
     appformatter = formatters[static_cast<int>(formatter)];
 
