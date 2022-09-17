@@ -152,7 +152,7 @@ std::string get_command(int parsed_files, Applications &apps, const std::string 
     return app_runner.command();
 }
 
-int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order, bool exclude_generic, int parsed_files, Dmenu &dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
+int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const char *shell, bool exclude_generic, int parsed_files, Dmenu &dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
     // Transfer the list to dmenu
     for(auto &app : iteration_order) {
         dmenu.write(app.second->name);
@@ -171,9 +171,6 @@ int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &ite
             printf("%s\n", command.c_str());
             return 0;
         }
-        static const char *shell = 0;
-        if((shell = getenv("SHELL")) == 0)
-            shell = "/bin/sh";
 
         fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
 
@@ -182,7 +179,7 @@ int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &ite
     return 0;
 }
 
-int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const char *wait_on, bool exclude_generic, int parsed_files, Dmenu &dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
+int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const char *shell, const char *wait_on, bool exclude_generic, int parsed_files, Dmenu &dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
     int fd;
     pid_t pid;
     char data;
@@ -212,7 +209,7 @@ int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &i
             close(fd);
             setsid();
             dmenu.run();
-            return do_dmenu(iteration_order, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+            return do_dmenu(iteration_order, shell, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
         }
     }
     close(fd);
@@ -225,6 +222,10 @@ int main(int argc, char **argv)
     std::string terminal = "i3-sensible-terminal";
     std::string wrapper;
     const char *wait_on = 0;
+
+    const char *shell = getenv("SHELL");
+    if (shell == NULL)
+        shell = "/bin/sh";
 
     stringlist_t environment;
     bool use_xdg_de = false;
@@ -350,8 +351,8 @@ int main(int argc, char **argv)
     }
 
     if(wait_on) {
-        return do_wait_on(iteration_order, wait_on, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+        return do_wait_on(iteration_order, shell, wait_on, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
     } else {
-        return do_dmenu(iteration_order, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+        return do_dmenu(iteration_order, shell, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
     }
 }
