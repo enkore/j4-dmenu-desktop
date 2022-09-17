@@ -154,11 +154,7 @@ std::string get_command(int parsed_files, Applications &apps, Dmenu *dmenu, bool
     return app_runner.command();
 }
 
-int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const std::string &dmenu_command, bool wait_on, bool exclude_generic, int parsed_files, Dmenu *dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
-    if(wait_on) {
-        dmenu = new Dmenu(dmenu_command);
-    }
-
+int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const std::string &dmenu_command, bool exclude_generic, int parsed_files, Dmenu *dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
     // Transfer the list to dmenu
     for(auto &app : iteration_order) {
         dmenu->write(app.second->name);
@@ -218,7 +214,8 @@ int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &i
         case 0:
             close(fd);
             setsid();
-            return do_dmenu(iteration_order, dmenu_command, true, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+            dmenu.run();
+            return do_dmenu(iteration_order, dmenu_command, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
         }
     }
     close(fd);
@@ -327,9 +324,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "%s\n", s.c_str());
 #endif
 
-    if(!wait_on) {
-        dmenu = new Dmenu(dmenu_command);
-    }
+    if(!wait_on)
+        dmenu.run();
 
     collect_files(apps, &parsed_files, appformatter, search_path, suffixes, use_xdg_de, environment);
 
@@ -358,6 +354,6 @@ int main(int argc, char **argv)
     if(wait_on) {
         return do_wait_on(iteration_order, dmenu_command, wait_on, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
     } else {
-        return do_dmenu(iteration_order, dmenu_command, false, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
+        return do_dmenu(iteration_order, dmenu_command, exclude_generic, parsed_files, dmenu, apps, usage_log, terminal, wrapper, no_exec);
     }
 }
