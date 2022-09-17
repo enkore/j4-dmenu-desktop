@@ -121,14 +121,14 @@ void collect_files(Applications &apps, int *parsed_files, application_formatter 
     }
 }
 
-std::string get_command(int parsed_files, Applications &apps, Dmenu *dmenu, bool exclude_generic, const char *usage_log, std::string &terminal) {
+std::string get_command(int parsed_files, Applications &apps, Dmenu &dmenu, bool exclude_generic, const char *usage_log, std::string &terminal) {
     std::string choice;
     std::string args;
     Application *app;
 
     fprintf(stderr, "Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
 
-    choice = dmenu->read_choice(); // Blocks
+    choice = dmenu.read_choice(); // Blocks
     if(choice.empty())
         return "";
 
@@ -154,20 +154,19 @@ std::string get_command(int parsed_files, Applications &apps, Dmenu *dmenu, bool
     return app_runner.command();
 }
 
-int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const std::string &dmenu_command, bool exclude_generic, int parsed_files, Dmenu *dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
+int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const std::string &dmenu_command, bool exclude_generic, int parsed_files, Dmenu &dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
     // Transfer the list to dmenu
     for(auto &app : iteration_order) {
-        dmenu->write(app.second->name);
+        dmenu.write(app.second->name);
         const std::string &generic_name = app.second->generic_name;
         if(!exclude_generic && !generic_name.empty() && app.second->name != generic_name)
-            dmenu->write(generic_name);
+            dmenu.write(generic_name);
     }
 
-    dmenu->display();
+    dmenu.display();
     std::string command = get_command(parsed_files, apps, dmenu, exclude_generic, usage_log, terminal);
     if (wrapper.length())
         command = wrapper + " \"" + command + "\"";
-    delete dmenu;
 
     if(!command.empty()) {
         if (no_exec) {
@@ -185,7 +184,7 @@ int do_dmenu(const std::vector<std::pair<std::string, const Application *>> &ite
     return 0;
 }
 
-int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const std::string &dmenu_command, const char *wait_on, bool exclude_generic, int parsed_files, Dmenu *dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
+int do_wait_on(const std::vector<std::pair<std::string, const Application *>> &iteration_order, const std::string &dmenu_command, const char *wait_on, bool exclude_generic, int parsed_files, Dmenu &dmenu, Applications &apps, const char *usage_log, std::string &terminal, std::string &wrapper, bool no_exec) {
     int fd;
     pid_t pid;
     char data;
