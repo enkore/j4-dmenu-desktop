@@ -52,8 +52,7 @@ public:
         return choice;
     }
 
-private:
-    int create() {
+    void run() {
         // Create the dmenu as soon as we know the command,
         // this speeds up things a bit if the -f flag for dmenu is
         // used
@@ -76,17 +75,17 @@ private:
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
 
-            return execl(shell, shell, "-c", this->dmenu_command.c_str(), 0, nullptr); // double nulls are needed because of https://github.com/enkore/j4-dmenu-desktop/pull/66#issuecomment-273126739
+            execl(shell, shell, "-c", this->dmenu_command.c_str(), 0, nullptr); // double nulls are needed because of https://github.com/enkore/j4-dmenu-desktop/pull/66#issuecomment-273126739
+            _exit(EXIT_FAILURE);
         }
 
         close(this->inpipe[1]);
         close(this->outpipe[0]);
 
         dup2(this->inpipe[0], STDIN_FILENO);
-
-        return true;
     }
 
+private:
     const std::string &dmenu_command;
 
     int inpipe[2];
