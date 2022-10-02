@@ -29,6 +29,9 @@ public:
     Dmenu(const std::string &dmenu_command, const char * sh)
         : dmenu_command(dmenu_command), shell(sh) {}
 
+    Dmenu(const Dmenu & dmenu) = delete;
+    void operator=(const Dmenu & dmenu) = delete;
+
     void write(const std::string &what) {
         write_proper(this->outpipe[1], what.c_str(), what.size());
         write_proper(this->outpipe[1], "\n", 1);
