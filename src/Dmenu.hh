@@ -90,6 +90,9 @@ public:
             dup2(this->inpipe[1], STDOUT_FILENO);
             dup2(this->outpipe[0], STDIN_FILENO);
 
+            close(this->inpipe[1]);
+            close(this->outpipe[0]);
+
             static const char *shell = 0;
             if((shell = getenv("SHELL")) == 0)
                 shell = "/bin/sh";
