@@ -43,6 +43,21 @@ public:
     }
 
     std::string read_choice() {
+        int status;
+        waitpid(this->pid, &status, 0);
+
+        // If dmenu exited abnormally, than it is unlikely that the WIFEXITED == false handler will be executed because
+        // j4dd would receive SIGPIPE or block when trying to call Dmenu::write().
+        if (!WIFEXITED(status)) {
+            close(inpipe[0]);
+            fprintf(stderr, "ERROR: Dmenu exited abnormally.\n");
+            exit(EXIT_FAILURE);
+        }
+        if (WEXITSTATUS(status) != 0) { // Dmenu returns 1 when the user exits dmenu with the Escape key, signaling that no choice was made.
+            close(inpipe[0]);
+            return {};
+        }
+
         std::string choice;
         char buf[256];
         ssize_t len;
@@ -53,8 +68,6 @@ public:
         if (choice.back() == '\n')
             choice.pop_back();
         close(inpipe[0]);
-        int status=0;
-        waitpid(this->pid, &status, 0);
         return choice;
     }
 
