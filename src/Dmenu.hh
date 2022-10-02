@@ -1,5 +1,3 @@
-#include <fstream>
-#include <iostream>
 #include <unistd.h>
 #include <stdexcept>
 
@@ -46,7 +44,15 @@ public:
 
     std::string read_choice() {
         std::string choice;
-        std::getline(std::cin, choice);
+        char buf[256];
+        ssize_t len;
+        while ((len = read(inpipe[0], buf, sizeof buf)) > 0)
+            choice.append(buf, len);
+        if (len == -1)
+            perror("read");
+        if (choice.back() == '\n')
+            choice.pop_back();
+        close(inpipe[0]);
         int status=0;
         waitpid(this->pid, &status, 0);
         return choice;
@@ -81,8 +87,6 @@ public:
 
         close(this->inpipe[1]);
         close(this->outpipe[0]);
-
-        dup2(this->inpipe[0], STDIN_FILENO);
     }
 
 private:
