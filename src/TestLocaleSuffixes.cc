@@ -3,6 +3,24 @@
 #include "LocaleSuffixes.hh"
 #include "catch.hpp"
 
+TEST_CASE("LocaleSuffixes/full", "")
+{
+    LocaleSuffixes ls("en_US.UTF-8@mod");
+    REQUIRE( ls.match("en_US@mod") == 0 );
+    REQUIRE( ls.match("en_US") == 1 );
+    REQUIRE( ls.match("en@mod") == 2 );
+    REQUIRE( ls.match("en") == 3 );
+}
+
+TEST_CASE("LocaleSuffixes/full_no_encoding", "")
+{
+    LocaleSuffixes ls("en_US@mod");
+    REQUIRE( ls.match("en_US@mod") == 0 );
+    REQUIRE( ls.match("en_US") == 1 );
+    REQUIRE( ls.match("en@mod") == 2 );
+    REQUIRE( ls.match("en") == 3 );
+}
+
 TEST_CASE("LocaleSuffixes/with_encoding", "")
 {
     LocaleSuffixes ls("en_US.UTF-8");
