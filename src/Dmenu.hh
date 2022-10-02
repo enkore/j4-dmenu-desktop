@@ -26,9 +26,8 @@ int write_proper(const int fd, const char *buf, size_t size) {
 class Dmenu
 {
 public:
-    Dmenu(const std::string &dmenu_command)
-        : dmenu_command(dmenu_command) {
-    }
+    Dmenu(const std::string &dmenu_command, const char * sh)
+        : dmenu_command(dmenu_command), shell(sh) {}
 
     void write(const std::string &what) {
         write_proper(this->outpipe[1], what.c_str(), what.size());
@@ -93,10 +92,6 @@ public:
             close(this->inpipe[1]);
             close(this->outpipe[0]);
 
-            static const char *shell = 0;
-            if((shell = getenv("SHELL")) == 0)
-                shell = "/bin/sh";
-
             execl(shell, shell, "-c", this->dmenu_command.c_str(), 0, nullptr); // double nulls are needed because of https://github.com/enkore/j4-dmenu-desktop/pull/66#issuecomment-273126739
             _exit(EXIT_FAILURE);
         }
@@ -107,6 +102,7 @@ public:
 
 private:
     const std::string &dmenu_command;
+    const char *shell;
 
     int inpipe[2];
     int outpipe[2];
