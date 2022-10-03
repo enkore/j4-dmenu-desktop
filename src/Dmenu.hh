@@ -1,3 +1,6 @@
+#ifndef DMENU_DEF
+#define DMENU_DEF
+
 #include <unistd.h>
 #include <stdexcept>
 
@@ -111,3 +114,4 @@ private:
     int outpipe[2];
     int pid = 0;
 };
+#endif
