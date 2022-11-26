@@ -96,14 +96,27 @@ int collect_files(Applications &apps, const stringlist_t & search_path) {
     return parsed_files;
 }
 
-std::pair<std::string, bool> get_command(int parsed_files, Applications &apps, const std::string &choice, const std::string & wrapper, const char *usage_log) {
+struct CommandInfo
+{
+    std::string command;
+    bool isterminal; // this indicated whether the program should be executed in a terminal
+    /*
+     * iscustom indicates whether a program was picked from a desktop file or if it is a custom program that
+     * should be executed directly
+     */
+    bool iscustom;
+    CommandInfo(std::string n, bool t, bool c) : command(std::move(n)), isterminal(t), iscustom(c) {}
+    CommandInfo() = default;
+};
+
+CommandInfo get_command(int parsed_files, Applications &apps, const std::string &choice, const std::string & wrapper, const char *usage_log) {
     std::string args;
     Application *app;
 
     fprintf(stderr, "Read %d .desktop files, found %lu apps.\n", parsed_files, apps.size());
 
     if(choice.empty())
-        return std::make_pair("", false);
+        return CommandInfo("", false, false);
 
     std::tie(app, args) = apps.get(choice);
 
@@ -111,9 +124,9 @@ std::pair<std::string, bool> get_command(int parsed_files, Applications &apps, c
 
     if (!app) {
         if (wrapper.empty())
-            return std::make_pair(args, false);
+            return CommandInfo(args, false, true);
         else
-            return std::make_pair(wrapper + " \"" + args + "\"", false);
+            return CommandInfo(wrapper + " \"" + args + "\"", false, true);
     }
 
     apps.update_log(usage_log);
@@ -126,9 +139,9 @@ std::pair<std::string, bool> get_command(int parsed_files, Applications &apps, c
 
     std::string command = application_command(*app, args);
     if (wrapper.empty())
-        return std::make_pair(command, app->terminal);
+        return CommandInfo(command, app->terminal, false);
     else
-        return std::make_pair(wrapper + " \"" + command + "\"", app->terminal);
+        return CommandInfo(wrapper + " \"" + command + "\"", app->terminal, false);
 }
 
 int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &apps, std::string &terminal, std::string &wrapper, bool no_exec, const char *usage_log) {
@@ -138,31 +151,39 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu, Applications &ap
 
     dmenu.display();
 
-    std::string command;
-    bool isterminal;
+    CommandInfo info;
 
     try
     {
-        std::tie(command, isterminal) = get_command(parsed_files, apps, dmenu.read_choice(), wrapper, usage_log); // read_choice blocks
+        info = get_command(parsed_files, apps, dmenu.read_choice(), wrapper, usage_log); // read_choice blocks
     }
     catch (const std::runtime_error & e) { // invalid field code in Exec, the standard says that the implementation shall not process these
         fprintf(stderr, "%s\n", e.what());
         return 1;
     }
 
-    if(!command.empty()) {
+    if(!info.command.empty()) {
         if (no_exec) {
-            printf("%s\n", command.c_str());
+            printf("%s\n", info.command.c_str());
             return 0;
         }
 
-        if (isterminal) {
-            fprintf(stderr, "%s -e %s -c '%s'\n", terminal.c_str(), shell, command.c_str());
-            return execlp(terminal.c_str(), terminal.c_str(), "-e", shell, "-c", command.c_str(), (char *) NULL);
+        /*
+         * Some shells automatically exec() the last command in the command_string passed in by $SHELL -c but some do not.
+         * For example bash does this but dash doesn't. Prepending "exec " to the command ensures that the shell will get replaced.
+         * Custom commands might contain complicated expressions so exec()ing them might not be a good idea. Desktop files can contain
+         * only a single command in Exec so using the exec shell builtin is safe.
+         */
+        if (!info.iscustom)
+            info.command = "exec " + info.command;
+
+        if (info.isterminal) {
+            fprintf(stderr, "%s -e %s -c '%s'\n", terminal.c_str(), shell, info.command.c_str());
+            return execlp(terminal.c_str(), terminal.c_str(), "-e", shell, "-c", info.command.c_str(), (char *) NULL);
         }
         else {
-            fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
-            return execl(shell, shell, "-c", command.c_str(), (char *) NULL);
+            fprintf(stderr, "%s -c '%s'\n", shell, info.command.c_str());
+            return execl(shell, shell, "-c", info.command.c_str(), (char *) NULL);
         }
     }
     return 0;
