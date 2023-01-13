@@ -109,6 +109,10 @@ inline std::string get_variable(const std::string &var)
         return "";
 }
 
+inline bool string_case_cmp(const std::string &str1, const std::string &str2){
+  return (0 > strncasecmp(str1.c_str(), str2.c_str(), std::min(str1.length(),str2.length())));
+}
+
 #define pfatale(msg) perror(msg); abort();
 
 
