@@ -112,6 +112,8 @@ Options:
         to be written to (use echo > path). Every time this happens a menu will be shown.
         Desktop files are parsed ahead of time.
         Perfoming 'echo -n q > path' will exit the program.
+    --case-insensitive
+        Sort applications case insensitively
     --no-exec
         Do not execute selected command, send to stdout instead
     --help
