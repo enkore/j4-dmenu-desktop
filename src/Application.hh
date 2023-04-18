@@ -19,7 +19,8 @@
 #define APPLICATION_DEF
 
 #include <algorithm>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include <unistd.h>
 
 #include "Utilities.hh"
