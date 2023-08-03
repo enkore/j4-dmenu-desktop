@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+#include <strings.h>
 
 
 typedef std::list<std::string> stringlist_t;
