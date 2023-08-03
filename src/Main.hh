@@ -127,7 +127,7 @@ private:
                 "\t\tPerfoming 'echo -n q > path' will exit the program.\n"
                 "\t--wrapper=<wrapper>\n"
                 "\t\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
-                "\t-c, --case-insensitive\n"
+                "\t-i, --case-insensitive\n"
                 "\t\tSort the applications case insensitively\n"
                 "\t-h, --help\n"
                 "\t\tDisplay this help message\n"
@@ -150,11 +150,11 @@ private:
                 {"wait-on", required_argument,  0,  'w'},
                 {"no-exec", no_argument,        0,  'e'},
                 {"wrapper", required_argument,   0,  'W'},
-                {"case-insensitive", no_argument,   0,  'c'},
+                {"case-insensitive", no_argument,   0,  'i'},
                 {0,         0,                  0,  0}
             };
 
-            int c = getopt_long(argc, argv, "d:t:xhbc", long_options, &option_index);
+            int c = getopt_long(argc, argv, "d:t:xhbi", long_options, &option_index);
             if(c == -1)
                 break;
 
@@ -189,7 +189,7 @@ private:
             case 'W':
                 this->wrapper = optarg;
                 break;
-            case 'c':
+            case 'i':
                 case_insensitive = true;
                 break;
             default:
