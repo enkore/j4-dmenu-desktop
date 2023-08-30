@@ -48,11 +48,17 @@ public:
     }
 
     std::string read_choice() {
-        std::string choice;
-        std::getline(std::cin, choice);
+        char *choice = NULL;
+        size_t choice_len = 0;
+        FILE *fp = fdopen(this->inpipe[0], "r");
+        getline(&choice, &choice_len, fp);
+        fclose(fp);
+        close(this->inpipe[0]);
+        std::string result(choice);
+        free(choice);
         int status=0;
         waitpid(this->pid, &status, 0);
-        return choice;
+        return result;
     }
 
 private:
@@ -70,10 +76,12 @@ private:
             throw std::runtime_error("Dmenu::create(): fork() failed");
         case 0:
             close(this->inpipe[0]);
-            close(this->outpipe[1]);
-
             dup2(this->inpipe[1], STDOUT_FILENO);
+            close(this->inpipe[1]);
+
+            close(this->outpipe[1]);
             dup2(this->outpipe[0], STDIN_FILENO);
+            close(this->outpipe[0]);
 
             static const char *shell = 0;
             if((shell = getenv("SHELL")) == 0)
@@ -84,8 +92,6 @@ private:
 
         close(this->inpipe[1]);
         close(this->outpipe[0]);
-
-        dup2(this->inpipe[0], STDIN_FILENO);
 
         return true;
     }
