@@ -67,14 +67,10 @@ public:
             iteration_order.emplace_back(app.first, app.second);
         }
 
-        std::sort(iteration_order.begin(), iteration_order.end(), [this](
+        std::sort(iteration_order.begin(), iteration_order.end(), [](
             const std::pair<std::string, const Application *> &s1,
             const std::pair<std::string, const Application *> &s2) {
-                if(case_insensitive) {
-                      return string_case_cmp(s1.second->name, s2.second->name);
-                } else {
-                      return s1.second->name < s2.second->name;
-                }
+                return s1.second->name < s2.second->name;
         });
 
         if(usage_log) {
@@ -127,8 +123,6 @@ private:
                 "\t\tPerfoming 'echo -n q > path' will exit the program.\n"
                 "\t--wrapper=<wrapper>\n"
                 "\t\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
-                "\t-i, --case-insensitive\n"
-                "\t\tSort the applications case insensitively\n"
                 "\t-h, --help\n"
                 "\t\tDisplay this help message\n"
                );
@@ -150,11 +144,10 @@ private:
                 {"wait-on", required_argument,  0,  'w'},
                 {"no-exec", no_argument,        0,  'e'},
                 {"wrapper", required_argument,   0,  'W'},
-                {"case-insensitive", no_argument,   0,  'i'},
                 {0,         0,                  0,  0}
             };
 
-            int c = getopt_long(argc, argv, "d:t:xhbi", long_options, &option_index);
+            int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
             if(c == -1)
                 break;
 
@@ -188,9 +181,6 @@ private:
                 break;
             case 'W':
                 this->wrapper = optarg;
-                break;
-            case 'i':
-                case_insensitive = true;
                 break;
             default:
                 exit(1);
@@ -369,7 +359,6 @@ private:
     bool use_xdg_de = false;
     bool exclude_generic = false;
     bool no_exec = false;
-    bool case_insensitive = false;
 
     Dmenu *dmenu = 0;
     SearchPath search_path;

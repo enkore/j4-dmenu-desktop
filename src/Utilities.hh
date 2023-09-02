@@ -31,7 +31,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
-#include <strings.h>
 
 
 typedef std::list<std::string> stringlist_t;
@@ -108,10 +107,6 @@ inline std::string get_variable(const std::string &var)
         return env;
     } else
         return "";
-}
-
-inline bool string_case_cmp(const std::string &str1, const std::string &str2){
-  return (0 > strncasecmp(str1.c_str(), str2.c_str(), std::min(str1.length(),str2.length())));
 }
 
 #define pfatale(msg) perror(msg); abort();
