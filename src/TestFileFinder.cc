@@ -5,8 +5,7 @@
 #include "FileFinder.hh"
 #include "catch.hpp"
 
-TEST_CASE("FileFinder/find2", "")
-{
+TEST_CASE("FileFinder/find2", "") {
     FileFinder ff(TEST_FILES);
     bool found = false;
     while (++ff) {

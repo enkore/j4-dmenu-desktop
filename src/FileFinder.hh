@@ -1,12 +1,12 @@
 #ifndef FILEFINDER_DEF
 #define FILEFINDER_DEF
 
-#include <iterator>
 #include <cstddef>
-#include <stack>
-#include <vector>
-#include <stdexcept>
 #include <dirent.h>
+#include <iterator>
+#include <stack>
+#include <stdexcept>
+#include <vector>
 
 #include "Utilities.hh"
 
@@ -15,8 +15,7 @@ class FileFinder
 public:
     typedef std::input_iterator_tag iterator_category;
 
-    FileFinder(const std::string &path)
-        : done(false), dir(NULL) {
+    FileFinder(const std::string &path) : done(false), dir(NULL) {
         dirstack.push(path);
     }
 
@@ -32,14 +31,14 @@ public:
         return curisdir;
     }
 
-    FileFinder& operator++() {
-        if(direntries.empty()) {
+    FileFinder &operator++() {
+        if (direntries.empty()) {
             dirent *entry;
             opendir();
-            if(done)
+            if (done)
                 return *this;
-            while((entry = readdir(dir))) {
-                if(entry->d_name[0] == '.') {
+            while ((entry = readdir(dir))) {
+                if (entry->d_name[0] == '.') {
                     // Exclude ., .. and hidden files
                     continue;
                 }
@@ -49,7 +48,7 @@ public:
             dir = NULL;
             std::sort(direntries.begin(), direntries.end(),
                       [](const _dirent &a, const _dirent &b) {
-                          return  a.d_ino > b.d_ino;
+                          return a.d_ino > b.d_ino;
                       });
             return ++(*this);
 
@@ -57,7 +56,7 @@ public:
             curpath = curdir + direntries.back().d_name;
             curisdir = is_directory(curpath);
             direntries.pop_back();
-            if(curisdir) {
+            if (curisdir) {
                 dirstack.push(curpath + "/");
             }
             return *this;
@@ -65,13 +64,16 @@ public:
     }
 
 private:
-    struct _dirent {
+    struct _dirent
+    {
         _dirent(const dirent *ent) : d_ino(ent->d_ino), d_name(ent->d_name) {}
+
         ino_t d_ino;
         std::string d_name;
     };
+
     void opendir() {
-        if(dirstack.empty()) {
+        if (dirstack.empty()) {
             done = true;
             return;
         }
@@ -79,7 +81,7 @@ private:
         curdir = dirstack.top();
         dirstack.pop();
         dir = ::opendir(curdir.c_str());
-        if(!dir)
+        if (!dir)
             throw std::runtime_error(curdir + ": opendir() failed");
         direntries.clear();
     }

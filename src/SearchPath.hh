@@ -32,7 +32,7 @@ stringlist_t get_search_path() {
     stringlist_t result;
 
     std::string xdg_data_home = get_variable("XDG_DATA_HOME");
-    if(xdg_data_home.empty())
+    if (xdg_data_home.empty())
         xdg_data_home = get_variable("HOME") + "/.local/share/";
 
     add_applications_dir(xdg_data_home);
@@ -40,7 +40,7 @@ stringlist_t get_search_path() {
         result.push_back(xdg_data_home);
 
     std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
-    if(xdg_data_dirs.empty())
+    if (xdg_data_dirs.empty())
         xdg_data_dirs = "/usr/share/:/usr/local/share/";
 
     auto dirs = split(xdg_data_dirs, ':');

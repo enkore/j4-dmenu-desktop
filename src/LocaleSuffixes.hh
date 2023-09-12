@@ -18,11 +18,11 @@
 #ifndef LOCALE_DEF
 #define LOCALE_DEF
 
+#include <set>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <string>
-#include <set>
 
 class LocaleSuffixes
 {
@@ -63,12 +63,13 @@ public:
 
         if (uscorepos != 0 && atpos != 0) {
             this->suffixes[1] = locale.substr(0, atpos);
-            this->suffixes[2] = locale.substr(0, uscorepos) + locale.substr(atpos);
+            this->suffixes[2] =
+                locale.substr(0, uscorepos) + locale.substr(atpos);
             this->suffixes[3] = locale.substr(0, uscorepos);
-        }
-        else {
+        } else {
             this->length = 2;
-            this->suffixes[1] = locale.substr(0, (atpos == 0 ? uscorepos : atpos));
+            this->suffixes[1] =
+                locale.substr(0, (atpos == 0 ? uscorepos : atpos));
         }
 
 #ifdef DEBUG
@@ -78,10 +79,10 @@ public:
     }
 
     // this function tests if a given string is matched by the current locale
-    // it returns an int that signifies how well it matches so that Application can skip localized
-    // keys with locales which have lower priority than a previously matched one
-    int match(const std::string &str) const
-    {
+    // it returns an int that signifies how well it matches so that Application
+    // can skip localized keys with locales which have lower priority than a
+    // previously matched one
+    int match(const std::string &str) const {
         for (int i = 0; i < this->length; i++) {
             if (suffixes[i] == str)
                 return i;
@@ -89,9 +90,9 @@ public:
         return -1;
     }
 
-    bool operator==(const LocaleSuffixes & other) const
-    {
-         return length == other.length && std::equal(suffixes, suffixes + length, other.suffixes);
+    bool operator==(const LocaleSuffixes &other) const {
+        return length == other.length &&
+               std::equal(suffixes, suffixes + length, other.suffixes);
     }
 
 private:
@@ -104,12 +105,13 @@ private:
 
     static std::string set_locale() {
         char *user_locale = setlocale(LC_MESSAGES, "");
-        if(!user_locale) {
+        if (!user_locale) {
             fprintf(stderr, "Locale configuration invalid, check locale(1).\n"
                             "No translated menu entries will be available.\n");
             user_locale = setlocale(LC_MESSAGES, "C");
-            if(!user_locale) {
-                fprintf(stderr, "POSIX/C locale is not available, setlocale(3) failed. Bailing.\n");
+            if (!user_locale) {
+                fprintf(stderr, "POSIX/C locale is not available, setlocale(3) "
+                                "failed. Bailing.\n");
                 abort();
             }
         }
