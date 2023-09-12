@@ -20,7 +20,7 @@
 
 #include <cstdlib>
 #include <map>
-#include <list>
+#include <vector>
 #include <set>
 #include <string>
 #include <utility>
@@ -31,18 +31,20 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
-#include <strings.h>
 
 
-typedef std::list<std::string> stringlist_t;
+typedef std::vector<std::string> stringlist_t;
 
-inline void split(const std::string &str, char delimiter, stringlist_t &elems)
+inline stringlist_t split(const std::string &str, char delimiter)
 {
     std::stringstream ss(str);
     std::string item;
+    stringlist_t result;
 
     while (std::getline(ss, item, delimiter))
-        elems.push_back(item);
+        result.push_back(item);
+
+    return result;
 }
 
 inline bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2){
@@ -55,24 +57,15 @@ inline bool have_equal_element(const stringlist_t &list1, const stringlist_t &li
     return false;
 }
 
-inline std::pair<std::string, std::string> split(const std::string &str, const std::string &delimiter)
-{
-    size_t pos = 0;
-    pos = str.find(delimiter);
-    return std::make_pair(str.substr(0, pos), str.substr(pos+1, str.length()));
-}
-
-
-inline std::string &replace(std::string &str, const std::string &substr, const std::string &substitute)
+inline void replace(std::string &str, const std::string &substr, const std::string &substitute)
 {
     if(substr.empty())
-        return str;
+        return;
     size_t start_pos = 0;
     while((start_pos = str.find(substr, start_pos)) != std::string::npos) {
         str.replace(start_pos, substr.length(), substitute);
         start_pos += substitute.length();
     }
-    return str;
 }
 
 inline bool endswith(const std::string &str, const std::string &suffix)
@@ -110,11 +103,10 @@ inline std::string get_variable(const std::string &var)
         return "";
 }
 
-inline bool string_case_cmp(const std::string &str1, const std::string &str2){
-  return (0 > strncasecmp(str1.c_str(), str2.c_str(), std::min(str1.length(),str2.length())));
+inline void pfatale(const char * msg)
+{
+    perror(msg);
+    abort();
 }
-
-#define pfatale(msg) perror(msg); abort();
-
 
 #endif

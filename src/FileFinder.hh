@@ -15,8 +15,8 @@ class FileFinder
 public:
     typedef std::input_iterator_tag iterator_category;
 
-    FileFinder(const std::string &path, const std::string &suffix)
-        : done(false), dir(NULL), suffix(suffix) {
+    FileFinder(const std::string &path)
+        : done(false), dir(NULL) {
         dirstack.push(path);
     }
 
@@ -24,15 +24,15 @@ public:
         return !done;
     }
 
-    const std::string &operator*() const {
+    const std::string &path() const {
         return curpath;
     }
 
-    const std::string *operator->() const {
-        return &curpath;
+    bool isdir() const {
+        return curisdir;
     }
 
-    FileFinder& operator++(int) {
+    FileFinder& operator++() {
         if(direntries.empty()) {
             dirent *entry;
             opendir();
@@ -51,17 +51,14 @@ public:
                       [](const _dirent &a, const _dirent &b) {
                           return  a.d_ino > b.d_ino;
                       });
-            return (*this)++;
+            return ++(*this);
 
         } else {
             curpath = curdir + direntries.back().d_name;
+            curisdir = is_directory(curpath);
             direntries.pop_back();
-            if(is_directory(curpath)) {
+            if(curisdir) {
                 dirstack.push(curpath + "/");
-                return (*this)++;
-            }
-            if(!endswith(curpath, suffix)) {
-                return (*this)++;
             }
             return *this;
         }
@@ -93,8 +90,8 @@ private:
     std::stack<std::string> dirstack;
     std::vector<_dirent> direntries;
 
-    const std::string suffix;
     std::string curpath;
+    bool curisdir;
     std::string curdir;
 };
 

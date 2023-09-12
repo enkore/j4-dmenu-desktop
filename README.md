@@ -112,8 +112,6 @@ Options:
         to be written to (use echo > path). Every time this happens a menu will be shown.
         Desktop files are parsed ahead of time.
         Perfoming 'echo -n q > path' will exit the program.
-    --case-insensitive
-        Sort applications case insensitively
     --no-exec
         Do not execute selected command, send to stdout instead
     --help
@@ -125,10 +123,6 @@ Environment variables
 - XDG-spec variables (XDG_CURRENT_DESKTOP, XDG_DATA_HOME, HOME) are respected
 
 ## FAQ / RAQ / RMR
-
-### Case insensitivity?
-
-Add the `-i` option to the dmenu command
 
 ### I want it to display normal binaries, too, yes?
 

@@ -19,35 +19,35 @@
 #define APPLICATION_DEF
 
 #include <algorithm>
+#include <stdexcept>
+#include <memory>
 #include <cstdint>
 #include <cstring>
 #include <unistd.h>
+#include <limits.h>
 
 #include "Utilities.hh"
 #include "LocaleSuffixes.hh"
 
-namespace ApplicationHelpers
+struct disabled_error : public std::runtime_error
 {
+    using std::runtime_error::runtime_error;
+};
 
-static inline constexpr uint32_t make_istring(const char *s)
+struct escape_error : public std::runtime_error
 {
-    return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
-}
+    using std::runtime_error::runtime_error;
+};
 
-constexpr uint32_t operator "" _istr(const char *s, size_t)
+void close_file(FILE * f)
 {
-    return make_istring(s);
-}
-
+    fclose(f);
 }
 
 class Application
 {
+    using application_formatter = std::string(*)(const Application &);
 public:
-    explicit Application(const LocaleSuffixes &locale_suffixes, const stringlist_t *environment = 0)
-        : locale_suffixes(locale_suffixes), environment(environment) {
-    }
-
     // Localized name
     std::string name;
 
@@ -67,54 +67,39 @@ public:
     bool terminal = false;
 
     // file id
+    // It isn't set by Application, it is a helper variable managed by Applications
     std::string id;
 
-    // usage count (see --usage-log option)
-    unsigned usage_count = 0;
+    bool operator==(const Application & other) const
+    {
+        return name == other.name && generic_name == other.generic_name && exec == other.exec && path == other.path
+            && location == other.location && terminal == other.terminal && id == other.id;
+    }
 
-    bool read(const char *filename, char **linep, size_t *linesz) {
-        using namespace ApplicationHelpers;
-
+    Application(const char *path, char **linep, size_t *linesz, application_formatter format, const LocaleSuffixes &locale_suffixes, const stringlist_t &desktopenvs)
+    {
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // !!   The code below is extremely hacky. But fast.    !!
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //
         // Please don't try this at home.
 
+        this->location = path;
 
-        //Whether the app should be hidden
-        bool hidden = false;
-
-        std::string fallback_name, fallback_generic_name;
-        size_t locale_length = 0, locale_generic_length = 0;
+        int locale_match = -1, locale_generic_match = -1;
 
         bool parse_key_values = false;
         ssize_t linelen;
         char *line;
-        FILE *file = fopen(filename, "r");
-        if(!file) {
-            char *pwd = new char[100];
-            int error = errno;
-            if(!getcwd(pwd, 100)) {
-                perror("read getcwd for error");
-            } else {
-                fprintf(stderr, "%s/%s: %s\n", pwd, filename, strerror(error));
-            }
-            delete[] pwd;
-            return false;
-        }
+        std::unique_ptr<FILE, decltype(&close_file)> file(fopen(path, "r"), &close_file);
+        if(!file)
+            throw std::runtime_error((std::string)"Couldn't open desktop file - " + strerror(errno));
 
 #ifdef DEBUG
-        char *pwd = new char[100];
-        getcwd(pwd, 100);
-        fprintf(stderr, "%s/%s -> ", pwd, filename);
-        delete[] pwd;
+        fprintf(stderr, "%s -> ", pwd, filename);
 #endif
 
-        id = filename + 2; // our internal filenames all start with './'
-        std::replace(id.begin(), id.end(), '/', '-');
-
-        while((linelen = getline(linep, linesz, file)) != -1) {
+        while((linelen = getline(linep, linesz, file.get())) != -1) {
             line = *linep;
             line[--linelen] = 0; // Chop off \n
 
@@ -128,119 +113,186 @@ public:
                     break;
 
                 // Split that string in place
-                char *key=line, *value=strchr(line, '=');
-                if (!value) {
-                    fprintf(stderr, "%s: malformed file, ignoring\n", filename);
-                    fclose(file);
-                    return false;
+                char *key = line, *value = strpbrk(line, " =");
+                if (!value || value == line)
+                    throw std::runtime_error("Malformed file.");
+                // Cut spaces before equal sign
+                if (*value != '=') {
+                    *value++ = '\0';
+                    value = strchr(value, '=');
+                    if (!value)
+                        throw std::runtime_error("Malformed file.");
                 }
-                (value++)[0] = 0; // Overwrite = with NUL (terminate key)
+                else
+                    *value = '\0';
+                value++;
+                // Cut spaces after equal sign
+                while (*value == ' ')
+                    value++;
 
-                //Cut spaces after the equal sign
-                while(value[0] == ' ')
-                    ++value;
-
-                switch(make_istring(key)) {
-                case "Name"_istr:
-                    parse_localestring(key, 4, &locale_length, value, this->name, fallback_name);
-                    continue;
-                case "GenericName"_istr:
-                    parse_localestring(key, 11, &locale_generic_length, value, this->generic_name, fallback_generic_name);
-                    continue;
-                case "Exec"_istr:
-                    this->exec = value;
-                    break;
-                case "Path"_istr:
-                    this->path= value;
-                    break;
-                case "OnlyShowIn"_istr:
-                    if(environment) {
-                        stringlist_t values;
-                        split(std::string(value), ';', values);
-                        if(!have_equal_element(*environment, values)) {
-                            hidden = true;
+                try
+                {
+                    if (strncmp(key, "Name", 4) == 0)
+                        parse_localestring(key, 4, locale_match, value, this->name, locale_suffixes);
+                    else if (strncmp(key, "GenericName", 11) == 0)
+                        parse_localestring(key, 11, locale_generic_match, value, this->generic_name, locale_suffixes);
+                    else if (strcmp(key, "Exec") == 0)
+                        this->exec = expand("Exec", value);
+                    else if (strcmp(key, "Path") == 0)
+                        this->path = expand("Path", value);
+                    else if (strcmp(key, "OnlyShowIn") == 0) {
+                        if(!desktopenvs.empty()) {
+                            stringlist_t values = expandlist("OnlyShowIn", value);
+                            if(!have_equal_element(desktopenvs, values)) {
 #ifdef DEBUG
-                            fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
+                                fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n", value);
 #endif
+                                throw disabled_error("Refusing to parse desktop file whose OnlyShowIn field doesn't match current desktop.");
+                            }
                         }
                     }
-                    break;
-                case "NotShowIn"_istr:
-                    if(environment) {
-                        stringlist_t values;
-                        split(std::string(value), ';', values);
-                        if(have_equal_element(*environment, values)) {
-                            hidden = true;
+                    else if (strcmp(key, "NotShowIn") == 0) {
+                        if(!desktopenvs.empty()) {
+                            stringlist_t values = expandlist("NotShowIn", value);
+                            if(have_equal_element(desktopenvs, values)) {
 #ifdef DEBUG
-                            fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
+                                fprintf(stderr, "NotShowIn: %s -> app is hidden\n", value);
 #endif
+                                throw disabled_error("Refusing to parse desktop file whose NotShowIn field matches current desktop.");
+                            }
                         }
                     }
-                    break;
-                case "Hidden"_istr:
-                case "NoDisplay"_istr:
-                    if(value[0] == 't'){ // true
+                    else if (strcmp(key, "Hidden") == 0 || strcmp(key, "NoDisplay") == 0) {
+                        if(strcmp(value, "true") == 0) {
 #ifdef DEBUG
-                        fprintf(stderr, "NoDisplay/Hidden\n");
+                            fprintf(stderr, "NoDisplay/Hidden\n");
 #endif
-                        hidden = true;
+                            throw disabled_error("Refusing to parse Hidden or NoDisplay desktop file.");
+                        }
                     }
-                    break;
-                case "Terminal"_istr:
-                    this->terminal = make_istring(value) == "true"_istr;
-                    break;
+                    else if (strcmp(key, "Terminal") == 0) {
+                        this->terminal = strcmp(value, "true") == 0;
+                    }
+                }
+                catch (const escape_error & e)
+                {
+                    fprintf(stderr, "%s: %s\n", location.c_str(), e.what());
+                    throw;
                 }
             } else if(!strcmp(line, "[Desktop Entry]"))
                 parse_key_values = true;
         }
 
-        if(this->name.empty())
-            this->name = fallback_name;
-
 #ifdef DEBUG
         fprintf(stderr, "%s", this->name.c_str());
-#endif
-
-        if(this->generic_name.empty())
-            this->generic_name = fallback_generic_name;
-
-#ifdef DEBUG
         fprintf(stderr, " (%s)\n", this->generic_name.c_str());
 #endif
-
-        fclose(file);
-
-        if(hidden)
-            return false;
-
-        return true;
+        this->name = format(*this);
     }
 
 private:
-    const LocaleSuffixes &locale_suffixes;
-    const stringlist_t *environment;
+    static char convert(char escape)
+    {
+        switch (escape)
+        {
+            case 's':
+                return ' ';
+            case 'n':
+                return '\n';
+            case 't':
+                return '\t';
+            case 'r':
+                return '\r';
+            case '\\':
+                return '\\';
+        }
+        throw escape_error((std::string)"Tried to interpret invalid escape sequence \\" + escape + ".");
+    }
 
-    void parse_localestring(const char *key, size_t key_length, size_t *best_so_far, const char *value, std::string &field, std::string &fallback) {
-        if(key[key_length] == '[') {
-            // Don't ask, don't tell.
-            const char *langcode = key + key_length + 1; // plus the [
-            const char *suffix;
-            const size_t length = strlen(langcode) - 1; // minus the ]
-            if(length < *best_so_far) {
-                return;
-            }
-            int i = 0;
-            while((suffix = this->locale_suffixes.suffixes[i++])) {
-                if(!strncmp(suffix, langcode, length)) {
-#ifdef DEBUG
-                    fprintf(stderr, "[%s] ", suffix);
-#endif
-                    *best_so_far = length;
-                    field = value;
+    std::string expand(const char * key, const char * value)
+    {
+        size_t len = strlen(value);
+        std::string result;
+        result.reserve(len);
+        bool escape = false; // if true then the next character should be escaped
+        try
+        {
+            for (size_t i = 0; i < len; i++) {
+                if (escape) {
+                    result += convert(value[i]);
+                    escape = false;
+                }
+                else {
+                    if (value[i] == '\\')
+                        escape = true;
+                    else
+                        result += value[i];
                 }
             }
-        } else {
-            fallback = value;
+            if (escape)
+                throw escape_error("Invalid escape character at end of line.");
+        }
+        catch (const escape_error & e) {
+            throw escape_error((std::string)key + ": " + e.what());
+        }
+        return result;
+    }
+
+    stringlist_t expandlist(const char * key, const char * value)
+    {
+        stringlist_t result;
+        std::string curr;
+        bool escape = false;
+        try
+        {
+            do {
+                if (escape) {
+                    if (*value == ';') // lists also allow ; to be escaped because it has special meaning in
+                        curr += ';';   // lists, so this will handle the escaping of it
+                    else
+                        curr += convert(*value);
+                    escape = false;
+                }
+                else {
+                    switch (*value) {
+                        case '\\':
+                            escape = true;
+                            break;
+                        case ';':
+                            result.push_back(std::move(curr));
+                            curr.clear();
+                            break;
+                        default:
+                            curr += *value;
+                            break;
+                    }
+                }
+            } while (*++value != '\0');
+            if (escape)
+                throw escape_error("Invalid escape character at end of line.");
+        }
+        catch (const escape_error & e) {
+            throw escape_error((std::string)key + ": " + e.what());
+        }
+        return result;
+    }
+
+    // Value is assigned to field if the new match is less or equal the current match.
+    // Newer entries of same match override older ones.
+    void parse_localestring(const char *key, int key_length, int &match, const char *value, std::string &field, const LocaleSuffixes &locale_suffixes) {
+        if(key[key_length] == '[') {
+            std::string locale(key + key_length + 1, strlen(key + key_length + 1) - 1);
+
+            int new_match = locale_suffixes.match(locale);
+            if (new_match == -1)
+                return;
+            if (new_match <= match || match == -1) {
+                match = new_match;
+                field = expand(key, value);
+            }
+        } else if (match == -1 || match == 4) {
+            match = 4; // The maximum match of LocaleSuffixes.match() is 3. 4 means default value.
+            field = expand(key, value);
         }
     }
 };

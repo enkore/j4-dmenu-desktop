@@ -1,0 +1,5 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=%c
+Exec=true --name=%c --location %k %u

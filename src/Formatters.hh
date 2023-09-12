@@ -31,17 +31,23 @@ inline std::string appformatter_default(const Application &app)
 
 inline std::string appformatter_with_binary_name(const Application &app)
 {
-    return app.name + " (" + split(app.exec, " ").first + ")";
+    // get name and the first part of exec
+    return app.name + " (" + app.exec.substr(0, app.exec.find(' ')) + ")";
 }
 
-enum class format_type {
-    standard,
-    with_binary_name
-};
+std::string appformatter_with_base_binary_name(const Application &app)
+{
+    auto command_end = app.exec.find(' ');
+    auto last_slash = app.exec.rfind('/', command_end);
 
-static const application_formatter formatters[2] = {
-    appformatter_default,
-    appformatter_with_binary_name
-};
+    if (last_slash == std::string::npos)
+        last_slash = 0; // exec is relative, it doesn't contain slashes in path
+    else
+        last_slash++;
+    if (command_end != std::string::npos)
+        command_end -= last_slash; // make command_end an offset from last_slash
+
+    return app.name + " (" + app.exec.substr(last_slash, command_end) + ")";
+}
 
 #endif

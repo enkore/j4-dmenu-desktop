@@ -20,61 +20,37 @@
 
 #include "Utilities.hh"
 
-class SearchPath
-{
-public:
-    SearchPath() {
-        generate();
+void add_applications_dir(std::string &str) {
+    if (str.back() == '/') // fix double slashes
+        str.pop_back();
+    if (!endswith(str, "/applications"))
+        str += "/applications";
+    str += '/';
+}
+
+stringlist_t get_search_path() {
+    stringlist_t result;
+
+    std::string xdg_data_home = get_variable("XDG_DATA_HOME");
+    if(xdg_data_home.empty())
+        xdg_data_home = get_variable("HOME") + "/.local/share/";
+
+    add_applications_dir(xdg_data_home);
+    if (is_directory(xdg_data_home))
+        result.push_back(xdg_data_home);
+
+    std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
+    if(xdg_data_dirs.empty())
+        xdg_data_dirs = "/usr/share/:/usr/local/share/";
+
+    auto dirs = split(xdg_data_dirs, ':');
+    for (auto &path : dirs) {
+        add_applications_dir(path);
+        if (is_directory(path))
+            result.push_back(path);
     }
 
-    const stringlist_t::iterator begin() {
-        return this->search_path.begin();
-    }
-
-    const stringlist_t::iterator end() {
-        return this->search_path.end();
-    }
-
-private:
-    void generate() {
-        stringlist_t sp;
-
-        std::string xdg_data_home = get_variable("XDG_DATA_HOME");
-        if(xdg_data_home.empty())
-            xdg_data_home = std::string(get_variable("HOME")) + "/.local/share/";
-
-        push_var(xdg_data_home, sp);
-
-        std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
-        if(xdg_data_dirs.empty())
-            xdg_data_dirs = "/usr/share/:/usr/local/share/";
-
-        push_var(xdg_data_dirs, sp);
-
-        sp.reverse();
-
-        // Fix double slashes, if any
-        for(auto path : sp) {
-            this->search_path.push_back(replace(path, "//", "/"));
-#ifdef DEBUG
-            fprintf(stderr, "SearchPath: %s\n", this->search_path.back().c_str());
-#endif
-        }
-    }
-
-    void push_var(const std::string &string, stringlist_t &sp) {
-        stringlist_t items;
-        split(string, ':', items);
-        items.reverse();
-        for(auto path : items) {
-            if(!endswith(path, "/applications/"))
-                path += "/applications/";
-            if(is_directory(path.c_str()))
-                sp.push_back(path);
-        }
-    }
-
-    stringlist_t search_path;
-};
+    return result;
+}
 
 #endif
