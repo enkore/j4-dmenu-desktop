@@ -1,0 +1,15 @@
+---
+# This clang format file is custom crafted to match enkore's coding style.
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+IndentWidth: 4
+AllowShortFunctionsOnASingleLine: Empty
+AlignArrayOfStructures: Left
+BreakBeforeBraces: Custom
+SeparateDefinitionBlocks: Always
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: Never
+  AfterFunction: false
+  AfterNamespace: true
+  AfterStruct: true
