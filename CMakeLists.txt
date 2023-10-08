@@ -5,7 +5,7 @@ project(j4-dmenu)
 option(WITH_TESTS "Build and run tests" ON)
 option(WITH_GIT_CATCH "Use a Git checkout of Catch to build the tests" ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 # _WITH_GETLINE for FreeBSD
 set(CMAKE_CXX_FLAGS
