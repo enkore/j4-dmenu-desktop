@@ -22,7 +22,6 @@
 #include "SearchPath.hh"
 #include "Utilities.hh"
 
-#include "Notify.hh"
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"
 #else

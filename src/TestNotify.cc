@@ -2,7 +2,6 @@
 
 #include "catch.hpp"
 
-#include "Notify.hh"
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"
 #else
