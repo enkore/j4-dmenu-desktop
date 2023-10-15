@@ -7,6 +7,13 @@ option(WITH_GIT_CATCH "Use a Git checkout of Catch to build the tests" ON)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# J4dd should have two translation units: one for j4-dmenu-desktop and one for
+# j4-dmenu-tests. This might be changed in the future to a more traditional
+# compilation model.
+set(CMAKE_UNITY_BUILD TRUE)
+# Set basically infinite limit.
+set(CMAKE_UNITY_BUILD_BATCH_SIZE 32768)
+
 # _WITH_GETLINE for FreeBSD
 set(CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Wno-missing-field-initializers -O2 -D_WITH_GETLINE"
@@ -29,7 +36,9 @@ endif()
 include_directories("${PROJECT_BINARY_DIR}")
 
 if(WITH_TESTS)
-  add_executable(j4-dmenu-tests src/Test.cc)
+  file(GLOB_RECURSE test_src_files src/Test*.cc)
+
+  add_executable(j4-dmenu-tests ${test_src_files})
   target_compile_definitions(
     j4-dmenu-tests PRIVATE TEST_FILES="${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
 
