@@ -5,7 +5,7 @@
 #include "ApplicationRunner.hh"
 #include "Formatters.hh"
 #include "LocaleSuffixes.hh"
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
 // This function will pass the string to the shell, the shell will unquote and
 // expand it and it will return the split arguments.
@@ -49,8 +49,8 @@ stringlist_t getshell(const std::string &args) {
     return result;
 }
 
-TEST_CASE("ApplicationRunner/expand",
-          "Tests proper handling of special characters") {
+TEST_CASE("Tests proper handling of special characters",
+          "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
     char *data = nullptr;
     size_t size;
@@ -65,7 +65,7 @@ TEST_CASE("ApplicationRunner/expand",
     free(data);
 }
 
-TEST_CASE("ApplicationRunner/field_codes", "") {
+TEST_CASE("Test field codes", "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
     char *data = nullptr;
     size_t size;
@@ -81,8 +81,8 @@ TEST_CASE("ApplicationRunner/field_codes", "") {
     free(data);
 }
 
-TEST_CASE("ApplicationRunner/escape",
-          "Regression test for issue #18, %c was not escaped") {
+TEST_CASE("Regression test for issue #18, %c was not escaped",
+          "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
     char *data = nullptr;
     size_t size;

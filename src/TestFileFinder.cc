@@ -3,9 +3,9 @@
 #include <vector>
 
 #include "FileFinder.hh"
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("FileFinder/find2", "") {
+TEST_CASE("Test FileFinder", "[FileFinder]") {
     FileFinder ff(TEST_FILES);
     bool found = false;
     while (++ff) {

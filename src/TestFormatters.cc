@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <string>
 
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
 #include "Application.hh"
 #include "Formatters.hh"
 #include "LocaleSuffixes.hh"
 
-TEST_CASE("Formatters/standard", "") {
+TEST_CASE("Text default formatter", "[Formatters]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
@@ -20,7 +20,7 @@ TEST_CASE("Formatters/standard", "") {
     free(buffer);
 }
 
-TEST_CASE("Formatters/with_binary", "") {
+TEST_CASE("Test with_binary_name formatter", "[Formatters]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;

@@ -1,15 +1,15 @@
 #include "Applications.hh"
 #include "Formatters.hh"
 #include "SearchPath.hh"
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <fcntl.h>
 
-TEST_CASE("Applications/empty", "Tests state of empty Applications") {
+TEST_CASE("Tests state of empty Applications", "[Applications]") {
     Applications app(appformatter_default, {}, {}, false, false);
     REQUIRE(app.begin() == app.end());
 }
 
-TEST_CASE("Application/get", "") {
+TEST_CASE("Test get()", "[Applications]") {
     Applications apps(appformatter_default, {}, {}, false, false);
 
     apps.add("web.desktop", 0, TEST_FILES "applications/");
@@ -32,7 +32,7 @@ TEST_CASE("Application/get", "") {
     REQUIRE(query.second == " --help");
 }
 
-TEST_CASE("Applications/comparison", "") {
+TEST_CASE("Test comparison of two Applications containers", "[Applications]") {
     Applications apps(appformatter_default, {}, {}, false, false);
 
     apps.add("eagle.desktop", 0, TEST_FILES "applications/");
@@ -58,8 +58,8 @@ TEST_CASE("Applications/comparison", "") {
     REQUIRE(apps == oldapps);
 }
 
-TEST_CASE("Applications/bad_remove",
-          "Test removing nonexistent/invalid desktop entries") {
+TEST_CASE("Test removing nonexistent/invalid desktop entries",
+          "[Applications]") {
     Applications apps(appformatter_default, {}, {}, false, false);
 
     apps.add("eagle.desktop", 0, TEST_FILES "applications/");
@@ -75,7 +75,7 @@ TEST_CASE("Applications/bad_remove",
     REQUIRE(before == apps);
 }
 
-TEST_CASE("Applications/basic_colision", "Test desktop ID precedence") {
+TEST_CASE("Test desktop ID precedence", "[Applications]") {
     SECTION("the former overrides the latter") {
         // This simulates
         // $XDG_DATA_DIRS="TEST_FILESusr/share:TEST_FILESusr/local/share"
@@ -108,8 +108,8 @@ TEST_CASE("Applications/basic_colision", "Test desktop ID precedence") {
     }
 }
 
-TEST_CASE("Applications/increment_history",
-          "Verify that get()ing a Application increments its history") {
+TEST_CASE("Verify that get()ing a Application increments its history",
+          "[Applications]") {
     Applications apps(appformatter_default, {}, {}, false, true);
 
     REQUIRE_NOTHROW(
@@ -131,9 +131,9 @@ TEST_CASE("Applications/increment_history",
     REQUIRE(std::equal(apps.begin(), apps.end(), cmp.begin()));
 }
 
-TEST_CASE("Applications/disable_increment_history",
-          "Verify that get()ing a Application doens't have side effects when "
-          "history is turned off") {
+TEST_CASE("Verify that get()ing a Application doens't have side effects when "
+          "history is turned off",
+          "[Applications]") {
     Applications apps(appformatter_default, {}, {}, false, false);
 
     REQUIRE_NOTHROW(
@@ -155,8 +155,8 @@ TEST_CASE("Applications/disable_increment_history",
     REQUIRE(std::equal(apps.begin(), apps.end(), cmp.begin()));
 }
 
-TEST_CASE("Applications/shadow",
-          "Test correct handling of desktop files with overlapping names") {
+TEST_CASE("Test correct handling of desktop files with overlapping names",
+          "[Applications]") {
     Applications apps(appformatter_default, {}, {}, false, true);
 
     apps.add("eagle.desktop", 0, TEST_FILES "applications/");
@@ -185,7 +185,7 @@ TEST_CASE("Applications/shadow",
     REQUIRE(std::distance(apps.begin(), apps.end()) == 0);
 }
 
-TEST_CASE("Applications/exclude_generic", "") {
+TEST_CASE("Test exclude generic", "[Applications]") {
     Applications apps(appformatter_default, {}, {}, true, false);
 
     apps.add("eagle.desktop", 0, TEST_FILES "applications/");
@@ -200,7 +200,7 @@ TEST_CASE("Applications/exclude_generic", "") {
     REQUIRE(std::equal(apps.begin(), apps.end(), cmp.begin()));
 }
 
-TEST_CASE("Applications/precedence", "") {
+TEST_CASE("Test precedence", "[Applications]") {
     // This behaves like $XDG_DATA_DIRS="TEST_FILESa:TEST_FILESb:TEST_FILESc"
     Applications apps(appformatter_default, {}, {}, false, false);
 
@@ -312,7 +312,7 @@ TEST_CASE("Applications/precedence", "") {
     cmp = {"Firefox", "Web browser"};
 }
 
-TEST_CASE("Applications/history", "Test loading and saving log") {
+TEST_CASE("Test loading and saving log", "[Applications]") {
     Applications apps(appformatter_default, {}, {}, false, true);
 
     REQUIRE_NOTHROW(apps.add("eagle.desktop", 0, TEST_FILES "applications/"));
@@ -357,8 +357,8 @@ TEST_CASE("Applications/history", "Test loading and saving log") {
     }
 }
 
-TEST_CASE("Applications/empty_log",
-          "Test that handling a nonexistant log doesn't break Applications") {
+TEST_CASE("Test that handling a nonexistant log doesn't break Applications",
+          "[Applications]") {
     // This removes log if it wasn't removed by the test (this can happen if the
     // test would fail before calling the last unlink()).
     unlink(TEST_FILES "log");

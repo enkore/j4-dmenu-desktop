@@ -5,9 +5,9 @@
 #include "Application.hh"
 #include "Formatters.hh"
 #include "LocaleSuffixes.hh"
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Application/invalid_file", "") {
+TEST_CASE("Test Nonexistant file", "[Application]") {
     LocaleSuffixes ls("en_US");
     char *buffer = nullptr;
     size_t size;
@@ -15,8 +15,8 @@ TEST_CASE("Application/invalid_file", "") {
                                appformatter_default, ls, {}));
 }
 
-TEST_CASE("Application/valid/eagle",
-          "Validates correct parsing of a simple file") {
+TEST_CASE("Validate correct parsing of a simple file",
+          "[Application][Application/valid]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
@@ -30,8 +30,8 @@ TEST_CASE("Application/valid/eagle",
     free(buffer);
 }
 
-TEST_CASE("Application/valid/htop",
-          "Similar to Application/valid/eagle, just for a term app") {
+TEST_CASE("Validate another desktop file (htop)",
+          "[Application][Application/valid]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
@@ -45,8 +45,8 @@ TEST_CASE("Application/valid/htop",
     free(buffer);
 }
 
-TEST_CASE("Application/valid/gimp",
-          "Tests correct parsing of localization and stuff") {
+TEST_CASE("Tests correct parsing of localization (gimp)",
+          "[Application][Application/valid]") {
     LocaleSuffixes ls("eo");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
@@ -62,8 +62,8 @@ TEST_CASE("Application/valid/gimp",
     free(buffer);
 }
 
-TEST_CASE("Application/valid/long_line",
-          "Tests correct parsing of file with line longer than buffer") {
+TEST_CASE("Tests correct parsing of file with line longer than buffer",
+          "[Application][Application/valid]") {
     LocaleSuffixes ls("eo");
     size_t size = 20;
     char *buffer = static_cast<char *>(malloc(20));
@@ -79,9 +79,8 @@ TEST_CASE("Application/valid/long_line",
     free(buffer);
 }
 
-TEST_CASE(
-    "Application/flag/hidden=false",
-    "Regression test for issue #17, Hidden=false was read as Hidden=true") {
+TEST_CASE("Regression test for issue #17, Hidden=false was read as Hidden=true",
+          "[Application][Application/flag]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
@@ -94,21 +93,21 @@ TEST_CASE(
     free(buffer);
 }
 
-TEST_CASE("Application/flag/hidden=true",
-          "Test for an issue where the name wasn't set correctly after reading "
-          "a hidden file") {
+TEST_CASE("Test for an issue where the name wasn't set correctly after reading "
+          "a hidden file",
+          "[Application][Application/flag]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
     REQUIRE_THROWS_AS(Application(TEST_FILES "applications/hidden.desktop",
                                   &buffer, &size, appformatter_default, ls, {}),
-                      const disabled_error &);
+                      disabled_error);
 
     free(buffer);
 }
 
-TEST_CASE("Application/spaces_around_equals",
-          "Test whether spaces around the equal sign are ignored") {
+TEST_CASE("Test whether spaces around the equal sign are ignored"
+          "[Application]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
@@ -122,7 +121,8 @@ TEST_CASE("Application/spaces_around_equals",
     free(buffer);
 }
 
-TEST_CASE("Application/onlyShowIn", "Test whether the OnlyShowIn tag works") {
+TEST_CASE("Test whether the OnlyShowIn tag works"
+          "[Application]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
@@ -137,12 +137,13 @@ TEST_CASE("Application/onlyShowIn", "Test whether the OnlyShowIn tag works") {
     REQUIRE_THROWS_AS(Application(TEST_FILES "applications/onlyShowIn.desktop",
                                   &buffer, &size, appformatter_default, ls,
                                   {"Kde"}),
-                      const disabled_error &);
+                      disabled_error);
 
     free(buffer);
 }
 
-TEST_CASE("Application/notShowIn", "Test whether the NotShowIn tag works") {
+TEST_CASE("Test whether the NotShowIn tag works"
+          "[Application]") {
     LocaleSuffixes ls("en_US");
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
@@ -151,7 +152,7 @@ TEST_CASE("Application/notShowIn", "Test whether the NotShowIn tag works") {
     REQUIRE_THROWS_AS(Application(TEST_FILES "applications/notShowIn.desktop",
                                   &buffer, &size, appformatter_default, ls,
                                   {"i3", "Gnome"}),
-                      const disabled_error &);
+                      disabled_error);
 
     // Case 2: The app should be shown in this environment
     Application app2(TEST_FILES "applications/notShowIn.desktop", &buffer,

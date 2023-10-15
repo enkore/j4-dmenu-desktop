@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "SearchPath.hh"
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("SearchPath/XDG_DATA_HOME", "Check SearchPath honors XDG_DATA_HOME") {
+TEST_CASE("Check SearchPath honors XDG_DATA_HOME", "[SearchPath]") {
     setenv("XDG_DATA_HOME", "/usr/share", 1);
     setenv("XDG_DATA_DIRS", " ", 1);
 
@@ -22,7 +22,7 @@ TEST_CASE("SearchPath/XDG_DATA_HOME", "Check SearchPath honors XDG_DATA_HOME") {
     }
 }
 
-TEST_CASE("SearchPath/XDG_DATA_DIRS", "Check SearchPath honors XDG_DATA_DIRS") {
+TEST_CASE("Check SearchPath honors XDG_DATA_DIRS", "[SearchPath]") {
     unsetenv("XDG_DATA_HOME");
     setenv("HOME", "/home/testuser", 1);
     setenv("XDG_DATA_DIRS",

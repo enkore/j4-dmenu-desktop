@@ -1,6 +1,7 @@
 #include <poll.h>
+#include <unistd.h>
 
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"
@@ -10,9 +11,9 @@
 
 #define FILENAME TEST_FILES "usr/local/share/newfile"
 
-TEST_CASE("Notify/create_delete",
-          "Test detection of file creation and deletion of a subdirectory of "
-          "watched directory") {
+TEST_CASE("Test detection of file creation and deletion of a subdirectory of "
+          "watched directory",
+          "[Notify]") {
     stringlist_t search_path({TEST_FILES "usr/"});
 #ifdef USE_KQUEUE
     NotifyKqueue notify(search_path);

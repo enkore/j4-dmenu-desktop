@@ -1,9 +1,9 @@
 #include <string.h>
 
 #include "LocaleSuffixes.hh"
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("LocaleSuffixes/full", "") {
+TEST_CASE("Test full encoding string", "[LocaleSuffixes]") {
     LocaleSuffixes ls("en_US.UTF-8@mod");
     REQUIRE(ls.match("en_US@mod") == 0);
     REQUIRE(ls.match("en_US") == 1);
@@ -11,7 +11,7 @@ TEST_CASE("LocaleSuffixes/full", "") {
     REQUIRE(ls.match("en") == 3);
 }
 
-TEST_CASE("LocaleSuffixes/full_no_encoding", "") {
+TEST_CASE("Test encoding string without encoding", "[LocaleSuffixes]") {
     LocaleSuffixes ls("en_US@mod");
     REQUIRE(ls.match("en_US@mod") == 0);
     REQUIRE(ls.match("en_US") == 1);
@@ -19,19 +19,19 @@ TEST_CASE("LocaleSuffixes/full_no_encoding", "") {
     REQUIRE(ls.match("en") == 3);
 }
 
-TEST_CASE("LocaleSuffixes/with_encoding", "") {
+TEST_CASE("Test encoding string with encoding", "[LocaleSuffixes]") {
     LocaleSuffixes ls("en_US.UTF-8");
     REQUIRE(ls.match("en_US") == 0);
     REQUIRE(ls.match("en") == 1);
 }
 
-TEST_CASE("LocaleSuffixes/long", "") {
+TEST_CASE("Test long encoding", "[LocaleSuffixes]") {
     LocaleSuffixes ls("en_US");
     REQUIRE(ls.match("en_US") == 0);
     REQUIRE(ls.match("en") == 1);
 }
 
-TEST_CASE("LocaleSuffixes/short", "") {
+TEST_CASE("Test short encoding", "[LocaleSuffixes]") {
     LocaleSuffixes ls("en");
     REQUIRE(ls.match("en") == 0);
     REQUIRE_FALSE(ls.match("en_US") == 0);
