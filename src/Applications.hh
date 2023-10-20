@@ -37,7 +37,7 @@ template <> struct std::hash<string_ref>
 // a helper function that safely gets an iterator from container.insert() and
 // container.emplace()
 template <typename iterator>
-iterator getiter(const std::pair<iterator, bool> &p) {
+static iterator getiter(const std::pair<iterator, bool> &p) {
     if (!p.second) {
         fprintf(stderr, "Tried to insert an element when it was already "
                         "present, aborting...\n");

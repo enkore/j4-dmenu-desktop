@@ -24,16 +24,17 @@
 
 using application_formatter = std::string (*)(const Application &);
 
-inline std::string appformatter_default(const Application &app) {
+static inline std::string appformatter_default(const Application &app) {
     return app.name;
 }
 
-inline std::string appformatter_with_binary_name(const Application &app) {
+static inline std::string
+appformatter_with_binary_name(const Application &app) {
     // get name and the first part of exec
     return app.name + " (" + app.exec.substr(0, app.exec.find(' ')) + ")";
 }
 
-std::string appformatter_with_base_binary_name(const Application &app) {
+static std::string appformatter_with_base_binary_name(const Application &app) {
     auto command_end = app.exec.find(' ');
     auto last_slash = app.exec.rfind('/', command_end);
 

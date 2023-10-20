@@ -39,7 +39,7 @@ struct escape_error : public std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
-void close_file(FILE *f) {
+static void close_file(FILE *f) {
     fclose(f);
 }
 

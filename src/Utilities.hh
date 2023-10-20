@@ -34,7 +34,7 @@
 
 typedef std::vector<std::string> stringlist_t;
 
-inline stringlist_t split(const std::string &str, char delimiter) {
+static inline stringlist_t split(const std::string &str, char delimiter) {
     std::stringstream ss(str);
     std::string item;
     stringlist_t result;
@@ -45,8 +45,8 @@ inline stringlist_t split(const std::string &str, char delimiter) {
     return result;
 }
 
-inline bool have_equal_element(const stringlist_t &list1,
-                               const stringlist_t &list2) {
+static inline bool have_equal_element(const stringlist_t &list1,
+                                      const stringlist_t &list2) {
     for (auto e1 : list1) {
         for (auto e2 : list2) {
             if (e1 == e2)
@@ -56,8 +56,8 @@ inline bool have_equal_element(const stringlist_t &list1,
     return false;
 }
 
-inline void replace(std::string &str, const std::string &substr,
-                    const std::string &substitute) {
+static inline void replace(std::string &str, const std::string &substr,
+                           const std::string &substitute) {
     if (substr.empty())
         return;
     size_t start_pos = 0;
@@ -67,20 +67,21 @@ inline void replace(std::string &str, const std::string &substr,
     }
 }
 
-inline bool endswith(const std::string &str, const std::string &suffix) {
+static inline bool endswith(const std::string &str, const std::string &suffix) {
     if (str.length() < suffix.length())
         return false;
     return str.compare(str.length() - suffix.length(), suffix.length(),
                        suffix) == 0;
 }
 
-inline bool startswith(const std::string &str, const std::string &prefix) {
+static inline bool startswith(const std::string &str,
+                              const std::string &prefix) {
     if (str.length() < prefix.length())
         return false;
     return str.compare(0, prefix.length(), prefix) == 0;
 }
 
-inline bool is_directory(const std::string &path) {
+static inline bool is_directory(const std::string &path) {
     int status;
     struct stat filestat;
 
@@ -91,7 +92,7 @@ inline bool is_directory(const std::string &path) {
     return S_ISDIR(filestat.st_mode);
 }
 
-inline std::string get_variable(const std::string &var) {
+static inline std::string get_variable(const std::string &var) {
     const char *env = std::getenv(var.c_str());
     if (env) {
         return env;
@@ -99,7 +100,7 @@ inline std::string get_variable(const std::string &var) {
         return "";
 }
 
-inline void pfatale(const char *msg) {
+static inline void pfatale(const char *msg) {
     perror(msg);
     abort();
 }

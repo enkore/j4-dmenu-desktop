@@ -47,8 +47,8 @@ static std::string quote(const std::string &s) {
 
 // This functions expands the field codes in Exec and prepares the arguments for
 // the shell
-const std::string application_command(const Application &app,
-                                      const std::string &args) {
+static const std::string application_command(const Application &app,
+                                             const std::string &args) {
     const std::string &exec = app.exec;
 
     std::string result;

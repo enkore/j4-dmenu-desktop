@@ -20,7 +20,7 @@
 
 #include "Utilities.hh"
 
-void add_applications_dir(std::string &str) {
+static void add_applications_dir(std::string &str) {
     if (str.back() == '/') // fix double slashes
         str.pop_back();
     if (!endswith(str, "/applications"))
@@ -28,7 +28,7 @@ void add_applications_dir(std::string &str) {
     str += '/';
 }
 
-stringlist_t get_search_path() {
+static stringlist_t get_search_path() {
     stringlist_t result;
 
     std::string xdg_data_home = get_variable("XDG_DATA_HOME");
