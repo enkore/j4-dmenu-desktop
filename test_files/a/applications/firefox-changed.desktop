@@ -1,0 +1,8 @@
+# This desktop file is used in AppManager - Test overwriting with add() test.
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Firefox
+GenericName=Internet browser
+Comment=j4-dmenu-desktop test file
+Exec=true

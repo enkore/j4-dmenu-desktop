@@ -106,6 +106,17 @@ static inline void pfatale(const char *msg) {
     abort();
 }
 
+static inline std::string get_desktop_id(std::string filename) {
+    std::string result(std::move(filename));
+    replace(result.begin(), result.end(), '/', '-');
+    return result;
+}
+
+static inline std::string get_desktop_id(std::string filename,
+                                         std::string_view base) {
+    return get_desktop_id(filename.substr(base.size()));
+}
+
 // This ScopeGuard is taken from https://stackoverflow.com/a/61242721
 template <typename F> struct OnExit
 {
