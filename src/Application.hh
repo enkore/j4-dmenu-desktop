@@ -281,6 +281,8 @@ private:
             } while (*++value != '\0');
             if (escape)
                 throw escape_error("Invalid escape character at end of line.");
+            if (!curr.empty())
+                result.push_back(std::move(curr));
         } catch (const escape_error &e) {
             throw escape_error((std::string)key + ": " + e.what());
         }

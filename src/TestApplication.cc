@@ -162,3 +162,21 @@ TEST_CASE("Test whether the NotShowIn tag works"
 
     free(buffer);
 }
+
+TEST_CASE("Test whether delimiter for string(s) works", "[Application]")
+{
+    LocaleSuffixes ls("en_US");
+    char *buffer = static_cast<char *>(malloc(4096));
+    size_t size = 4096;
+
+    // This checks that the last element of NotShowIn is acknowledged (there was
+    // a bug which ignored the last entry if it wasn't terminated by a
+    // semicolon even though that is not mandatory according to the spec).
+    // This desktop file should be ignored, because the environment is Kde.
+    REQUIRE_THROWS_AS(Application(TEST_FILES "applications/notShowIn.desktop",
+                                  &buffer, &size, appformatter_default, ls,
+                                  {"Kde"}),
+                      disabled_error);
+
+    free(buffer);
+}
