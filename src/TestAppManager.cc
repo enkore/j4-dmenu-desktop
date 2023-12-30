@@ -551,3 +551,76 @@ TEST_CASE("Test lookup by ID", "[AppManager]") {
     REQUIRE(apps.lookup_by_ID("chromium.desktop").value().get().name ==
             "Chromium");
 }
+
+TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
+    SECTION("Test 1")
+    {
+        AppManager apps(
+            {
+                {TEST_FILES "a/applications/",
+                 {TEST_FILES "a/applications/chromium.desktop",
+                  TEST_FILES "a/applications/firefox.desktop"}},
+                {TEST_FILES "applications/",
+                 {TEST_FILES "applications/notShowIn.desktop"}}
+        },
+            true, false, appformatter_default, {"Kde"});
+
+        REQUIRE(apps.count() == 2);
+
+        check_app(apps, "Chromium", name_type::name, "Chrome based browser");
+        check_app(apps, "Chrome based browser", name_type::generic_name,
+                "Chromium");
+        check_app(apps, "Firefox", name_type::name, "Web browser");
+        check_app(apps, "Web browser", name_type::generic_name, "Firefox");
+        REQUIRE(!apps.lookup("Htop"));
+
+        apps.add(TEST_FILES "applications/onlyShowIn.desktop",
+                TEST_FILES "applications/", 1);
+
+        REQUIRE(apps.count() == 2);
+
+        check_app(apps, "Chromium", name_type::name, "Chrome based browser");
+        check_app(apps, "Chrome based browser", name_type::generic_name,
+                "Chromium");
+        check_app(apps, "Firefox", name_type::name, "Web browser");
+        check_app(apps, "Web browser", name_type::generic_name, "Firefox");
+        REQUIRE(!apps.lookup("Htop"));
+
+        apps.check_inner_state();
+    }
+    SECTION("Test 2")
+    {
+        AppManager apps(
+            {
+                {TEST_FILES "a/applications/",
+                 {TEST_FILES "a/applications/chromium.desktop",
+                  TEST_FILES "a/applications/firefox.desktop"}},
+                {TEST_FILES "applications/",
+                 {TEST_FILES "applications/notShowIn.desktop"}}
+        },
+            true, false, appformatter_default, {"i3"});
+
+        REQUIRE(apps.count() == 2);
+
+        check_app(apps, "Chromium", name_type::name, "Chrome based browser");
+        check_app(apps, "Chrome based browser", name_type::generic_name,
+                "Chromium");
+        check_app(apps, "Firefox", name_type::name, "Web browser");
+        check_app(apps, "Web browser", name_type::generic_name, "Firefox");
+        REQUIRE(!apps.lookup("Htop"));
+
+        apps.add(TEST_FILES "applications/onlyShowIn.desktop",
+                TEST_FILES "applications/", 1);
+
+        REQUIRE(apps.count() == 3);
+
+        check_app(apps, "Chromium", name_type::name, "Chrome based browser");
+        check_app(apps, "Chrome based browser", name_type::generic_name,
+                "Chromium");
+        check_app(apps, "Firefox", name_type::name, "Web browser");
+        check_app(apps, "Web browser", name_type::generic_name, "Firefox");
+        check_app(apps, "Htop", name_type::name, "Process Viewer");
+
+        apps.check_inner_state();
+    }
+}

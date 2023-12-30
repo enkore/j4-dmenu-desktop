@@ -74,6 +74,7 @@ public:
                id == other.id;
     }
 
+    // If desktopenvs is {}, notShowIn and onlyShowIn will be ignored.
     Application(const char *path, char **linep, size_t *linesz,
                 application_formatter format,
                 const LocaleSuffixes &locale_suffixes,
