@@ -26,6 +26,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <stdio.h>
 #include <string.h>
 #include <string>
 #include <sys/stat.h>
@@ -130,5 +131,13 @@ template <typename F> struct OnExit
 };
 
 template <typename F> OnExit(F &&frv) -> OnExit<F>;
+
+// Helper struct for std::unique_ptr
+struct fclose_deleter
+{
+    void operator()(FILE *f) const noexcept {
+        fclose(f);
+    }
+};
 
 #endif

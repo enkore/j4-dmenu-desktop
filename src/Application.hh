@@ -39,10 +39,6 @@ struct escape_error : public std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
-static void close_file(FILE *f) {
-    fclose(f);
-}
-
 class Application
 {
     using application_formatter = std::string (*)(const Application &);
@@ -95,8 +91,7 @@ public:
         bool parse_key_values = false;
         ssize_t linelen;
         char *line;
-        std::unique_ptr<FILE, decltype(&close_file)> file(fopen(path, "r"),
-                                                          &close_file);
+        std::unique_ptr<FILE, fclose_deleter> file(fopen(path, "r"));
         if (!file)
             throw std::runtime_error(
                 (std::string) "Couldn't open desktop file - " +

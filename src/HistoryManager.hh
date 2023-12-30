@@ -70,8 +70,7 @@ class v0_version_error : public std::runtime_error
 class HistoryManager
 {
 public:
-    HistoryManager(const string &path)
-        : file(std::fopen(path.c_str(), "r+"), std::fclose) {
+    HistoryManager(const string &path) : file(std::fopen(path.c_str(), "r+")) {
         // We first try to open the file in the initializer list. If that
         // doesn't work, we go for fallback.
         if (!this->file) {
@@ -179,8 +178,7 @@ public:
 
     static HistoryManager convert_history_from_v0(const string &path,
                                                   const AppManager &appm) {
-        std::unique_ptr<FILE, decltype(&std::fclose)> f(
-            std::fopen(path.c_str(), "r"), std::fclose);
+        std::unique_ptr<FILE, fclose_deleter> f(std::fopen(path.c_str(), "r"));
         if (!f)
             throw std::runtime_error("Couldn't open file '" + path +
                                      "' for conversion: " + strerror(errno));
@@ -232,7 +230,7 @@ public:
 
 private:
     HistoryManager(FILE *f, std::multimap<int, string, std::greater<int>> hist)
-        : file(f, std::fclose), history(std::move(hist)) {}
+        : file(f), history(std::move(hist)) {}
 
     // This function tests whether file is the "v0.0" version of the history
     // file. This version doesn't contain the header.
@@ -309,7 +307,7 @@ private:
                                      name + "': " + strerror(errno));
     }
 
-    std::unique_ptr<FILE, decltype(&std::fclose)> file;
+    std::unique_ptr<FILE, fclose_deleter> file;
     std::multimap<int, string, std::greater<int>> history;
 };
 
