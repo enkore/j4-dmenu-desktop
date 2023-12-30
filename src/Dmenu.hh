@@ -35,8 +35,8 @@ public:
     Dmenu(const Dmenu &dmenu) = delete;
     void operator=(const Dmenu &dmenu) = delete;
 
-    void write(const std::string &what) {
-        write_proper(this->outpipe[1], what.c_str(), what.size());
+    void write(std::string_view what) {
+        write_proper(this->outpipe[1], what.data(), what.size());
         write_proper(this->outpipe[1], "\n", 1);
     }
 
