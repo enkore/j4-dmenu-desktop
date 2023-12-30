@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <dirent.h>
+#include <functional>
 #include <istream>
 #include <map>
 #include <set>
@@ -104,5 +105,19 @@ static inline void pfatale(const char *msg) {
     perror(msg);
     abort();
 }
+
+// This ScopeGuard is taken from https://stackoverflow.com/a/61242721
+template <typename F> struct OnExit
+{
+    F func;
+
+    OnExit(F &&f) : func(std::forward<F>(f)) {}
+
+    ~OnExit() {
+        func();
+    }
+};
+
+template <typename F> OnExit(F &&frv) -> OnExit<F>;
 
 #endif
