@@ -13,12 +13,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include "AppManager.hh"
 #include "Application.hh"
 #include "ApplicationRunner.hh"
-#include "Applications.hh"
 #include "Dmenu.hh"
 #include "FileFinder.hh"
 #include "Formatters.hh"
+#include "HistoryManager.hh"
 #include "SearchPath.hh"
 #include "Utilities.hh"
 
@@ -89,21 +90,22 @@ void print_usage(FILE *f) {
     );
 }
 
-int collect_files(Applications &apps, const stringlist_t &search_path) {
-    int parsed_files = 0;
+Desktop_file_list collect_files(const stringlist_t &search_path) {
+    Desktop_file_list result;
+    result.reserve(search_path.size());
 
-    for (Applications::size_type i = 0; i < search_path.size(); i++) {
-        FileFinder finder(search_path[i]);
+    for (const string &base_path : search_path) {
+        std::vector<string> found_desktop_files;
+        FileFinder finder(base_path);
         while (++finder) {
             if (finder.isdir() || !endswith(finder.path(), ".desktop"))
                 continue;
-            apps.add(finder.path().substr(search_path[i].length()), i,
-                     search_path[i]);
-            parsed_files++;
+            found_desktop_files.push_back(finder.path());
         }
+        result.emplace_back(base_path, std::move(found_desktop_files));
     }
 
-    return parsed_files;
+    return result;
 }
 
 struct CommandInfo
@@ -123,50 +125,42 @@ struct CommandInfo
     CommandInfo() = default;
 };
 
-CommandInfo get_command(int parsed_files, Applications &apps,
-                        const std::string &choice, const std::string &wrapper,
-                        const char *usage_log) {
-    std::string args;
-    Application *app;
-
-    fprintf(stderr, "Read %d .desktop files, found %lu apps.\n", parsed_files,
-            apps.size());
-
+CommandInfo get_command(AppManager &apps, std::optional<HistoryManager> &hist,
+                        const std::string &choice, const std::string &wrapper) {
     if (choice.empty())
         return CommandInfo("", false, false);
 
-    std::tie(app, args) = apps.get(choice);
+    auto lookup_result = apps.lookup(choice);
 
-    fprintf(stderr, "User input is: %s %s\n", choice.c_str(), args.c_str());
-
-    if (!app) {
+    if (!lookup_result) {
         if (wrapper.empty())
-            return CommandInfo(args, false, true);
+            return CommandInfo(choice, false, true);
         else
-            return CommandInfo(wrapper + " \"" + args + "\"", false, true);
-    }
-
-    apps.update_log(usage_log);
-
-    if (!app->path.empty()) {
-        if (chdir(app->path.c_str())) {
-            perror("chdir into application path");
+            return CommandInfo(wrapper + " \"" + choice + "\"", false, true);
+    } else {
+        if (hist) {
+            if (lookup_result->name == AppManager::lookup_result_type::NAME)
+                hist->increment(lookup_result->app->name);
+            else
+                hist->increment(lookup_result->app->generic_name);
         }
     }
 
-    std::string command = application_command(*app, args);
+    const Application &app = *lookup_result->app;
+
+    std::string command = application_command(app, lookup_result->args);
     if (wrapper.empty())
-        return CommandInfo(command, app->terminal, false);
+        return CommandInfo(command, app.terminal, false);
     else
-        return CommandInfo(wrapper + " \"" + command + "\"", app->terminal,
+        return CommandInfo(wrapper + " \"" + command + "\"", app.terminal,
                            false);
 }
 
-int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu,
-             Applications &apps, std::string &terminal, std::string &wrapper,
-             bool no_exec, const char *usage_log) {
+int do_dmenu(Dmenu &dmenu, AppManager &apps,
+             std::optional<HistoryManager> &hist, const char *shell,
+             std::string &terminal, std::string &wrapper, bool no_exec) {
     // Transfer the list to dmenu
-    for (auto &name : apps)
+    for (const auto &name : apps.list_sorted_names())
         dmenu.write(name);
 
     dmenu.display();
@@ -174,8 +168,12 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu,
     CommandInfo info;
 
     try {
-        info = get_command(parsed_files, apps, dmenu.read_choice(), wrapper,
-                           usage_log); // read_choice blocks
+        string choice = dmenu.read_choice();
+        if (choice.empty())
+            return 0;
+        fprintf(stderr, "User input is: %s\n", choice.c_str());
+        info = get_command(apps, hist, dmenu.read_choice(),
+                           wrapper); // read_choice blocks
     } catch (const std::runtime_error
                  &e) { // invalid field code in Exec, the standard says that the
                        // implementation shall not process these
@@ -216,9 +214,10 @@ int do_dmenu(const char *shell, int parsed_files, Dmenu &dmenu,
 }
 
 int do_wait_on(NotifyBase &notify, const char *shell, const char *wait_on,
-               int parsed_files, Dmenu &dmenu, Applications &apps,
-               std::string &terminal, std::string &wrapper, bool no_exec,
-               const stringlist_t &search_path, const char *usage_log) {
+               Dmenu &dmenu, AppManager &apps,
+               std::optional<HistoryManager> &hist, std::string &terminal,
+               std::string &wrapper, bool no_exec,
+               const stringlist_t &search_path) {
     // Avoid zombie processes.
     struct sigaction act = {{0}}; // double curly braces fix a warning fixes
                                   // -Wmissing-braces on FreeBSD
@@ -253,12 +252,15 @@ int do_wait_on(NotifyBase &notify, const char *shell, const char *wait_on,
                     continue;
                 switch (i.status) {
                 case NotifyBase::changetype::modified:
-                    apps.add(i.name, i.rank, search_path[i.rank]);
+                    apps.add(i.name, search_path[i.rank], i.rank);
                     break;
                 case NotifyBase::changetype::deleted:
-                    apps.remove(i.name, i.rank);
+                    apps.remove(i.name, search_path[i.rank]);
                     break;
                 }
+#ifdef DEBUG
+                apps.check_inner_state();
+#endif
             }
         }
         if (watch[0].revents & POLLIN) {
@@ -278,8 +280,8 @@ int do_wait_on(NotifyBase &notify, const char *shell, const char *wait_on,
                 close(fd);
                 setsid();
                 dmenu.run();
-                return do_dmenu(shell, parsed_files, dmenu, apps, terminal,
-                                wrapper, no_exec, usage_log);
+                return do_dmenu(dmenu, apps, hist, shell, terminal, wrapper,
+                                no_exec);
             }
         }
     }
@@ -301,6 +303,7 @@ int main(int argc, char **argv) {
     bool use_xdg_de = false;
     bool exclude_generic = false;
     bool no_exec = false;
+    bool case_insensitive = false;
 
     stringlist_t search_path = get_search_path();
 
@@ -330,11 +333,12 @@ int main(int argc, char **argv) {
             {"wait-on",             required_argument, 0, 'w'},
             {"no-exec",             no_argument,       0, 'e'},
             {"wrapper",             required_argument, 0, 'W'},
+            {"case-insensitive",    no_argument,       0, 'i'},
             {0,                     0,                 0, 0  }
         };
 
         int c =
-            getopt_long(argc, argv, "d:t:xhbf", long_options, &option_index);
+            getopt_long(argc, argv, "d:t:xhbfi", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -372,6 +376,9 @@ int main(int argc, char **argv) {
         case 'W':
             wrapper = optarg;
             break;
+        case 'i':
+            case_insensitive = true;
+            break;
         default:
             exit(1);
         }
@@ -387,17 +394,38 @@ int main(int argc, char **argv) {
         fprintf(stderr, "%s\n", s.c_str());
 #endif
 
-    Applications apps(appformatter, desktopenvs, suffixes, exclude_generic,
-                      usage_log != NULL);
-
     Dmenu dmenu(dmenu_command, shell);
 
     if (!wait_on)
         dmenu.run();
 
-    int parsed_files = collect_files(apps, search_path);
+    auto desktop_file_list = collect_files(search_path);
+    AppManager apps(desktop_file_list, !exclude_generic, case_insensitive,
+                    appformatter, desktopenvs);
 
-    apps.load_log(usage_log); // load the log if it's enabled
+#ifdef DEBUG
+    apps.check_inner_state();
+#endif
+
+    int number_of_desktop_files_read = 0;
+    for (const auto &rank : desktop_file_list)
+        number_of_desktop_files_read += rank.files.size();
+
+    desktop_file_list.clear(); // We will no longer need it.
+
+    fprintf(stderr, "Read %d .desktop files, found %u apps.\n",
+            number_of_desktop_files_read, (unsigned int)apps.count());
+
+    std::optional<HistoryManager> hist_manager;
+
+    if (usage_log != nullptr) {
+        try {
+            hist_manager.emplace(usage_log);
+        } catch (const v0_version_error &) {
+            hist_manager.emplace(
+                HistoryManager::convert_history_from_v0(usage_log, apps));
+        }
+    }
 
     if (wait_on) {
 #ifdef USE_KQUEUE
@@ -405,10 +433,10 @@ int main(int argc, char **argv) {
 #else
         NotifyInotify notify(search_path);
 #endif
-        return do_wait_on(notify, shell, wait_on, parsed_files, dmenu, apps,
-                          terminal, wrapper, no_exec, search_path, usage_log);
+        return do_wait_on(notify, shell, wait_on, dmenu, apps, hist_manager,
+                          terminal, wrapper, no_exec, search_path);
     } else {
-        return do_dmenu(shell, parsed_files, dmenu, apps, terminal, wrapper,
-                        no_exec, usage_log);
+        return do_dmenu(dmenu, apps, hist_manager, shell, terminal, wrapper,
+                        no_exec);
     }
 }
