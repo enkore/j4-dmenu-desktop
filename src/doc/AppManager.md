@@ -30,6 +30,8 @@ The AppManager class is a specialized container for the Application. The contain
 
    This feature is used primarily for verbose output.
 
+AppManager also supports looking up Application by its desktop file ID. This is used only for converting the old format of the history file to the new one. This operation will not be needed in a typical j4dd session.
+
 # Collisions
 There are two main types of collisions:
 

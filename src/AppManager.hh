@@ -424,6 +424,19 @@ public:
         }
     }
 
+    // This function will never get called in a typical j4dd session. It is used
+    // only for converting the old history format to the new onw.
+    std::optional<std::reference_wrapper<const Application>>
+    lookup_by_ID(const string &ID) const {
+        auto result = std::find_if(
+            this->applications.cbegin(), this->applications.cend(),
+            [&ID](const Managed_application &app) { return app.ID == ID; });
+        if (result == this->applications.cend())
+            return std::nullopt;
+        else
+            return result->app;
+    }
+
 private:
     static string trim_surrounding_whitespace(string_view str) {
         auto begin = str.cbegin();

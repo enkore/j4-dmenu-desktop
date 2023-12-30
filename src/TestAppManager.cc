@@ -538,3 +538,16 @@ TEST_CASE("Test adding a disabled file", "[AppManager]") {
 
     apps.check_inner_state();
 }
+
+TEST_CASE("Test lookup by ID", "[AppManager]") {
+    AppManager apps(
+        {
+            {TEST_FILES "a/applications/",
+             {TEST_FILES "a/applications/chromium.desktop",
+              TEST_FILES "a/applications/firefox.desktop",
+              TEST_FILES "a/applications/hidden.desktop"}}},
+        true, false, appformatter_default, {});
+
+    REQUIRE(apps.lookup_by_ID("chromium.desktop").value().get().name ==
+            "Chromium");
+}
