@@ -27,6 +27,8 @@ public:
             : rank(r), name(std::move(n)), status(s) {}
     };
 
+    // filechange have absolute paths (they are relative to spearch_path
+    // specified in ctor; search_path is absolute so this must be too).
     virtual std::vector<filechange> getchanges() = 0;
 };
 #endif

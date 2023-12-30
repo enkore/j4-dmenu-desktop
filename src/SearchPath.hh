@@ -28,6 +28,7 @@ static void add_applications_dir(std::string &str) {
     str += '/';
 }
 
+// The spec says that these paths must be absolute
 static stringlist_t get_search_path() {
     stringlist_t result;
 

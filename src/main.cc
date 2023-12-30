@@ -90,6 +90,7 @@ void print_usage(FILE *f) {
     );
 }
 
+// This returns absolute paths.
 Desktop_file_list collect_files(const stringlist_t &search_path) {
     Desktop_file_list result;
     result.reserve(search_path.size());

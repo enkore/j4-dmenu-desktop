@@ -31,6 +31,8 @@ public:
         return curisdir;
     }
 
+    // This returns path (given in ctor) / filename. If path is absolute,
+    // returned path will be absolute.
     FileFinder &operator++() {
         if (direntries.empty()) {
             dirent *entry;
