@@ -99,7 +99,7 @@ public:
                 strerror(errno));
 
 #ifdef DEBUG
-        fprintf(stderr, "%s -> ", pwd, filename);
+        fprintf(stderr, "%s\n", path);
 #endif
 
         while ((linelen = getline(linep, linesz, file.get())) != -1) {

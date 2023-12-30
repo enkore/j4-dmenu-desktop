@@ -73,7 +73,7 @@ public:
         }
 
 #ifdef DEBUG
-        for (int i = 0; this->length; i++)
+        for (int i = 0; i < this->length; ++i)
             fprintf(stderr, "LocaleSuffix: %s\n", this->suffixes[i].c_str());
 #endif
     }
