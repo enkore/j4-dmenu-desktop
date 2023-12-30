@@ -82,7 +82,11 @@ void print_usage(FILE *f) {
 #else
         "inotify"
 #endif
-        " support.\n");
+        " support.\n"
+#ifdef DEBUG
+        "DEBUG enabled.\n"
+#endif
+    );
 }
 
 int collect_files(Applications &apps, const stringlist_t &search_path) {
