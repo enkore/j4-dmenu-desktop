@@ -36,87 +36,17 @@
 
 typedef std::vector<std::string> stringlist_t;
 
-static inline stringlist_t split(const std::string &str, char delimiter) {
-    std::stringstream ss(str);
-    std::string item;
-    stringlist_t result;
-
-    while (std::getline(ss, item, delimiter))
-        result.push_back(item);
-
-    return result;
-}
-
-static inline bool have_equal_element(const stringlist_t &list1,
-                                      const stringlist_t &list2) {
-    for (auto e1 : list1) {
-        for (auto e2 : list2) {
-            if (e1 == e2)
-                return true;
-        }
-    }
-    return false;
-}
-
-static inline void replace(std::string &str, const std::string &substr,
-                           const std::string &substitute) {
-    if (substr.empty())
-        return;
-    size_t start_pos = 0;
-    while ((start_pos = str.find(substr, start_pos)) != std::string::npos) {
-        str.replace(start_pos, substr.length(), substitute);
-        start_pos += substitute.length();
-    }
-}
-
-static inline bool endswith(const std::string &str, const std::string &suffix) {
-    if (str.length() < suffix.length())
-        return false;
-    return str.compare(str.length() - suffix.length(), suffix.length(),
-                       suffix) == 0;
-}
-
-static inline bool startswith(const std::string &str,
-                              const std::string &prefix) {
-    if (str.length() < prefix.length())
-        return false;
-    return str.compare(0, prefix.length(), prefix) == 0;
-}
-
-static inline bool is_directory(const std::string &path) {
-    int status;
-    struct stat filestat;
-
-    status = stat(path.c_str(), &filestat);
-    if (status)
-        return false;
-
-    return S_ISDIR(filestat.st_mode);
-}
-
-static inline std::string get_variable(const std::string &var) {
-    const char *env = std::getenv(var.c_str());
-    if (env) {
-        return env;
-    } else
-        return "";
-}
-
-static inline void pfatale(const char *msg) {
-    perror(msg);
-    abort();
-}
-
-static inline std::string get_desktop_id(std::string filename) {
-    std::string result(std::move(filename));
-    replace(result.begin(), result.end(), '/', '-');
-    return result;
-}
-
-static inline std::string get_desktop_id(std::string filename,
-                                         std::string_view base) {
-    return get_desktop_id(filename.substr(base.size()));
-}
+stringlist_t split(const std::string &str, char delimiter);
+bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2);
+void replace(std::string &str, const std::string &substr,
+             const std::string &substitute);
+bool endswith(const std::string &str, const std::string &suffix);
+bool startswith(const std::string &str, const std::string &prefix);
+bool is_directory(const std::string &path);
+std::string get_variable(const std::string &var);
+void pfatale(const char *msg);
+std::string get_desktop_id(std::string filename);
+std::string get_desktop_id(std::string filename, std::string_view base);
 
 // This ScopeGuard is taken from https://stackoverflow.com/a/61242721
 template <typename F> struct OnExit
@@ -135,9 +65,7 @@ template <typename F> OnExit(F &&frv) -> OnExit<F>;
 // Helper struct for std::unique_ptr
 struct fclose_deleter
 {
-    void operator()(FILE *f) const noexcept {
-        fclose(f);
-    }
+    void operator()(FILE *f) const noexcept;
 };
 
 #endif
