@@ -26,7 +26,6 @@
 #include <unordered_set>
 
 #include "Application.hh"
-#include "DynamicCompare.hh"
 #include "Formatters.hh"
 #include "Utilities.hh"
 
@@ -40,12 +39,11 @@ using std::string_view;
 struct Managed_application
 {
     Application app;
-    string ID;
     int rank;
 
     template <typename... Args>
-    Managed_application(string ID, int rank, Args... forwarded)
-        : app(std::forward<Args>(forwarded)...), ID(ID), rank(rank) {}
+    Managed_application(int rank, Args... forwarded)
+        : app(std::forward<Args>(forwarded)...), rank(rank) {}
 };
 
 struct Desktop_file_rank
@@ -72,31 +70,15 @@ public:
     void operator=(AppManager &&) = delete;
 
     AppManager(Desktop_file_list files, bool generic_names_enabled,
-               bool case_insensitive_sort, application_formatter formatter,
                stringlist_t desktopenvs);
 
-    struct lookup_result_type
-    {
-        const Application *app;
-        // This string contains arguments for the desktop app. It doesn't begin
-        // with whitespace. It will either contain text (with at least one
-        // non-whitespace character) or be empty.
-        // If query doesn't refer to a desktop file, lookup() returns empty
-        // optional.
-        string args;
-
-        enum name_type { NAME, GENERIC_NAME } name;
-
-        lookup_result_type(const Application *a, string args, name_type n);
-    };
-
-    std::optional<lookup_result_type> lookup(const string &query) const;
     void remove(const string &filename, const string &base_path);
     // This function accepts path to the desktop file relative to $XDG_DATA_DIRS
     // and its rank within $XDG_DATA_DIRS
     void add(const string &filename, const string &base_path, int rank);
-    std::vector<string_view> list_sorted_names() const;
     std::forward_list<Managed_application>::difference_type count() const;
+    const std::unordered_map<string_view, Application *> &
+    view_name_app_mapping() const;
     ~AppManager();
 
     // This function should be used only for debugging.
@@ -108,8 +90,6 @@ public:
     lookup_by_ID(const string &ID) const;
 
 private:
-    static string trim_surrounding_whitespace(string_view str);
-
     enum class NameType { name, generic_name };
 
     // Cleanly remove a name mapping from name_lookup. Collisions are handled
@@ -126,8 +106,8 @@ private:
         if (name.empty())
             return;
 
-        auto name_lookup_iter = name_lookup.find(name);
-        if (name_lookup_iter == name_lookup.end()) {
+        auto name_lookup_iter = name_app_mapping.find(name);
+        if (name_lookup_iter == name_app_mapping.end()) {
             fprintf(stderr,
                     "AppManager has reached a inconsistent state.\n"
                     "Tried to remove application name '%s' which isn't saved!",
@@ -140,33 +120,52 @@ private:
         // applications. The application which currently owns the name
         // (it's pointer is associated with the name in name_lookup) must also
         // own the key to maintain the lifetime of the key.
-        if (name_lookup_iter->second == &to_remove) {
-            name_lookup.erase(name_lookup_iter);
+        if (name_lookup_iter->second == &to_remove.app) {
+            name_app_mapping.erase(name_lookup_iter);
+            // We will look through all applications to find one with the same
+            // (Generic)Name to replace the current one. The match with the
+            // lowest rank wins.
+            Application *best_match;
+            int best_match_rank = std::numeric_limits<int>::max();
+
             // If we have generic names enabled, we need to search for them.
             for (auto iter = this->applications.begin();
                  iter != this->applications.end(); ++iter) {
-                if (this->generic_names_enabled) {
-                    if (iter->app.name == name ||
-                        iter->app.generic_name == name) {
-                        if (&*iter == &to_remove)
-                            continue;
+                Managed_application &managed_app = iter->second;
+                Application &app = managed_app.app;
 
-                        this->name_lookup.try_emplace(
-                            N == NameType::name ? iter->app.name
-                                                : iter->app.generic_name,
-                            &*iter);
+                if (this->generic_names_enabled) {
+                    if (app.name == name || app.generic_name == name) {
+                        if (&managed_app == &to_remove)
+                            continue;
+                        // When there are multiple candidates in the same rank,
+                        // the replacement isn't chosen "deterministically", it
+                        // isn't sorted so the choice depends on the ordering of
+                        // unordered_map.
+
+                        // We are looking for the match with the lowest rank.
+                        // This match has a higher rank (or the same), we aren't
+                        // interested in it.
+                        if (managed_app.rank >= best_match_rank)
+                            continue;
+                        
+                        best_match_rank = managed_app.rank;
+                        best_match = &app;
                     }
                 } else {
-                    if (iter->app.name == name) {
-                        if (&*iter == &to_remove)
+                    if (app.name == name) {
+                        if (&managed_app == &to_remove)
                             continue;
-                        this->name_lookup.try_emplace(
-                            N == NameType::name ? iter->app.name
-                                                : iter->app.generic_name,
-                            &*iter);
+                        if (managed_app.rank >= best_match_rank)
+                            continue;
+                        best_match_rank = managed_app.rank;
+                        best_match = &app;
                     }
                 }
             }
+
+            if (best_match_rank != std::numeric_limits<int>::max())
+                this->name_app_mapping.try_emplace(best_match->name == name ? best_match->name : best_match->generic_name, best_match);
         }
     }
 
@@ -180,53 +179,53 @@ private:
         if (name.empty())
             return;
 
-        auto result = this->name_lookup.try_emplace(name, &to_add);
+        auto result = this->name_app_mapping.try_emplace(name, &to_add.app);
         if (result.second)
             return;
 
-        int &old_rank = result.first->second->rank;
+        Application *&colliding_app_ptr = result.first->second;
+
+        using value_type = typename decltype(this->applications)::value_type;
+        auto colliding_iter =
+            std::find_if(this->applications.begin(), this->applications.end(),
+                         [&colliding_app_ptr](const value_type &val) {
+                             return &val.second.app == colliding_app_ptr;
+                         });
+        if (colliding_iter == this->applications.end()) {
+            fprintf(stderr,
+                    "AppManager has reached a inconsistent state.\n"
+                    "Couldn't find Application* for name '%s' when there "
+                    "should be one.",
+                    name.c_str());
+            abort();
+        }
+        Managed_application &colliding_managed_app = colliding_iter->second;
+
+        int &old_rank = colliding_managed_app.rank;
         if (to_add.rank < old_rank) {
             // We must remove and readd the element if it must be replaced.
             // We can't just change the value of name_lookup's element because
             // the key of the element is a string_view. A replacement of the
             // pointer would mess up the lifetime of the key.
-            this->name_lookup.erase(result.first);
-            this->name_lookup.try_emplace(name, &to_add);
+            this->name_app_mapping.erase(result.first);
+            this->name_app_mapping.try_emplace(name, &to_add.app);
         }
     }
 
-    using applications_iter_type =
-        std::forward_list<Managed_application>::iterator;
-
-    struct app_ID_search_result
-    {
-        applications_iter_type before_begin, begin;
-
-        app_ID_search_result(applications_iter_type a,
-                             applications_iter_type b);
-    };
-
-    std::optional<app_ID_search_result> find_app_by_ID(const string &ID);
-
     // This contains the actual data. All other containers depend on this
-    // list. This list should be modified first when adding something and it
-    // should be modified last when removing something for lifetime reasons.
-    // desktop_IDs depends on this because its string_view points to here and
-    // name_lookup's value also points here. A std::vector isn't used here
-    // because if a reallocation to it would occur, these two pointers would be
-    // invalidated.
-    std::forward_list<Managed_application> applications;
-    // Set of all registered desktop IDs so far.
-    std::unordered_set<string_view> desktop_IDs;
-    // Map used for lookup.
-    std::map<string_view, Managed_application *, DynamicCompare> name_lookup;
+    // unordered_map. This list should be modified first when adding something
+    // and it should be modified last when removing something for lifetime
+    // reasons.
+    std::unordered_map<string /*desktop ID*/, Managed_application> applications;
+    // Map used for lookup and name listing.
+    std::unordered_map<string_view /*(Generic)Name*/, Application *>
+        name_app_mapping;
 
     bool generic_names_enabled;
 
     // Things needed to construct Application:
     char *linep = nullptr;
     size_t linesz = 0;
-    application_formatter formatter;
     LocaleSuffixes suffixes;
     stringlist_t desktopenvs;
 };

@@ -25,7 +25,6 @@ bool Application::operator==(const Application &other) const {
 }
 
 Application::Application(const char *path, char **linep, size_t *linesz,
-                         application_formatter format,
                          const LocaleSuffixes &locale_suffixes,
                          const stringlist_t &desktopenvs) {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -142,7 +141,6 @@ Application::Application(const char *path, char **linep, size_t *linesz,
     fprintf(stderr, "%s", this->name.c_str());
     fprintf(stderr, " (%s)\n", this->generic_name.c_str());
 #endif
-    this->name = format(*this);
 }
 
 char Application::convert(char escape) {

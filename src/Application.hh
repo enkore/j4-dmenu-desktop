@@ -41,8 +41,6 @@ struct escape_error : public std::runtime_error
 
 class Application
 {
-    using application_formatter = std::string (*)(const Application &);
-
 public:
     // Localized name
     std::string name;
@@ -71,7 +69,6 @@ public:
 
     // If desktopenvs is {}, notShowIn and onlyShowIn will be ignored.
     Application(const char *path, char **linep, size_t *linesz,
-                application_formatter format,
                 const LocaleSuffixes &locale_suffixes,
                 const stringlist_t &desktopenvs);
 

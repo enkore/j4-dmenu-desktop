@@ -4,40 +4,51 @@
 #include "AppManager.hh"
 #include "FSUtils.hh"
 
-namespace test_helpers
+struct check_entry
 {
-enum class name_type { name, generic_name };
+    std::string some_name; // Name or GenericName
+    std::string exec;
 
-static AppManager::lookup_result_type::name_type
-convert_name_type(name_type t) {
-    return t == name_type::name ? AppManager::lookup_result_type::NAME
-                                : AppManager::lookup_result_type::GENERIC_NAME;
-}
+    check_entry(std::string n, std::string e)
+        : some_name(std::move(n)), exec(std::move(e)) {}
 
-// primary_lookup_name is the name apps.lookup() is provided. It is a name if
-// type is name, otherwise it's generic_name. verification_name is the other
-// name. If primary_lookup_name is name, verification_name is generic_name.
-// verification_name is used only for double checking.
-static void check_app(AppManager &apps, const std::string &primary_lookup_name,
-                      name_type type, const std::string &verification_name) {
-    auto result = apps.lookup(primary_lookup_name);
-    if (!result) {
-        FAIL("Couldn't lookup "
-             << (type == name_type::generic_name ? "generic_" : "") << "name '"
-             << primary_lookup_name << "' in AppManager!");
+    bool operator<(const check_entry &other) const noexcept {
+        return this->some_name < other.some_name;
     }
-    REQUIRE(result.value().name == convert_name_type(type));
-    if (type == name_type::name) {
-        REQUIRE(result.value().app->name == primary_lookup_name);
-        REQUIRE(result.value().app->generic_name == verification_name);
-    } else {
-        REQUIRE(result.value().app->name == verification_name);
-        REQUIRE(result.value().app->generic_name == primary_lookup_name);
-    }
-}
-}; // namespace test_helpers
 
-using namespace test_helpers;
+    bool operator==(const check_entry &other) const noexcept {
+        return this->some_name == other.some_name && this->exec == other.exec;
+    }
+};
+
+using ctype = std::vector<check_entry>;
+
+static bool checkmap(const AppManager &appm, const ctype &cmp) {
+    const auto &original_name_mapping = appm.view_name_app_mapping();
+
+    ctype app_name_mapping;
+    app_name_mapping.reserve(original_name_mapping.size());
+    for (const auto &[name, ptr] : original_name_mapping)
+        app_name_mapping.emplace_back((std::string)name, ptr->exec);
+
+    ctype cmp_name_mapping = cmp;
+
+    std::sort(app_name_mapping.begin(), app_name_mapping.end());
+    std::sort(cmp_name_mapping.begin(), cmp_name_mapping.end());
+
+    if (app_name_mapping != cmp_name_mapping) {
+        std::string error_message =
+            "Number of name to Application mappings doesn't match!\n  Got:\n";
+        for (const auto &[name, exec] : app_name_mapping)
+            error_message += "    " + (std::string)name + " -> " + exec + '\n';
+        error_message += "  Expected:\n";
+        for (const auto &[name, exec] : cmp_name_mapping)
+            error_message += "    " + name + " -> " + exec + '\n';
+        FAIL_CHECK(error_message);
+        return false;
+    }
+    return true;
+}
 
 TEST_CASE("Test basic functionality + hidden desktop file", "[AppManager]") {
     AppManager apps(
@@ -47,28 +58,28 @@ TEST_CASE("Test basic functionality + hidden desktop file", "[AppManager]") {
               TEST_FILES "a/applications/firefox.desktop",
               TEST_FILES "a/applications/hidden.desktop"}}
     },
-        true, false, appformatter_default, {});
+        true, {});
 
     REQUIRE(apps.count() == 2);
 
     apps.check_inner_state();
 
-    // Test whether anything will be found and whether the correct app has been
-    // selected. This also checks that the app is actualy there.
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
+    // A single test case usually needs multiple map checks. Having multiple
+    // ctypes can lead to confusion. A check variable is used instead of check1,
+    // check2, check3... To avoid name clashing, all check variables get their
+    // own block.
+    {
+        ctype check{
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Firefox",              "firefox" },
+            {"Web browser",          "firefox" },
+        };
 
-    REQUIRE(!apps.lookup("errapp"));
+        REQUIRE(checkmap(apps, check));
+    }
 
-    auto search_result = apps.lookup("Chromium --help");
-    REQUIRE(search_result.value().args == "--help");
-    search_result = apps.lookup("Chromium help");
-    REQUIRE(search_result.value().args == "help");
-
-    REQUIRE(!apps.lookup("Chromiu"));
+    apps.check_inner_state();
 }
 
 TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
@@ -79,7 +90,7 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            true, false, appformatter_default, {"i3"});
+            true, {"i3"});
 
         REQUIRE(apps.count() == 1);
     }
@@ -91,7 +102,7 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            true, false, appformatter_default, {"Kde"});
+            true, {"Kde"});
 
         REQUIRE(apps.count() == 0);
     }
@@ -103,7 +114,7 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            true, false, appformatter_default, {"Gnome"});
+            true, {"Gnome"});
 
         REQUIRE(apps.count() == 1);
     }
@@ -114,15 +125,18 @@ TEST_CASE("Test ID collisions", "[AppManager]") {
         AppManager apps(
             {
                 {TEST_FILES "usr/share/applications/",
-                 {TEST_FILES "usr/share/applications/collision.desktop"}},
+                 {TEST_FILES "usr/share/applications/collision.desktop"}      },
                 {TEST_FILES "usr/local/share/applications/",
                  {TEST_FILES "usr/local/share/applications/collision.desktop"}},
-
-            },
-            true, false, appformatter_default, {});
+        },
+            true, {});
         REQUIRE(apps.count() == 1);
-        check_app(apps, "First", name_type::name, "");
-        REQUIRE(!apps.lookup("Second"));
+        {
+            ctype check{
+                {"First", "true"}
+            };
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.check_inner_state();
     }
@@ -132,12 +146,16 @@ TEST_CASE("Test ID collisions", "[AppManager]") {
                 {TEST_FILES "usr/local/share/applications/",
                  {TEST_FILES "usr/local/share/applications/collision.desktop"}},
                 {TEST_FILES "usr/share/applications/",
-                 {TEST_FILES "usr/share/applications/collision.desktop"}},
-            },
-            true, false, appformatter_default, {});
+                 {TEST_FILES "usr/share/applications/collision.desktop"}      },
+        },
+            true, {});
         REQUIRE(apps.count() == 1);
-        check_app(apps, "Second", name_type::name, "");
-        REQUIRE(!apps.lookup("First"));
+        {
+            ctype check{
+                {"Second", "true"}
+            };
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.check_inner_state();
     }
@@ -151,56 +169,86 @@ TEST_CASE("Test collisions and remove()", "[AppManager]") {
               TEST_FILES "a/applications/firefox.desktop"}},
             {TEST_FILES "b/applications/",
              {TEST_FILES "b/applications/chrome.desktop",
-              TEST_FILES "b/applications/safari.desktop"}},
+              TEST_FILES "b/applications/safari.desktop"} },
     },
-        true, false, appformatter_default, {});
+        true, {});
 
     REQUIRE(apps.count() == 4);
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name, "Chromium");
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-    check_app(apps, "Chrome", name_type::name, "Chrome based browser");
-    check_app(apps, "Safari", name_type::name, "Web browser");
+
+    {
+        ctype check{
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Firefox",              "firefox" },
+            {"Web browser",          "firefox" },
+            {"Chrome",               "chrome"  },
+            {"Safari",               "safari"  },
+        };
+        REQUIRE(checkmap(apps, check));
+    }
 
     apps.check_inner_state();
 
     apps.remove(TEST_FILES "a/applications/firefox.desktop",
                 TEST_FILES "a/applications/");
-
     REQUIRE(apps.count() == 3);
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name, "Chromium");
-    REQUIRE(!apps.lookup("Firefox"));
-    check_app(apps, "Web browser", name_type::generic_name, "Safari");
-    check_app(apps, "Chrome", name_type::name, "Chrome based browser");
-    check_app(apps, "Safari", name_type::name, "Web browser");
+
+    {
+        ctype check{
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+ /*
+  {"Firefox",              "firefox" },
+  {"Web browser",          "firefox" },
+  */
+            {"Chrome",               "chrome"  },
+            {"Safari",               "safari"  },
+            {"Web browser",          "safari"  },
+        };
+        REQUIRE(checkmap(apps, check));
+    }
 
     apps.check_inner_state();
 
     apps.remove(TEST_FILES "b/applications/chrome.desktop",
                 TEST_FILES "b/applications/");
-
     REQUIRE(apps.count() == 2);
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name, "Chromium");
-    REQUIRE(!apps.lookup("Firefox"));
-    check_app(apps, "Web browser", name_type::generic_name, "Safari");
-    REQUIRE(!apps.lookup("Chrome"));
-    check_app(apps, "Safari", name_type::name, "Web browser");
+
+    {
+        ctype check{
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+ /*
+  {"Firefox",              "firefox" },
+  {"Web browser",          "firefox" },
+  {"Chrome",               "chrome"  },
+  */
+            {"Safari",               "safari"  },
+            {"Web browser",          "safari"  },
+        };
+        REQUIRE(checkmap(apps, check));
+    }
 
     apps.check_inner_state();
 
     apps.remove(TEST_FILES "a/applications/chromium.desktop",
                 TEST_FILES "a/applications/");
-
     REQUIRE(apps.count() == 1);
-    REQUIRE(!apps.lookup("Chromium"));
-    REQUIRE(!apps.lookup("Chrome based browser"));
-    REQUIRE(!apps.lookup("Firefox"));
-    check_app(apps, "Web browser", name_type::generic_name, "Safari");
-    REQUIRE(!apps.lookup("Chrome"));
-    check_app(apps, "Safari", name_type::name, "Web browser");
+
+    {
+        ctype check{
+  /*
+  {"Chromium",             "chromium"},
+  {"Chrome based browser", "chromium"},
+  {"Firefox",              "firefox" },
+  {"Web browser",          "firefox" },
+  {"Chrome",               "chrome"  },
+  */
+            {"Safari",      "safari"},
+            {"Web browser", "safari"},
+        };
+        REQUIRE(checkmap(apps, check));
+    }
 
     apps.check_inner_state();
 
@@ -208,57 +256,132 @@ TEST_CASE("Test collisions and remove()", "[AppManager]") {
                 TEST_FILES "b/applications/");
 
     REQUIRE(apps.count() == 0);
+    REQUIRE(apps.view_name_app_mapping().empty());
 }
 
-TEST_CASE("Test name listing", "[AppManager]") {
-    using namespace std::string_view_literals;
-    SECTION("Case sensitive") {
+TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
+    SECTION("Differing ranks") {
         AppManager apps(
             {
                 {TEST_FILES "a/applications/",
                  {TEST_FILES "a/applications/chromium.desktop",
                   TEST_FILES "a/applications/firefox.desktop"}},
-                {TEST_FILES "b/applications/",
-                 {TEST_FILES "b/applications/chrome.desktop",
-                  TEST_FILES "b/applications/safari.desktop"}},
                 {TEST_FILES "applications/",
-                 {TEST_FILES "applications/visible.desktop"}},
-            },
-            true, false, appformatter_default, {});
+                 {TEST_FILES "applications/chromium-variant1.desktop"} },
+        },
+            true, {});
+
+        REQUIRE(apps.count() == 3);
 
         apps.check_inner_state();
 
-        std::vector<std::string_view> names{
-            "Chrome"sv, "Chrome based browser"sv, "Chromium"sv,  "Firefox"sv,
-            "Safari"sv, "Web browser"sv,          "visibleApp"sv};
-
-        REQUIRE(apps.list_sorted_names() == names);
+        {
+            ctype check{
+                {"Chromium",             "chromium"},
+                {"Chrome based browser", "chromium"},
+                {"Firefox",              "firefox" },
+                {"Web browser",          "firefox" },
+            };
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.check_inner_state();
+
+        apps.remove(TEST_FILES "a/applications/chromium.desktop",
+                    TEST_FILES "a/applications/");
+        {
+            ctype check{
+                {"Chromium",             "chromium-apps"},
+                {"Chrome based browser", "chromium-apps"},
+                {"Firefox",              "firefox"      },
+                {"Web browser",          "firefox"      },
+            };
+            REQUIRE(checkmap(apps, check));
+        }
     }
-    SECTION("Case insensitive") {
+    SECTION("Same rank") {
+        AppManager apps(
+            {
+                {TEST_FILES "applications/",
+                 {TEST_FILES "applications/chromium-variant1.desktop",
+                  TEST_FILES "applications/chromium-variant2.desktop"}},
+        },
+            true, {});
+
+        REQUIRE(apps.count() == 2);
+
+        apps.check_inner_state();
+
+        REQUIRE(apps.view_name_app_mapping().count("Chromium"));
+        REQUIRE(apps.view_name_app_mapping().count("Chrome based browser"));
+
+        apps.remove(TEST_FILES "applications/chromium-variant1.desktop", TEST_FILES "applications/");
+        apps.check_inner_state();
+
+        REQUIRE(apps.count() == 1);
+
+        REQUIRE(apps.view_name_app_mapping().count("Chromium"));
+        REQUIRE(apps.view_name_app_mapping().count("Chrome based browser"));
+    }
+}
+
+TEST_CASE("Test removing app with shadowed name without generic names", "[AppManager]") {
+    SECTION("Differing ranks") {
         AppManager apps(
             {
                 {TEST_FILES "a/applications/",
                  {TEST_FILES "a/applications/chromium.desktop",
                   TEST_FILES "a/applications/firefox.desktop"}},
-                {TEST_FILES "b/applications/",
-                 {TEST_FILES "b/applications/chrome.desktop",
-                  TEST_FILES "b/applications/safari.desktop"}},
                 {TEST_FILES "applications/",
-                 {TEST_FILES "applications/visible.desktop"}},
-            },
-            true, true, appformatter_default, {});
+                 {TEST_FILES "applications/chromium-variant1.desktop"} },
+        },
+            false, {});
+
+        REQUIRE(apps.count() == 3);
 
         apps.check_inner_state();
 
-        std::vector<std::string_view> names{
-            "Chrome"sv, "Chrome based browser"sv, "Chromium"sv,   "Firefox"sv,
-            "Safari"sv, "visibleApp"sv,           "Web browser"sv};
-
-        REQUIRE(apps.list_sorted_names() == names);
+        {
+            ctype check{
+                {"Chromium",             "chromium"},
+                {"Firefox",              "firefox" },
+            };
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.check_inner_state();
+
+        apps.remove(TEST_FILES "a/applications/chromium.desktop",
+                    TEST_FILES "a/applications/");
+        {
+            ctype check{
+                {"Chromium",             "chromium-apps"},
+                {"Firefox",              "firefox"      },
+            };
+            REQUIRE(checkmap(apps, check));
+        }
+    }
+    SECTION("Same rank") {
+        AppManager apps(
+            {
+                {TEST_FILES "applications/",
+                 {TEST_FILES "applications/chromium-variant1.desktop",
+                  TEST_FILES "applications/chromium-variant2.desktop"}},
+        },
+            false, {});
+
+        REQUIRE(apps.count() == 2);
+
+        apps.check_inner_state();
+
+        REQUIRE(apps.view_name_app_mapping().count("Chromium"));
+
+        apps.remove(TEST_FILES "applications/chromium-variant1.desktop", TEST_FILES "applications/");
+        apps.check_inner_state();
+
+        REQUIRE(apps.count() == 1);
+
+        REQUIRE(apps.view_name_app_mapping().count("Chromium"));
     }
 }
 
@@ -266,24 +389,29 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     AppManager apps(
         {
             {TEST_FILES "a/applications/",
-             //{TEST_FILES "a/applications/chromium.desktop",
+           //{TEST_FILES "a/applications/chromium.desktop",
              {TEST_FILES "a/applications/firefox.desktop",
-              TEST_FILES "a/applications/hidden.desktop"}},
+              TEST_FILES "a/applications/hidden.desktop"} },
             {TEST_FILES "b/applications/",
-             {TEST_FILES "b/applications/chrome.desktop"}},
-              //TEST_FILES "b/applications/safari.desktop"}},
+             {TEST_FILES "b/applications/chrome.desktop"} },
+            //TEST_FILES "b/applications/safari.desktop"}},
             {TEST_FILES "c/applications/",
-             {TEST_FILES "c/applications/vivaldi.desktop"}}},
-        true, false, appformatter_default, {});
+             {TEST_FILES "c/applications/vivaldi.desktop"}}
+    },
+        true, {});
     REQUIRE(apps.count() == 3);
 
-    REQUIRE(!apps.lookup("errapp"));
+    {
+        ctype check{
+            {"Firefox",              "firefox"},
+            {"Web browser",          "firefox"},
+            {"Chrome",               "chrome" },
+            {"Chrome based browser", "chrome" },
+            {"Vivaldi",              "vivaldi"},
+        };
 
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-    check_app(apps, "Chrome", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name, "Chrome");
-    check_app(apps, "Vivaldi", name_type::name, "Web browser");
+        REQUIRE(checkmap(apps, check));
+    }
 
     apps.check_inner_state();
 
@@ -292,13 +420,18 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
 
     REQUIRE(apps.count() == 4);
 
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-    check_app(apps, "Chrome", name_type::name, "Chrome based browser");
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Vivaldi", name_type::name, "Web browser");
+    {
+        ctype check{
+            {"Firefox",              "firefox" },
+            {"Web browser",          "firefox" },
+            {"Chrome",               "chrome"  },
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Vivaldi",              "vivaldi" },
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
 
     apps.check_inner_state();
 
@@ -307,13 +440,18 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
 
     REQUIRE(apps.count() == 3);
 
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-    REQUIRE(!apps.lookup("Chrome"));
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Vivaldi", name_type::name, "Web browser");
+    {
+        ctype check{
+            {"Firefox",              "firefox" },
+            {"Web browser",          "firefox" },
+          //{"Chrome",               "chrome"  },
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Vivaldi",              "vivaldi" },
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
 
     apps.check_inner_state();
 
@@ -322,14 +460,19 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
 
     REQUIRE(apps.count() == 4);
 
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-    REQUIRE(!apps.lookup("Chrome"));
-    check_app(apps, "Safari", name_type::name, "Web browser");
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Vivaldi", name_type::name, "Web browser");
+    {
+        ctype check{
+            {"Firefox",              "firefox" },
+            {"Web browser",          "firefox" },
+          //{"Chrome",               "chrome"  },
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Vivaldi",              "vivaldi" },
+            {"Safari",               "safari"  },
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
 
     apps.check_inner_state();
 
@@ -338,17 +481,130 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
 
     REQUIRE(apps.count() == 3);
 
-    REQUIRE(!apps.lookup("Firefox"));
-    check_app(apps, "Web browser", name_type::generic_name, "Safari");
-    REQUIRE(!apps.lookup("Chrome"));
-    check_app(apps, "Safari", name_type::name, "Web browser");
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Vivaldi", name_type::name, "Web browser");
+    {
+        ctype check{
+          //{"Firefox",              "firefox" },
+          //{"Web browser",          "firefox" },
+          //{"Chrome",               "chrome"  },
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Vivaldi",              "vivaldi" },
+            {"Safari",               "safari"  },
+            {"Web browser",          "safari"  },
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
+}
+
+TEST_CASE("Test collisions, remove() and add() with disabled generic names", "[AppManager]") {
+    AppManager apps(
+        {
+            {TEST_FILES "a/applications/",
+           //{TEST_FILES "a/applications/chromium.desktop",
+             {TEST_FILES "a/applications/firefox.desktop",
+              TEST_FILES "a/applications/hidden.desktop"} },
+            {TEST_FILES "b/applications/",
+             {TEST_FILES "b/applications/chrome.desktop"} },
+            //TEST_FILES "b/applications/safari.desktop"}},
+            {TEST_FILES "c/applications/",
+             {TEST_FILES "c/applications/vivaldi.desktop"}}
+    },
+        false, {});
+    REQUIRE(apps.count() == 3);
+
+    {
+        ctype check{
+            {"Firefox", "firefox"},
+            {"Chrome",  "chrome" },
+            {"Vivaldi", "vivaldi"},
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
+
+    apps.check_inner_state();
+
+    apps.add(TEST_FILES "a/applications/chromium.desktop",
+             TEST_FILES "a/applications/", 0);
+
+    REQUIRE(apps.count() == 4);
+
+    {
+        ctype check{
+            {"Firefox",  "firefox" },
+            {"Chrome",   "chrome"  },
+            {"Chromium", "chromium"},
+            {"Vivaldi",  "vivaldi" },
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
+
+    apps.check_inner_state();
+
+    apps.remove(TEST_FILES "b/applications/chrome.desktop",
+                TEST_FILES "b/applications/");
+
+    REQUIRE(apps.count() == 3);
+
+    {
+        ctype check{
+            {"Firefox",  "firefox" },
+          //{"Chrome",   "chrome"  },
+            {"Chromium", "chromium"},
+            {"Vivaldi",  "vivaldi" },
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
+
+    apps.check_inner_state();
+
+    apps.add(TEST_FILES "b/applications/safari.desktop",
+             TEST_FILES "b/applications/", 1);
+
+    REQUIRE(apps.count() == 4);
+
+    {
+        ctype check{
+            {"Firefox",     "firefox" },
+          //{"Web browser", "firefox" },
+          //{"Chrome",      "chrome"  },
+            {"Chromium",    "chromium"},
+            {"Vivaldi",     "vivaldi" },
+            {"Safari",      "safari"  },
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
+
+    apps.check_inner_state();
+
+    apps.remove(TEST_FILES "a/applications/firefox.desktop",
+                TEST_FILES "a/applications/");
+
+    REQUIRE(apps.count() == 3);
+
+    {
+        ctype check{
+          //{"Firefox",     "firefox" },
+          //{"Web browser", "firefox" },
+          //{"Chrome",      "chrome"  },
+            {"Chromium",    "chromium"},
+            {"Vivaldi",     "vivaldi" },
+            {"Safari",      "safari"  },
+        };
+
+        REQUIRE(checkmap(apps, check));
+    }
 }
 
 TEST_CASE("Test overwriting with add()", "[AppManager]") {
+    // This testcase tests a situation where a desktop file is loaded, then it's
+    // changed and then AppManager.add() is called to update the (same) file.
+    // Tests never modify files in the test_files/ directory, so we make a
+    // temporary file.
     char tmpfilename[] = "/tmp/j4dd-appmanager-unit-test-XXXXXX";
     int tmpfilefd = mkstemp(tmpfilename);
     if (tmpfilefd == -1) {
@@ -374,9 +630,9 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
         FSUtils::copy_file_fd(origfd, tmpfilefd);
     } catch (const std::exception &e) {
         close(origfd);
-        SKIP("Couldn't copy file '" << TEST_FILES "a/applications/firefox.desktop"
-                                    << "' to '" << tmpfilename << ": "
-                                    << e.what());
+        SKIP("Couldn't copy file '"
+             << TEST_FILES "a/applications/firefox.desktop"
+             << "' to '" << tmpfilename << ": " << e.what());
     }
     close(origfd);
 
@@ -388,36 +644,44 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
         {
             {TEST_FILES "a/applications/",
              {TEST_FILES "a/applications/chromium.desktop",
-              TEST_FILES "a/applications/hidden.desktop"}},
-            {"/tmp/",
-             {tmpfilename}},
+              TEST_FILES "a/applications/hidden.desktop"} },
+            {"/tmp/",                      {tmpfilename}  },
             {TEST_FILES "c/applications/",
-             {TEST_FILES "c/applications/vivaldi.desktop"}}},
-        true, false, appformatter_default, {});
+             {TEST_FILES "c/applications/vivaldi.desktop"}}
+    },
+        true, {});
 
     apps.check_inner_state();
 
-    REQUIRE(!apps.lookup("errapp"));
+    {
+        ctype check{
+            {"Firefox",              "firefox" },
+            {"Web browser",          "firefox" },
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Vivaldi",              "vivaldi" },
+        };
 
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name, "Chromium");
-    check_app(apps, "Vivaldi", name_type::name, "Web browser");
+        REQUIRE(checkmap(apps, check));
+    }
 
-    // Try to reload the file without changing it. apps should be left in the same state.
+    // Try to reload the file without changing it. apps should be left in the
+    // same state.
     apps.add(tmpfilename, "/tmp/", 1);
 
     apps.check_inner_state();
 
-    REQUIRE(!apps.lookup("errapp"));
+    {
+        ctype check{
+            {"Firefox",              "firefox" },
+            {"Web browser",          "firefox" },
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Vivaldi",              "vivaldi" },
+        };
 
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Vivaldi", name_type::name, "Web browser");
+        REQUIRE(checkmap(apps, check));
+    }
 
     // Now we change it.
     if (lseek(tmpfilefd, 0, SEEK_SET) == (off_t)-1) {
@@ -452,15 +716,19 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
 
     apps.check_inner_state();
 
-    REQUIRE(!apps.lookup("errapp"));
+    {
+        ctype check{
+            {"Firefox",              "firefox" },
+            {"Internet browser",     "firefox" },
+        //{"Web browser",          "firefox" },
+            {"Chromium",             "chromium"},
+            {"Chrome based browser", "chromium"},
+            {"Vivaldi",              "vivaldi" },
+            {"Web browser",          "vivaldi" },
+        };
 
-    check_app(apps, "Firefox", name_type::name, "Internet browser");
-    check_app(apps, "Internet browser", name_type::generic_name, "Firefox");
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Vivaldi", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Vivaldi");
+        REQUIRE(checkmap(apps, check));
+    }
 }
 
 TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
@@ -469,8 +737,8 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
             {
                 {TEST_FILES "usr/share/applications/",
                  {TEST_FILES "usr/share/applications/collision.desktop"}},
-            },
-            true, false, appformatter_default, {});
+        },
+            true, {});
 
         REQUIRE(apps.count() == 1);
 
@@ -480,22 +748,25 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
         apps.check_inner_state();
 
         REQUIRE(apps.count() == 1);
-        check_app(apps, "First", name_type::name, "");
-        REQUIRE(!apps.lookup("Second"));
+        {
+            ctype check{{"First", "true"}};
+            REQUIRE(checkmap(apps, check));
+        }
     }
     SECTION("Newer desktop file is added") {
         AppManager apps(
             {
-                {TEST_FILES "usr/share/applications/", {}},
+                {TEST_FILES "usr/share/applications/",       {}               },
                 {TEST_FILES "usr/local/share/applications/",
                  {TEST_FILES "usr/local/share/applications/collision.desktop"}},
-            },
-            true, false, appformatter_default, {});
+        },
+            true, {});
 
         REQUIRE(apps.count() == 1);
-
-        check_app(apps, "Second", name_type::name, "");
-        REQUIRE(!apps.lookup("First"));
+        {
+            ctype check{{"Second", "true"}};
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.add(TEST_FILES "usr/share/applications/collision.desktop",
                  TEST_FILES "usr/share/applications/", 0);
@@ -503,8 +774,10 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
         apps.check_inner_state();
 
         REQUIRE(apps.count() == 1);
-        check_app(apps, "First", name_type::name, "");
-        REQUIRE(!apps.lookup("Second"));
+        {
+            ctype check{{"First", "true"}};
+            REQUIRE(checkmap(apps, check));
+        }
     }
 }
 
@@ -515,26 +788,23 @@ TEST_CASE("Test adding a disabled file", "[AppManager]") {
              {TEST_FILES "a/applications/chromium.desktop",
               TEST_FILES "a/applications/firefox.desktop"}},
     },
-        true, false, appformatter_default, {});
+        true, {});
 
     REQUIRE(apps.count() == 2);
 
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
+    ctype check{
+        {"Firefox",              "firefox" },
+        {"Web browser",          "firefox" },
+        {"Chromium",             "chromium"},
+        {"Chrome based browser", "chromium"},
+    };
+    REQUIRE(checkmap(apps, check));
 
     apps.add(TEST_FILES "a/applications/hidden.desktop",
              TEST_FILES "a/applications/", 0);
 
     REQUIRE(apps.count() == 2);
-
-    check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-    check_app(apps, "Chrome based browser", name_type::generic_name,
-              "Chromium");
-    check_app(apps, "Firefox", name_type::name, "Web browser");
-    check_app(apps, "Web browser", name_type::generic_name, "Firefox");
+    REQUIRE(checkmap(apps, check));
 
     apps.check_inner_state();
 }
@@ -545,16 +815,16 @@ TEST_CASE("Test lookup by ID", "[AppManager]") {
             {TEST_FILES "a/applications/",
              {TEST_FILES "a/applications/chromium.desktop",
               TEST_FILES "a/applications/firefox.desktop",
-              TEST_FILES "a/applications/hidden.desktop"}}},
-        true, false, appformatter_default, {});
+              TEST_FILES "a/applications/hidden.desktop"}}
+    },
+        true, {});
 
     REQUIRE(apps.lookup_by_ID("chromium.desktop").value().get().name ==
             "Chromium");
 }
 
 TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
-    SECTION("Test 1")
-    {
+    SECTION("Test 1") {
         AppManager apps(
             {
                 {TEST_FILES "a/applications/",
@@ -563,33 +833,36 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
                 {TEST_FILES "applications/",
                  {TEST_FILES "applications/notShowIn.desktop"}}
         },
-            true, false, appformatter_default, {"Kde"});
+            true, {"Kde"});
 
         REQUIRE(apps.count() == 2);
-
-        check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-        check_app(apps, "Chrome based browser", name_type::generic_name,
-                "Chromium");
-        check_app(apps, "Firefox", name_type::name, "Web browser");
-        check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-        REQUIRE(!apps.lookup("Htop"));
+        {
+            ctype check{
+                {"Firefox",              "firefox" },
+                {"Web browser",          "firefox" },
+                {"Chromium",             "chromium"},
+                {"Chrome based browser", "chromium"},
+            };
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.add(TEST_FILES "applications/onlyShowIn.desktop",
-                TEST_FILES "applications/", 1);
+                 TEST_FILES "applications/", 1);
 
         REQUIRE(apps.count() == 2);
-
-        check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-        check_app(apps, "Chrome based browser", name_type::generic_name,
-                "Chromium");
-        check_app(apps, "Firefox", name_type::name, "Web browser");
-        check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-        REQUIRE(!apps.lookup("Htop"));
+        {
+            ctype check{
+                {"Firefox",              "firefox" },
+                {"Web browser",          "firefox" },
+                {"Chromium",             "chromium"},
+                {"Chrome based browser", "chromium"},
+            };
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.check_inner_state();
     }
-    SECTION("Test 2")
-    {
+    SECTION("Test 2") {
         AppManager apps(
             {
                 {TEST_FILES "a/applications/",
@@ -598,28 +871,35 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
                 {TEST_FILES "applications/",
                  {TEST_FILES "applications/notShowIn.desktop"}}
         },
-            true, false, appformatter_default, {"i3"});
+            true, {"i3"});
 
         REQUIRE(apps.count() == 2);
-
-        check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-        check_app(apps, "Chrome based browser", name_type::generic_name,
-                "Chromium");
-        check_app(apps, "Firefox", name_type::name, "Web browser");
-        check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-        REQUIRE(!apps.lookup("Htop"));
+        {
+            ctype check{
+                {"Firefox",              "firefox" },
+                {"Web browser",          "firefox" },
+                {"Chromium",             "chromium"},
+                {"Chrome based browser", "chromium"},
+            };
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.add(TEST_FILES "applications/onlyShowIn.desktop",
-                TEST_FILES "applications/", 1);
+                 TEST_FILES "applications/", 1);
 
         REQUIRE(apps.count() == 3);
 
-        check_app(apps, "Chromium", name_type::name, "Chrome based browser");
-        check_app(apps, "Chrome based browser", name_type::generic_name,
-                "Chromium");
-        check_app(apps, "Firefox", name_type::name, "Web browser");
-        check_app(apps, "Web browser", name_type::generic_name, "Firefox");
-        check_app(apps, "Htop", name_type::name, "Process Viewer");
+        {
+            ctype check{
+                {"Firefox",              "firefox" },
+                {"Web browser",          "firefox" },
+                {"Chromium",             "chromium"},
+                {"Chrome based browser", "chromium"},
+                {"Htop",                 "htop"    },
+                {"Process Viewer",       "htop"    },
+            };
+            REQUIRE(checkmap(apps, check));
+        }
 
         apps.check_inner_state();
     }
