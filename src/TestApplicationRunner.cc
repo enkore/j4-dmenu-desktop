@@ -9,7 +9,7 @@
 
 // This function will pass the string to the shell, the shell will unquote and
 // expand it and it will return the split arguments.
-stringlist_t getshell(const std::string &args) {
+static stringlist_t getshell(const std::string &args) {
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         WARN("Unable to create pipe: " << strerror(errno));
