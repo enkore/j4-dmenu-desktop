@@ -55,7 +55,7 @@ TEST_CASE("Tests proper handling of special characters",
     char *data = nullptr;
     size_t size;
     Application app(TEST_FILES "applications/gimp.desktop", &data, &size,
-                    appformatter_default, ls, {});
+                    ls, {});
 
     auto result = getshell(application_command(app, R"--(@#$%^&*}{)(\)--"));
 
@@ -70,7 +70,7 @@ TEST_CASE("Test field codes", "[ApplicationRunner]") {
     char *data = nullptr;
     size_t size;
     Application app(TEST_FILES "applications/field_codes.desktop", &data, &size,
-                    appformatter_default, ls, {});
+                    ls, {});
 
     auto result = getshell(application_command(app, "arg1 arg2\\ arg3"));
     stringlist_t cmp({"true", "--name=%c", "--location",
@@ -87,7 +87,7 @@ TEST_CASE("Regression test for issue #18, %c was not escaped",
     char *data = nullptr;
     size_t size;
     Application app(TEST_FILES "applications/caption.desktop", &data, &size,
-                    appformatter_default, ls, {});
+                    ls, {});
 
     auto result = getshell(application_command(app, ""));
     stringlist_t cmp({"1234", "--caption", "Regression Test 18"});
