@@ -13,9 +13,9 @@ TEST_CASE("Text default formatter", "[Formatters]") {
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
     Application app(TEST_FILES "applications/eagle.desktop", &buffer, &size,
-                    appformatter_default, ls, {});
+                    ls, {});
 
-    REQUIRE(app.name == "Eagle");
+    REQUIRE(appformatter_default(app.name, app) == "Eagle");
 
     free(buffer);
 }
@@ -25,9 +25,9 @@ TEST_CASE("Test with_binary_name formatter", "[Formatters]") {
     char *buffer = static_cast<char *>(malloc(4096));
     size_t size = 4096;
     Application app(TEST_FILES "applications/eagle.desktop", &buffer, &size,
-                    appformatter_with_binary_name, ls, {});
+                    ls, {});
 
-    REQUIRE(app.name == "Eagle (eagle)");
+    REQUIRE(appformatter_with_binary_name(app.name, app) == "Eagle (eagle)");
 
     free(buffer);
 }
