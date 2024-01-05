@@ -116,6 +116,7 @@ void HistoryManager::increment(const string &name) {
                         std::forward_as_tuple(name));
         history.erase(result);
     }
+    write();
 }
 
 void HistoryManager::write() {
@@ -180,12 +181,9 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
     // to the beginning and then truncate it.
     FILE *newf = fopen(path.c_str(), "a");
 
-    return HistoryManager(newf, result);
-}
-
-HistoryManager::~HistoryManager() {
-    if (this->file)
-        write();
+    auto histm = HistoryManager(newf, result);
+    histm.write();
+    return histm;
 }
 
 HistoryManager::HistoryManager(

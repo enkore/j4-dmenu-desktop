@@ -62,11 +62,9 @@ public:
     void operator=(const HistoryManager &) = delete;
 
     void increment(const string &name);
-    void write();
     const std::multimap<int, string, std::greater<int>> &view() const;
     static HistoryManager convert_history_from_v0(const string &path,
                                                   const AppManager &appm);
-    ~HistoryManager();
 
 private:
     HistoryManager(FILE *f, std::multimap<int, string, std::greater<int>> hist);
@@ -78,6 +76,8 @@ private:
     // This is called in the ctor. It is expected that file is open and the
     // header has already been read.
     void read_file(const string &name);
+
+    void write();
 
     std::unique_ptr<FILE, fclose_deleter> file;
     std::multimap<int, string, std::greater<int>> history;
