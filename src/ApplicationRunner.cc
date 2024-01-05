@@ -95,5 +95,10 @@ const std::string application_command(const Application &app,
     if (field)
         throw std::runtime_error("Invalid field code at the end of Exec.");
 
+    std::string before = result;
+    auto last = result.find_last_not_of(' ');
+    if (last != std::string::npos)
+        result.erase(last + 1);
+
     return result;
 }
