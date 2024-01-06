@@ -44,7 +44,7 @@ bool endswith(const std::string &str, const std::string &suffix);
 bool startswith(const std::string &str, const std::string &prefix);
 bool is_directory(const std::string &path);
 std::string get_variable(const std::string &var);
-void pfatale(const char *msg);
+[[noreturn]] void pfatale(const char *msg);
 std::string get_desktop_id(std::string filename);
 std::string get_desktop_id(std::string filename, std::string_view base);
 
