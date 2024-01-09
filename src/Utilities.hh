@@ -52,11 +52,17 @@ std::string get_desktop_id(std::string filename, std::string_view base);
 template <typename F> struct OnExit
 {
     F func;
+    bool active = true;
 
     OnExit(F &&f) : func(std::forward<F>(f)) {}
 
+    void disarm() {
+        active = false;
+    }
+
     ~OnExit() {
-        func();
+        if (active)
+            func();
     }
 };
 
