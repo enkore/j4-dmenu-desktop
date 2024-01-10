@@ -77,7 +77,7 @@ public:
     // and its rank within $XDG_DATA_DIRS
     void add(const string &filename, const string &base_path, int rank);
     std::forward_list<Managed_application>::difference_type count() const;
-    const std::unordered_map<string_view, Application *> &
+    const std::unordered_map<string_view, const Application *> &
     view_name_app_mapping() const;
     ~AppManager();
 
@@ -148,7 +148,7 @@ private:
                         // interested in it.
                         if (managed_app.rank >= best_match_rank)
                             continue;
-                        
+
                         best_match_rank = managed_app.rank;
                         best_match = &app;
                     }
@@ -165,7 +165,10 @@ private:
             }
 
             if (best_match_rank != std::numeric_limits<int>::max())
-                this->name_app_mapping.try_emplace(best_match->name == name ? best_match->name : best_match->generic_name, best_match);
+                this->name_app_mapping.try_emplace(
+                    best_match->name == name ? best_match->name
+                                             : best_match->generic_name,
+                    best_match);
         }
     }
 
@@ -183,7 +186,7 @@ private:
         if (result.second)
             return;
 
-        Application *&colliding_app_ptr = result.first->second;
+        const Application *&colliding_app_ptr = result.first->second;
 
         using value_type = typename decltype(this->applications)::value_type;
         auto colliding_iter =
@@ -218,7 +221,7 @@ private:
     // reasons.
     std::unordered_map<string /*desktop ID*/, Managed_application> applications;
     // Map used for lookup and name listing.
-    std::unordered_map<string_view /*(Generic)Name*/, Application *>
+    std::unordered_map<string_view /*(Generic)Name*/, const Application *>
         name_app_mapping;
 
     bool generic_names_enabled;

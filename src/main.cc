@@ -17,6 +17,7 @@
 #include "Application.hh"
 #include "ApplicationRunner.hh"
 #include "Dmenu.hh"
+#include "DynamicCompare.hh"
 #include "FileFinder.hh"
 #include "Formatters.hh"
 #include "HistoryManager.hh"
@@ -29,12 +30,12 @@
 #include "NotifyInotify.hh"
 #endif
 
-void sigchld(int) {
+static void sigchld(int) {
     while (waitpid(-1, NULL, WNOHANG) > 0)
         ;
 }
 
-void print_usage(FILE *f) {
+static void print_usage(FILE *f) {
     fprintf(
         f,
         "j4-dmenu-desktop\n"
@@ -91,7 +92,7 @@ void print_usage(FILE *f) {
 }
 
 // This returns absolute paths.
-Desktop_file_list collect_files(const stringlist_t &search_path) {
+static Desktop_file_list collect_files(const stringlist_t &search_path) {
     Desktop_file_list result;
     result.reserve(search_path.size());
 
@@ -109,116 +110,143 @@ Desktop_file_list collect_files(const stringlist_t &search_path) {
     return result;
 }
 
-struct CommandInfo
-{
-    std::string command;
-    bool isterminal; // this indicated whether the program should be executed in
-                     // a terminal
-    /*
-     * iscustom indicates whether a program was picked from a desktop file or if
-     * it is a custom program that should be executed directly
-     */
-    bool iscustom;
+using name_map = std::map<std::string, const Application *, DynamicCompare>;
 
-    CommandInfo(std::string n, bool t, bool c)
-        : command(std::move(n)), isterminal(t), iscustom(c) {}
+static name_map format_name_app_mapping(const AppManager &appm,
+                                        application_formatter format,
+                                        bool case_insensitive) {
+    const auto &orig_mapping = appm.view_name_app_mapping();
 
-    CommandInfo() = default;
-};
+    name_map result{DynamicCompare(case_insensitive)};
 
-CommandInfo get_command(AppManager &apps, std::optional<HistoryManager> &hist,
-                        const std::string &choice, const std::string &wrapper) {
-    if (choice.empty())
-        return CommandInfo("", false, false);
+    for (const auto &[key, ptr] : orig_mapping)
+        result.try_emplace(format(key, *ptr), ptr);
 
-    auto lookup_result = apps.lookup(choice);
-
-    if (!lookup_result) {
-        if (wrapper.empty())
-            return CommandInfo(choice, false, true);
-        else
-            return CommandInfo(wrapper + " \"" + choice + "\"", false, true);
-    } else {
-        if (hist) {
-            if (lookup_result->name == AppManager::lookup_result_type::NAME)
-                hist->increment(lookup_result->app->name);
-            else
-                hist->increment(lookup_result->app->generic_name);
-        }
-    }
-
-    const Application &app = *lookup_result->app;
-
-    std::string command = application_command(app, lookup_result->args);
-    if (wrapper.empty())
-        return CommandInfo(command, app.terminal, false);
-    else
-        return CommandInfo(wrapper + " \"" + command + "\"", app.terminal,
-                           false);
+    return result;
 }
 
-int do_dmenu(Dmenu &dmenu, AppManager &apps,
-             std::optional<HistoryManager> &hist, const char *shell,
-             std::string &terminal, std::string &wrapper, bool no_exec) {
-    // Transfer the list to dmenu
-    for (const auto &name : apps.list_sorted_names())
-        dmenu.write(name);
+static std::optional<std::string>
+do_dmenu(Dmenu &dmenu, const name_map &mapping,
+         const std::optional<HistoryManager> &histm) {
+    // Transfer the names to dmenu
+    if (histm) {
+        std::set<std::string_view, DynamicCompare> desktop_file_names(
+            mapping.key_comp());
+        for (const auto &[name, ignored] : mapping)
+            desktop_file_names.emplace_hint(desktop_file_names.end(), name);
+        for (const auto &[ignored, name] : histm->view()) {
+            // We don't want to display a single element twice. We can't print
+            // history and then desktop name list because names in history will
+            // also be in desktop name list. Also, if there is a name in history
+            // which isn't in desktop name list, it could mean that the desktop
+            // file corresponding to the history name has been removed, making
+            // the history entry obsolete. The history entry shouldn't be shown
+            // if that is the case.
+            if (desktop_file_names.erase(name))
+                dmenu.write(name);
+#ifdef DEBUG
+            else
+                fprintf(
+                    stderr,
+                    "DEBUG WARNING: Name '%s' in history will be ignored!\n",
+                    name.c_str());
+#endif
+        }
+        for (const auto &name : desktop_file_names)
+            dmenu.write(name);
+    } else {
+        for (const auto &[name, ignored] : mapping)
+            dmenu.write(name);
+    }
 
     dmenu.display();
 
-    CommandInfo info;
-
-    try {
-        string choice = dmenu.read_choice();
-        if (choice.empty())
-            return 0;
-        fprintf(stderr, "User input is: %s\n", choice.c_str());
-        info = get_command(apps, hist, dmenu.read_choice(),
-                           wrapper); // read_choice blocks
-    } catch (const std::runtime_error
-                 &e) { // invalid field code in Exec, the standard says that the
-                       // implementation shall not process these
-        fprintf(stderr, "%s\n", e.what());
-        return 1;
-    }
-
-    if (!info.command.empty()) {
-        if (no_exec) {
-            printf("%s\n", info.command.c_str());
-            return 0;
-        }
-
-        /*
-         * Some shells automatically exec() the last command in the
-         * command_string passed in by $SHELL -c but some do not. For example
-         * bash does this but dash doesn't. Prepending "exec " to the command
-         * ensures that the shell will get replaced. Custom commands might
-         * contain complicated expressions so exec()ing them might not be a good
-         * idea. Desktop files can contain only a single command in Exec so
-         * using the exec shell builtin is safe.
-         */
-        if (!info.iscustom)
-            info.command = "exec " + info.command;
-
-        if (info.isterminal) {
-            fprintf(stderr, "%s -e %s -c '%s'\n", terminal.c_str(), shell,
-                    info.command.c_str());
-            return execlp(terminal.c_str(), terminal.c_str(), "-e", shell, "-c",
-                          info.command.c_str(), (char *)NULL);
-        } else {
-            fprintf(stderr, "%s -c '%s'\n", shell, info.command.c_str());
-            return execl(shell, shell, "-c", info.command.c_str(),
-                         (char *)NULL);
-        }
-    }
-    return 0;
+    string choice = dmenu.read_choice(); // This blocks
+    if (choice.empty())
+        return {};
+    fprintf(stderr, "User input is: %s\n", choice.c_str());
+    return choice;
 }
 
-int do_wait_on(NotifyBase &notify, const char *shell, const char *wait_on,
-               Dmenu &dmenu, AppManager &apps,
-               std::optional<HistoryManager> &hist, std::string &terminal,
-               std::string &wrapper, bool no_exec,
-               const stringlist_t &search_path) {
+struct lookup_result
+{
+    const Application *app;
+    std::string args;
+
+    lookup_result(const Application *a, std::string arg)
+        : app(a), args(std::move(arg)) {}
+};
+
+// This function takes a query and returns Application*. If the optional is
+// empty, there is no desktop file with matching name. J4dd supports executing
+// raw commands through dmenu. This is the fallback behavior when there's no
+// match.
+static std::optional<lookup_result> lookup_name(const std::string &query,
+                                                const name_map &map) {
+    auto find = map.find(query);
+    if (find != map.end())
+        return std::make_optional<lookup_result>(find->second, "");
+    else {
+        for (const auto &[name, ptr] : map) {
+            if (startswith(query, name))
+                return std::make_optional<lookup_result>(
+                    ptr, query.substr(name.size()));
+        }
+        return {};
+    }
+}
+
+static unsigned int
+count_collected_desktop_files(const Desktop_file_list &files) {
+    unsigned int result = 0;
+    for (const Desktop_file_rank &rank : files)
+        result += rank.files.size();
+    return result;
+}
+
+// If wrapper.empty(), no wrapper will be used
+[[noreturn]] static void execute_app(const std::string &exec,
+                                     const std::string &wrapper,
+                                     const std::string &terminal,
+                                     const char *shell, bool is_terminal,
+                                     bool is_custom) {
+    std::string command;
+    if (!wrapper.empty())
+        command = wrapper + " \"" + exec + "\"";
+    else
+        command = exec;
+
+    /*
+     * Some shells automatically exec() the last command in the
+     * command_string passed in by $SHELL -c but some do not. For example
+     * bash does this but dash doesn't. Prepending "exec " to the command
+     * ensures that the shell will get replaced. Custom commands might
+     * contain complicated expressions so exec()ing them might not be a good
+     * idea. Desktop files can contain only a single command in Exec so
+     * using the exec shell builtin is safe.
+     */
+    if (!is_custom)
+        command = "exec " + command;
+
+    if (is_terminal) {
+        fprintf(stderr, "%s -e %s -c '%s'\n", terminal.c_str(), shell,
+                command.c_str());
+        execlp(terminal.c_str(), terminal.c_str(), "-e", shell, "-c",
+               command.c_str(), (char *)NULL);
+    } else {
+        fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
+        execl(shell, shell, "-c", command.c_str(), (char *)NULL);
+    }
+    fprintf(stderr, "Couldn't execute program: %s\n", strerror(errno));
+    exit(1);
+}
+
+static int do_wait_on(NotifyBase &notify, const char *shell,
+                      const char *wait_on, Dmenu &dmenu, AppManager &appm,
+                      const name_map &mapping,
+                      std::optional<HistoryManager> &hist,
+                      std::string &terminal, std::string &wrapper, bool no_exec,
+                      const stringlist_t &search_path) {
     // Avoid zombie processes.
     struct sigaction act = {{0}}; // double curly braces fix a warning fixes
                                   // -Wmissing-braces on FreeBSD
@@ -253,14 +281,14 @@ int do_wait_on(NotifyBase &notify, const char *shell, const char *wait_on,
                     continue;
                 switch (i.status) {
                 case NotifyBase::changetype::modified:
-                    apps.add(i.name, search_path[i.rank], i.rank);
+                    appm.add(i.name, search_path[i.rank], i.rank);
                     break;
                 case NotifyBase::changetype::deleted:
-                    apps.remove(i.name, search_path[i.rank]);
+                    appm.remove(i.name, search_path[i.rank]);
                     break;
                 }
 #ifdef DEBUG
-                apps.check_inner_state();
+                appm.check_inner_state();
 #endif
             }
         }
@@ -272,6 +300,35 @@ int do_wait_on(NotifyBase &notify, const char *shell, const char *wait_on,
             }
             if (data == 'q')
                 return 0;
+
+            dmenu.run();
+
+            // See the end of main() for brief explanation.
+            std::optional<std::string> query =
+                do_dmenu(dmenu, mapping, hist); // blocks!
+            if (!query)
+                continue;
+            std::optional<lookup_result> name_lookup =
+                lookup_name(*query, mapping);
+
+            // Are we executing a desktop file or a custom command?
+            bool is_custom = !name_lookup.has_value();
+            std::string command =
+                is_custom
+                    ? *query
+                    : application_command(*name_lookup->app, name_lookup->args);
+
+            if (no_exec) {
+                if (wrapper.empty())
+                    fprintf(stderr, "%s\n", command.c_str());
+                else
+                    fprintf(stderr, "%s \"%s\"\n", wrapper.c_str(),
+                            command.c_str());
+                continue;
+            }
+            if (hist && !is_custom)
+                hist->increment(*query);
+
             pid_t pid = fork();
             switch (pid) {
             case -1:
@@ -280,9 +337,9 @@ int do_wait_on(NotifyBase &notify, const char *shell, const char *wait_on,
             case 0:
                 close(fd);
                 setsid();
-                dmenu.run();
-                return do_dmenu(dmenu, apps, hist, shell, terminal, wrapper,
-                                no_exec);
+                execute_app(command, wrapper, terminal, shell,
+                            is_custom ? false : name_lookup->app->terminal,
+                            is_custom);
             }
         }
     }
@@ -296,25 +353,11 @@ int main(int argc, char **argv) {
     std::string wrapper;
     const char *wait_on = 0;
 
-    const char *shell = getenv("SHELL");
-    if (shell == NULL)
-        shell = "/bin/sh";
-
     stringlist_t desktopenvs;
     bool use_xdg_de = false;
     bool exclude_generic = false;
     bool no_exec = false;
     bool case_insensitive = false;
-
-    stringlist_t search_path = get_search_path();
-
-#ifdef DEBUG
-    for (const std::string &path : search_path) {
-        fprintf(stderr, "SearchPath: %s\n", path.c_str());
-    }
-#endif
-
-    LocaleSuffixes suffixes;
 
     application_formatter appformatter = appformatter_default;
 
@@ -395,27 +438,35 @@ int main(int argc, char **argv) {
         fprintf(stderr, "%s\n", s.c_str());
 #endif
 
+    const char *shell = getenv("SHELL");
+    if (shell == NULL)
+        shell = "/bin/sh";
+
+    // Start dmenu early, because the user could have specified -f flag.
     Dmenu dmenu(dmenu_command, shell);
 
     if (!wait_on)
         dmenu.run();
 
-    auto desktop_file_list = collect_files(search_path);
-    AppManager apps(desktop_file_list, !exclude_generic, case_insensitive,
-                    appformatter, desktopenvs);
+    // We get search_path -> desktop_file_list -> appm
+    stringlist_t search_path = get_search_path();
 
 #ifdef DEBUG
-    apps.check_inner_state();
+    for (const std::string &path : search_path) {
+        fprintf(stderr, "SearchPath: %s\n", path.c_str());
+    }
 #endif
 
-    int number_of_desktop_files_read = 0;
-    for (const auto &rank : desktop_file_list)
-        number_of_desktop_files_read += rank.files.size();
+    auto desktop_file_list = collect_files(search_path);
+    AppManager appm(desktop_file_list, !exclude_generic, desktopenvs);
 
-    desktop_file_list.clear(); // We will no longer need it.
+#ifdef DEBUG
+    appm.check_inner_state();
+#endif
 
     fprintf(stderr, "Read %d .desktop files, found %u apps.\n",
-            number_of_desktop_files_read, (unsigned int)apps.count());
+            count_collected_desktop_files(desktop_file_list),
+            (unsigned int)appm.count());
 
     std::optional<HistoryManager> hist_manager;
 
@@ -424,9 +475,12 @@ int main(int argc, char **argv) {
             hist_manager.emplace(usage_log);
         } catch (const v0_version_error &) {
             hist_manager.emplace(
-                HistoryManager::convert_history_from_v0(usage_log, apps));
+                HistoryManager::convert_history_from_v0(usage_log, appm));
         }
     }
+
+    name_map mapping =
+        format_name_app_mapping(appm, appformatter, case_insensitive);
 
     if (wait_on) {
 #ifdef USE_KQUEUE
@@ -434,10 +488,38 @@ int main(int argc, char **argv) {
 #else
         NotifyInotify notify(search_path);
 #endif
-        return do_wait_on(notify, shell, wait_on, dmenu, apps, hist_manager,
-                          terminal, wrapper, no_exec, search_path);
+        return do_wait_on(notify, shell, wait_on, dmenu, appm, mapping,
+                          hist_manager, terminal, wrapper, no_exec,
+                          search_path);
     } else {
-        return do_dmenu(dmenu, apps, hist_manager, shell, terminal, wrapper,
-                        no_exec);
+        // create formatted name to Application* mapping -> ask the user which
+        // program they want through dmenu -> lookup Application* using that
+        // mapping -> create the command line using the Exec key of Application*
+        // (add any arguments the user has supplied) -> update usage_log/history
+        // (if enabled) -> execute Application*
+        std::optional<std::string> query = do_dmenu(dmenu, mapping, hist_manager); // blocks
+        if (!query)
+            exit(0);
+        std::optional<lookup_result> name_lookup = lookup_name(*query, mapping);
+
+        // Are we executing a desktop file or a custom command?
+        bool is_custom = !name_lookup.has_value();
+        std::string command =
+            is_custom
+                ? *query
+                : application_command(*name_lookup->app, name_lookup->args);
+
+        if (no_exec) {
+            if (wrapper.empty())
+                fprintf(stderr, "%s\n", command.c_str());
+            else
+                fprintf(stderr, "%s \"%s\"\n", wrapper.c_str(),
+                        command.c_str());
+            exit(0);
+        }
+        if (hist_manager && !is_custom)
+            hist_manager->increment(*query);
+        execute_app(command, wrapper, terminal, shell,
+                    is_custom ? false : name_lookup->app->terminal, is_custom);
     }
 }

@@ -142,7 +142,7 @@ void AppManager::add(const string &filename, const string &base_path,
     }
 }
 
-const std::unordered_map<string_view, Application *> &
+const std::unordered_map<string_view, const Application *> &
 AppManager::view_name_app_mapping() const {
     return this->name_app_mapping;
 }
