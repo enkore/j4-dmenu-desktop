@@ -17,31 +17,14 @@
 
 #include "Dmenu.hh"
 
-static int write_proper(const int fd, const char *buf, size_t size) {
-    while (size) {
-        ssize_t written = write(fd, buf, size);
-        if (written == -1) {
-            if ((errno == EINTR) || (errno == EWOULDBLOCK) ||
-                (errno == EAGAIN)) {
-                continue;
-            } else {
-                break;
-            }
-        }
-
-        buf += written;
-        size -= written;
-    }
-
-    return size ? -1 : 0;
-}
+#include "Utilities.hh"
 
 Dmenu::Dmenu(const std::string &dmenu_command, const char *sh)
     : dmenu_command(dmenu_command), shell(sh) {}
 
 void Dmenu::write(std::string_view what) {
-    write_proper(this->outpipe[1], what.data(), what.size());
-    write_proper(this->outpipe[1], "\n", 1);
+    writen(this->outpipe[1], what.data(), what.size());
+    writen(this->outpipe[1], "\n", 1);
 }
 
 void Dmenu::display() {

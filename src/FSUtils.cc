@@ -116,4 +116,71 @@ bool compare_files(const char *a, const char *b) {
             return false;
     }
 }
+
+static void rmdir_impl(const std::string &path) {
+    DIR *d = opendir(path.c_str());
+    if (d == NULL)
+        throw std::runtime_error("Error while calling opendir() on '" + path +
+                                 "': " + strerror(errno));
+
+    OnExit closed = [d]() { closedir(d); };
+
+    dirent *dirinfo;
+    errno = 0;
+    while ((dirinfo = readdir(d)) != NULL) {
+        if (strcmp(dirinfo->d_name, ".") == 0 ||
+            strcmp(dirinfo->d_name, "..") == 0)
+            continue;
+
+        string subpath = path + '/' + dirinfo->d_name;
+
+        enum class file_type { file, directory } ft;
+        switch (dirinfo->d_type) {
+        case DT_DIR:
+            ft = file_type::file;
+            break;
+        case DT_UNKNOWN:
+            struct stat info;
+            if (stat(subpath.c_str(), &info) == -1)
+                throw std::runtime_error("Error while calling stat() on '" +
+                                         subpath + "': " + strerror(errno));
+            ft = S_ISDIR(info.st_mode) ? file_type::directory : file_type::file;
+            break;
+        default:
+            ft = file_type::file;
+            break;
+        }
+
+        switch (ft) {
+        case file_type::directory:
+            rmdir_recursive(subpath.c_str());
+            if (rmdir(subpath.c_str()) == -1)
+                throw std::runtime_error("Error while calling rmdir() on '" +
+                                         subpath + "': " + strerror(errno));
+            break;
+        case file_type::file:
+            if (unlink(subpath.c_str()) == -1)
+                throw std::runtime_error("Error while calling unlink() on '" +
+                                         subpath + "': " + strerror(errno));
+        }
+
+        errno = 0;
+    }
+    if (errno != 0)
+        throw std::runtime_error("Error while calling readdir() on '" + path +
+                                 "': " + strerror(errno));
+}
+
+void rmdir_recursive(const char *dirname) {
+    try {
+        rmdir_impl(dirname);
+    } catch (const std::runtime_error &e) {
+        throw std::runtime_error(
+            (string) "Error while recursively removing directory '" + dirname +
+            "': " + e.what());
+    }
+    if (rmdir(dirname) == -1)
+        throw std::runtime_error((string) "Error while calling rmdir() on '" +
+                                 dirname + "': " + strerror(errno));
+}
 }; // namespace FSUtils

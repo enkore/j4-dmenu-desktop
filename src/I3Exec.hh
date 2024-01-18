@@ -15,28 +15,14 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef FSUTILS_DEF
-#define FSUTILS_DEF
+#ifndef I3EXEC_DEF
+#define I3EXEC_DEF
 
-#include "Utilities.hh"
-
-#include <stdexcept>
 #include <string>
 
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-
-using std::string;
-
-// These helper functions are currently used only in unit tests to set up the
-// testing environment.
-namespace FSUtils
-{
-void copy_file_fd(int in, int out);
-void copy_file(const char *from, const char *to);
-bool compare_files(const char *a, const char *b);
-void rmdir_recursive(const char *dirname);
-}; // namespace FSUtils
+// Get the socket path required for i3_exec(). It is benefitial to call this
+// function early, because it will abort() if i3 isn't available.
+std::string i3_get_ipc_socket_path();
+void i3_exec(const std::string & command, const std::string &socket_path);
 
 #endif

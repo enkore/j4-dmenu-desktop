@@ -17,6 +17,8 @@
 
 #include "Utilities.hh"
 
+#include <unistd.h>
+
 stringlist_t split(const std::string &str, char delimiter) {
     std::stringstream ss(str);
     std::string item;
@@ -98,4 +100,27 @@ std::string get_desktop_id(std::string filename, std::string_view base) {
 
 void fclose_deleter::operator()(FILE *f) const noexcept {
     fclose(f);
+}
+
+// This function is taken from The Linux Programming Interface
+ssize_t writen(int fd, const void *buffer, size_t n) {
+    ssize_t numWritten; /* # of bytes written by last write() */
+    size_t totWritten;  /* Total # of bytes written so far */
+
+    /* No pointer arithmetic on "void *" */
+    const char *buf = static_cast<const char *>(buffer);
+    for (totWritten = 0; totWritten < n;) {
+        numWritten = write(fd, buf, n - totWritten);
+
+        if (numWritten <= 0) {
+            if (numWritten == -1 && errno == EINTR)
+                continue; /* Interrupted --> restart write() */
+            else
+                return -1; /* Some other error */
+        }
+        totWritten += numWritten;
+        buf += numWritten;
+    }
+    /* Must be 'n' bytes if we get here */
+    return totWritten;
 }

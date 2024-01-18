@@ -21,6 +21,7 @@
 #include "FileFinder.hh"
 #include "Formatters.hh"
 #include "HistoryManager.hh"
+#include "I3Exec.hh"
 #include "SearchPath.hh"
 #include "Utilities.hh"
 
@@ -29,6 +30,8 @@
 #else
 #include "NotifyInotify.hh"
 #endif
+
+using i3_path_type = std::optional<std::string>;
 
 static void sigchld(int) {
     while (waitpid(-1, NULL, WNOHANG) > 0)
@@ -76,6 +79,16 @@ static void print_usage(FILE *f) {
         "\t\tPerforming 'echo -n q > path' will exit the program.\n"
         "\t--wrapper=<wrapper>\n"
         "\t\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
+        "\t-I, --i3-ipc\n"
+        "\t\tExecute desktop entries through i3 IPC. Requires i3 to be "
+        "running.\n"
+        "\t--skip-i3-exec-check\n"
+        "\t\tDisable the check for '--wrapper \"i3 exec\"'.\n"
+        "\t\tj4-dmenu-desktop has direct support for i3 through the -I flag "
+        "which should be\n"
+        "\t\tused instead of the --wrapper option. j4-dmenu-desktop detects "
+        "this and exits.\n"
+        "\t\tThis flag overrides this.\n"
         "\t-h, --help\n"
         "\t\tDisplay this help message\n\n"
         "j4-dmenu-desktop is compiled with "
@@ -209,7 +222,7 @@ count_collected_desktop_files(const Desktop_file_list &files) {
                                      const std::string &wrapper,
                                      const std::string &terminal,
                                      const char *shell, bool is_terminal,
-                                     bool is_custom) {
+                                     bool is_custom, i3_path_type i3) {
     std::string command;
     if (!wrapper.empty())
         command = wrapper + " \"" + exec + "\"";
@@ -231,11 +244,19 @@ count_collected_desktop_files(const Desktop_file_list &files) {
     if (is_terminal) {
         fprintf(stderr, "%s -e %s -c '%s'\n", terminal.c_str(), shell,
                 command.c_str());
-        execlp(terminal.c_str(), terminal.c_str(), "-e", shell, "-c",
-               command.c_str(), (char *)NULL);
+        if (i3)
+            i3_exec(terminal + " -e " + shell + " -c '" + command + "'", *i3);
+        else {
+            execlp(terminal.c_str(), terminal.c_str(), "-e", shell, "-c",
+                   command.c_str(), (char *)NULL);
+        }
     } else {
         fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
-        execl(shell, shell, "-c", command.c_str(), (char *)NULL);
+        if (i3)
+            i3_exec(command, *i3);
+        else {
+            execl(shell, shell, "-c", command.c_str(), (char *)NULL);
+        }
     }
     fprintf(stderr, "Couldn't execute program: %s\n", strerror(errno));
     exit(1);
@@ -246,7 +267,7 @@ static int do_wait_on(NotifyBase &notify, const char *shell,
                       const name_map &mapping,
                       std::optional<HistoryManager> &hist,
                       std::string &terminal, std::string &wrapper, bool no_exec,
-                      const stringlist_t &search_path) {
+                      i3_path_type i3, const stringlist_t &search_path) {
     // Avoid zombie processes.
     struct sigaction act = {{0}}; // double curly braces fix a warning fixes
                                   // -Wmissing-braces on FreeBSD
@@ -339,7 +360,7 @@ static int do_wait_on(NotifyBase &notify, const char *shell,
                 setsid();
                 execute_app(command, wrapper, terminal, shell,
                             is_custom ? false : name_lookup->app->terminal,
-                            is_custom);
+                            is_custom, i3);
             }
         }
     }
@@ -358,6 +379,10 @@ int main(int argc, char **argv) {
     bool exclude_generic = false;
     bool no_exec = false;
     bool case_insensitive = false;
+    // If this optional is empty, i3 isn't use. Otherwise it contains the i3 IPC
+    // path.
+    std::optional<std::string> i3_ipc_path;
+    bool skip_i3_check = false;
 
     application_formatter appformatter = appformatter_default;
 
@@ -378,11 +403,13 @@ int main(int argc, char **argv) {
             {"no-exec",             no_argument,       0, 'e'},
             {"wrapper",             required_argument, 0, 'W'},
             {"case-insensitive",    no_argument,       0, 'i'},
+            {"i3-ipc",              no_argument,       0, 'I'},
+            {"skip-i3-exec-check",  no_argument,       0, 'S'},
             {0,                     0,                 0, 0  }
         };
 
         int c =
-            getopt_long(argc, argv, "d:t:xhbfi", long_options, &option_index);
+            getopt_long(argc, argv, "d:t:xhbfiI", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -423,7 +450,25 @@ int main(int argc, char **argv) {
         case 'i':
             case_insensitive = true;
             break;
+        case 'I':
+            // This may abort()/exit()
+            i3_ipc_path = i3_get_ipc_socket_path();
+            break;
+        case 'S':
+            skip_i3_check = true;
+            break;
         default:
+            exit(1);
+        }
+    }
+
+    if (!skip_i3_check) {
+        if (wrapper.find("i3") != std::string::npos) {
+            fprintf(stderr, "Usage of an i3 wrapper has been detected! Please "
+                            "use the -I flag instead.\n");
+            fprintf(stderr,
+                    "(You can use --skip-i3-exec-check to disable this check. "
+                    "Usage of --skip-i3-exec-check is discouraged.)\n");
             exit(1);
         }
     }
@@ -489,7 +534,7 @@ int main(int argc, char **argv) {
         NotifyInotify notify(search_path);
 #endif
         return do_wait_on(notify, shell, wait_on, dmenu, appm, mapping,
-                          hist_manager, terminal, wrapper, no_exec,
+                          hist_manager, terminal, wrapper, no_exec, i3_ipc_path,
                           search_path);
     } else {
         // create formatted name to Application* mapping -> ask the user which
@@ -497,7 +542,8 @@ int main(int argc, char **argv) {
         // mapping -> create the command line using the Exec key of Application*
         // (add any arguments the user has supplied) -> update usage_log/history
         // (if enabled) -> execute Application*
-        std::optional<std::string> query = do_dmenu(dmenu, mapping, hist_manager); // blocks
+        std::optional<std::string> query =
+            do_dmenu(dmenu, mapping, hist_manager); // blocks
         if (!query)
             exit(0);
         std::optional<lookup_result> name_lookup = lookup_name(*query, mapping);
@@ -520,6 +566,7 @@ int main(int argc, char **argv) {
         if (hist_manager && !is_custom)
             hist_manager->increment(*query);
         execute_app(command, wrapper, terminal, shell,
-                    is_custom ? false : name_lookup->app->terminal, is_custom);
+                    is_custom ? false : name_lookup->app->terminal,
+                    is_custom, i3_ipc_path);
     }
 }
