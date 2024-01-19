@@ -269,8 +269,8 @@ static int do_wait_on(NotifyBase &notify, const char *shell,
                       std::string &terminal, std::string &wrapper, bool no_exec,
                       i3_path_type i3, const stringlist_t &search_path) {
     // Avoid zombie processes.
-    struct sigaction act = {{0}}; // double curly braces fix a warning fixes
-                                  // -Wmissing-braces on FreeBSD
+    struct sigaction act;
+    memset(&act, 0, sizeof act);
     act.sa_handler = sigchld;
     if (sigaction(SIGCHLD, &act, NULL) == -1)
         pfatale("sigaction");
