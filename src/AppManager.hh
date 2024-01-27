@@ -25,6 +25,8 @@
 #include <string_view>
 #include <unordered_set>
 
+#include <loguru.hpp>
+
 #include "Application.hh"
 #include "Formatters.hh"
 #include "Utilities.hh"
@@ -70,7 +72,7 @@ public:
     void operator=(AppManager &&) = delete;
 
     AppManager(Desktop_file_list files, bool generic_names_enabled,
-               stringlist_t desktopenvs);
+               stringlist_t desktopenvs, LocaleSuffixes suffixes);
 
     void remove(const string &filename, const string &base_path);
     // This function accepts path to the desktop file relative to $XDG_DATA_DIRS
@@ -108,11 +110,9 @@ private:
 
         auto name_lookup_iter = name_app_mapping.find(name);
         if (name_lookup_iter == name_app_mapping.end()) {
-            fprintf(stderr,
-                    "AppManager has reached a inconsistent state.\n"
-                    "Tried to remove application name '%s' which isn't saved!",
+            ABORT_F("AppManager has reached a inconsistent state. Tried to "
+                    "remove application name '%s' which isn't saved!",
                     name.c_str());
-            abort();
         }
 
         // The order of insertions and removals is crucial here. The keys of
@@ -195,12 +195,9 @@ private:
                              return &val.second.app == colliding_app_ptr;
                          });
         if (colliding_iter == this->applications.end()) {
-            fprintf(stderr,
-                    "AppManager has reached a inconsistent state.\n"
-                    "Couldn't find Application* for name '%s' when there "
-                    "should be one.",
+            ABORT_F("AppManager has reached a inconsistent state. Couldn't "
+                    "find Application* for name '%s' when there should be one.",
                     name.c_str());
-            abort();
         }
         Managed_application &colliding_managed_app = colliding_iter->second;
 

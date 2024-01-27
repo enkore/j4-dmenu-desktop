@@ -13,6 +13,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+// See CONTRIBUTING.md for explanation of loglevels.
+#include <loguru.hpp>
+
 #include "AppManager.hh"
 #include "Application.hh"
 #include "ApplicationRunner.hh"
@@ -56,7 +59,6 @@ static void print_usage(FILE *f) {
         "default)\n"
         "\t-d, --dmenu=<command>\n"
         "\t\tDetermines the command used to invoke dmenu\n"
-        "\t\tExecuted with your shell ($SHELL) or /bin/sh\n"
         "\t--no-exec\n"
         "\t\tDo not execute selected command, send to stdout instead\n"
         "\t--no-generic\n"
@@ -64,19 +66,12 @@ static void print_usage(FILE *f) {
         "\t-t, --term=<command>\n"
         "\t\tSets the terminal emulator used to start terminal apps\n"
         "\t--usage-log=<file>\n"
-        "\t\tMust point to a read-writeable file (will create if not exists).\n"
-        "\t\tIn this mode entries are sorted by usage frequency.\n"
+        "\t\tUse file as usage log (enables sorting by usage frequency)\n"
         "\t-x, --use-xdg-de\n"
         "\t\tEnables reading $XDG_CURRENT_DESKTOP to determine the desktop "
         "environment\n"
         "\t--wait-on=<path>\n"
-        "\t\tMust point to a path where a file can be created.\n"
-        "\t\tIn this mode no menu will be shown. Instead the program waits for "
-        "<path>\n"
-        "\t\tto be written to (use echo > path). Every time this happens a "
-        "menu will be shown.\n"
-        "\t\tDesktop files are parsed ahead of time.\n"
-        "\t\tPerforming 'echo -n q > path' will exit the program.\n"
+        "\t\tEnable daemon mode\n"
         "\t--wrapper=<wrapper>\n"
         "\t\tA wrapper binary. Useful in case you want to wrap into 'i3 exec'\n"
         "\t-I, --i3-ipc\n"
@@ -89,8 +84,17 @@ static void print_usage(FILE *f) {
         "\t\tused instead of the --wrapper option. j4-dmenu-desktop detects "
         "this and exits.\n"
         "\t\tThis flag overrides this.\n"
+        "\t-v\n"
+        "\t\tBe more verbose\n"
+        "\t--log-level=ERROR | WARNING | INFO | DEBUG\n"
+        "\t\tSet log level\n"
+        "\t--log-file\n"
+        "\t\tSpecify a log file\n"
+        "\t--log-file-level=ERROR | WARNING | INFO | DEBUG\n"
+        "\t\tSet file log level\n"
         "\t-h, --help\n"
         "\t\tDisplay this help message\n\n"
+        "See the manpage for more detailed description of the flags.\n"
         "j4-dmenu-desktop is compiled with "
 #ifdef USE_KQUEUE
         "kqueue"
@@ -157,13 +161,10 @@ do_dmenu(Dmenu &dmenu, const name_map &mapping,
             // if that is the case.
             if (desktop_file_names.erase(name))
                 dmenu.write(name);
-#ifdef DEBUG
             else
-                fprintf(
-                    stderr,
-                    "DEBUG WARNING: Name '%s' in history will be ignored!\n",
-                    name.c_str());
-#endif
+                LOG_F(9,
+                      "DEBUG WARNING: Name '%s' in history will be ignored!\n",
+                      name.c_str());
         }
         for (const auto &name : desktop_file_names)
             dmenu.write(name);
@@ -178,6 +179,7 @@ do_dmenu(Dmenu &dmenu, const name_map &mapping,
     if (choice.empty())
         return {};
     fprintf(stderr, "User input is: %s\n", choice.c_str());
+    LOG_F(INFO, "User input is: %s", choice.c_str());
     return choice;
 }
 
@@ -244,6 +246,8 @@ count_collected_desktop_files(const Desktop_file_list &files) {
     if (is_terminal) {
         fprintf(stderr, "%s -e %s -c '%s'\n", terminal.c_str(), shell,
                 command.c_str());
+        LOG_F(INFO, "Command: %s -e %s -c '%s'", terminal.c_str(), shell,
+              command.c_str());
         if (i3)
             i3_exec(terminal + " -e " + shell + " -c '" + command + "'", *i3);
         else {
@@ -252,14 +256,15 @@ count_collected_desktop_files(const Desktop_file_list &files) {
         }
     } else {
         fprintf(stderr, "%s -c '%s'\n", shell, command.c_str());
+        LOG_F(INFO, "Command: %s -c '%s'", shell, command.c_str());
         if (i3)
             i3_exec(command, *i3);
         else {
             execl(shell, shell, "-c", command.c_str(), (char *)NULL);
         }
     }
-    fprintf(stderr, "Couldn't execute program: %s\n", strerror(errno));
-    exit(1);
+    LOG_F(ERROR, "Couldn't execute program: %s", strerror(errno));
+    exit(EXIT_FAILURE);
 }
 
 static int do_wait_on(NotifyBase &notify, const char *shell,
@@ -273,18 +278,14 @@ static int do_wait_on(NotifyBase &notify, const char *shell,
     memset(&act, 0, sizeof act);
     act.sa_handler = sigchld;
     if (sigaction(SIGCHLD, &act, NULL) == -1)
-        pfatale("sigaction");
+        PFATALE("sigaction");
 
     int fd;
-    if (mkfifo(wait_on, 0600) && errno != EEXIST) {
-        perror("mkfifo");
-        return 1;
-    }
+    if (mkfifo(wait_on, 0600) && errno != EEXIST)
+        PFATALE("mkfifo");
     fd = open(wait_on, O_RDWR);
-    if (fd == -1) {
-        perror("open(fifo)");
-        return 1;
-    }
+    if (fd == -1)
+        PFATALE("open");
     pollfd watch[] = {
         {fd,             POLLIN, 0},
         {notify.getfd(), POLLIN, 0},
@@ -295,7 +296,7 @@ static int do_wait_on(NotifyBase &notify, const char *shell,
         while ((ret = poll(watch, 2, -1)) == -1 && errno == EINTR)
             ;
         if (ret == -1)
-            pfatale("poll");
+            PFATALE("poll");
         if (watch[1].revents & POLLIN) {
             for (const auto &i : notify.getchanges()) {
                 if (!endswith(i.name, ".desktop"))
@@ -315,10 +316,8 @@ static int do_wait_on(NotifyBase &notify, const char *shell,
         }
         if (watch[0].revents & POLLIN) {
             char data;
-            if (read(fd, &data, sizeof(data)) < 1) {
-                perror("read(fifo)");
-                break;
-            }
+            if (read(fd, &data, sizeof(data)) < 1)
+                PFATALE("read");
             if (data == 'q')
                 return 0;
 
@@ -340,11 +339,15 @@ static int do_wait_on(NotifyBase &notify, const char *shell,
                     : application_command(*name_lookup->app, name_lookup->args);
 
             if (no_exec) {
-                if (wrapper.empty())
+                if (wrapper.empty()) {
                     fprintf(stderr, "%s\n", command.c_str());
-                else
+                    LOG_F(INFO, "%s\n", command.c_str());
+                } else {
                     fprintf(stderr, "%s \"%s\"\n", wrapper.c_str(),
                             command.c_str());
+                    LOG_F(INFO, "%s \"%s\"\n", wrapper.c_str(),
+                          command.c_str());
+                }
                 continue;
             }
             if (hist && !is_custom)
@@ -368,7 +371,21 @@ static int do_wait_on(NotifyBase &notify, const char *shell,
     return 0;
 }
 
+// This helper function is most likely useless, but I, meator, ran into
+// a situation where a directory was specified twice in $XDG_DATA_DIRS.
+static void test_search_path_uniqueness(const stringlist_t &search_path) {
+    if (std::unordered_set<std::string>{search_path.begin(), search_path.end()}
+            .size() != search_path.size())
+        LOG_F(WARNING, "Search path contains duplicit elements!");
+}
+
 int main(int argc, char **argv) {
+    loguru::g_stderr_verbosity = loguru::Verbosity_WARNING;
+
+    const char *log_file_path = nullptr;
+    decltype(loguru::Verbosity_ERROR) log_file_verbosity =
+        loguru::Verbosity_INFO;
+
     std::string dmenu_command = "dmenu -i";
     std::string terminal = "i3-sensible-terminal";
     std::string wrapper;
@@ -381,8 +398,9 @@ int main(int argc, char **argv) {
     bool case_insensitive = false;
     // If this optional is empty, i3 isn't use. Otherwise it contains the i3 IPC
     // path.
-    std::optional<std::string> i3_ipc_path;
+    bool use_i3_ipc = false;
     bool skip_i3_check = false;
+    int verbose_flag = 0;
 
     application_formatter appformatter = appformatter_default;
 
@@ -405,11 +423,14 @@ int main(int argc, char **argv) {
             {"case-insensitive",    no_argument,       0, 'i'},
             {"i3-ipc",              no_argument,       0, 'I'},
             {"skip-i3-exec-check",  no_argument,       0, 'S'},
+            {"log-level",           required_argument, 0, 'o'},
+            {"log-file",            required_argument, 0, 'O'},
+            {"log-file-level",      required_argument, 0, 'V'},
             {0,                     0,                 0, 0  }
         };
 
         int c =
-            getopt_long(argc, argv, "d:t:xhbfiI", long_options, &option_index);
+            getopt_long(argc, argv, "d:t:xhbfiIv", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -451,8 +472,42 @@ int main(int argc, char **argv) {
             case_insensitive = true;
             break;
         case 'I':
-            // This may abort()/exit()
-            i3_ipc_path = i3_get_ipc_socket_path();
+            use_i3_ipc = true;
+            break;
+        case 'v':
+            ++verbose_flag;
+            break;
+        case 'o':
+            if (strcmp(optarg, "DEBUG") == 0) {
+                loguru::g_stderr_verbosity = loguru::Verbosity_9;
+            } else if (strcmp(optarg, "INFO") == 0) {
+                loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
+            } else if (strcmp(optarg, "WARNING") == 0) {
+                loguru::g_stderr_verbosity = loguru::Verbosity_WARNING;
+            } else if (strcmp(optarg, "ERROR") == 0) {
+                loguru::g_stderr_verbosity = loguru::Verbosity_ERROR;
+            } else {
+                fprintf(stderr, "Invalid loglevel supplied to --log-level!\n");
+                exit(1);
+            }
+            break;
+        case 'O':
+            log_file_path = optarg;
+            break;
+        case 'V':
+            if (strcmp(optarg, "DEBUG") == 0) {
+                log_file_verbosity = loguru::Verbosity_9;
+            } else if (strcmp(optarg, "INFO") == 0) {
+                log_file_verbosity = loguru::Verbosity_INFO;
+            } else if (strcmp(optarg, "WARNING") == 0) {
+                log_file_verbosity = loguru::Verbosity_WARNING;
+            } else if (strcmp(optarg, "ERROR") == 0) {
+                log_file_verbosity = loguru::Verbosity_ERROR;
+            } else {
+                fprintf(stderr,
+                        "Invalid loglevel supplied to --log-file-level!\n");
+                exit(1);
+            }
             break;
         case 'S':
             skip_i3_check = true;
@@ -462,26 +517,60 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Handle -v or -vv flag if --log-level wasn't specified.
+    if (loguru::g_stderr_verbosity == loguru::Verbosity_WARNING) {
+        switch (verbose_flag) {
+        case 0:
+            break;
+        case 1:
+            loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
+            break;
+        default:
+            loguru::g_stderr_verbosity = loguru::Verbosity_9;
+            break;
+        }
+    }
+
+    // We process arguments before logging is enabled.
+    loguru::Options logopt;
+    logopt.verbosity_flag = nullptr;
+    loguru::init(argc, argv, logopt);
+
+    if (log_file_path) {
+        if (!loguru::add_file(log_file_path, loguru::Truncate,
+                              log_file_verbosity))
+            exit(1);
+    }
+
+    LOG_F(9, "I3 IPC interface is %s.", (use_i3_ipc ? "on" : "off"));
+
+    std::optional<std::string> i3_ipc_path;
+    // This may abort()/exit()
+    if (use_i3_ipc)
+        i3_ipc_path = i3_get_ipc_socket_path();
+
     if (!skip_i3_check) {
         if (wrapper.find("i3") != std::string::npos) {
-            fprintf(stderr, "Usage of an i3 wrapper has been detected! Please "
-                            "use the -I flag instead.\n");
-            fprintf(stderr,
-                    "(You can use --skip-i3-exec-check to disable this check. "
-                    "Usage of --skip-i3-exec-check is discouraged.)\n");
-            exit(1);
+            LOG_F(ERROR, "Usage of an i3 wrapper has been detected! Please "
+                         "use the -I flag instead.");
+            LOG_F(ERROR,
+                  "(You can use --skip-i3-exec-check to disable this check. "
+                  "Usage of --skip-i3-exec-check is discouraged.)");
+            exit(EXIT_FAILURE);
         }
     }
 
     if (use_xdg_de) {
         desktopenvs = split(get_variable("XDG_CURRENT_DESKTOP"), ':');
+        LOG_F(INFO, "Found %d desktop environments in $XDG_CURRENT_DESKTOP:",
+              (int)desktopenvs.size());
+        for (auto s : desktopenvs)
+            LOG_F(INFO, "  %s", s.c_str());
+    } else {
+        LOG_F(INFO,
+              "Desktop environment detection is turned off (-x hasn't been "
+              "specified).");
     }
-
-#ifdef DEBUG
-    fprintf(stderr, "desktop environments:\n");
-    for (auto s : desktopenvs)
-        fprintf(stderr, "%s\n", s.c_str());
-#endif
 
     const char *shell = getenv("SHELL");
     if (shell == NULL)
@@ -496,22 +585,50 @@ int main(int argc, char **argv) {
     // We get search_path -> desktop_file_list -> appm
     stringlist_t search_path = get_search_path();
 
-#ifdef DEBUG
+    LOG_F(INFO,
+          "Found %d directories in search path:", (int)search_path.size());
     for (const std::string &path : search_path) {
-        fprintf(stderr, "SearchPath: %s\n", path.c_str());
+        LOG_F(INFO, " %s", path.c_str());
     }
-#endif
+
+    test_search_path_uniqueness(search_path);
 
     auto desktop_file_list = collect_files(search_path);
-    AppManager appm(desktop_file_list, !exclude_generic, desktopenvs);
+    LOG_F(9, "The following destop files have been found:");
+    for (const auto &item : desktop_file_list) {
+        LOG_F(9, " %s", item.base_path.c_str());
+        for (const std::string &file : item.files)
+            LOG_F(9, "   %s", file.c_str());
+    }
+    LocaleSuffixes locales;
+    {
+        auto suffixes = locales.list_suffixes_for_logging_only();
+        LOG_F(9, "Found %d locale suffixes:", (int)suffixes.size());
+        for (const auto & ptr : suffixes)
+            LOG_F(9, " %s", ptr->c_str());
+    }
+    AppManager appm(desktop_file_list, !exclude_generic, desktopenvs,
+                    std::move(locales));
 
 #ifdef DEBUG
     appm.check_inner_state();
 #endif
 
+    // The followind message is printed twice. Once directly and once as a log.
+    // The log won't be shown (unless the user has set higher logging
+    // verbosity).
+    // It is printed twice because it should be shown, but it doesn't qualify
+    // for the ERROR log level (which is shown by default) and because the
+    // message was printed as is before logging was introduced to j4dd. If only
+    // a log was printed, it would a) not be printed if user doesn't specify -v
+    // which is bad b) have to be misclassified as ERROR c) logging info
+    // (timestamp, thread name, file + line number...) would be added, which
+    // adds unnecessary clutter.
+    int desktop_file_count = count_collected_desktop_files(desktop_file_list);
     fprintf(stderr, "Read %d .desktop files, found %u apps.\n",
-            count_collected_desktop_files(desktop_file_list),
-            (unsigned int)appm.count());
+            desktop_file_count, (unsigned int)appm.count());
+    LOG_F(INFO, "Read %d .desktop files, found %u apps.", desktop_file_count,
+          (unsigned int)appm.count());
 
     std::optional<HistoryManager> hist_manager;
 
@@ -519,6 +636,8 @@ int main(int argc, char **argv) {
         try {
             hist_manager.emplace(usage_log);
         } catch (const v0_version_error &) {
+            LOG_F(WARNING, "History file is using old format. Automatically "
+                           "converting to new one.");
             hist_manager.emplace(
                 HistoryManager::convert_history_from_v0(usage_log, appm));
         }
@@ -544,8 +663,10 @@ int main(int argc, char **argv) {
         // (if enabled) -> execute Application*
         std::optional<std::string> query =
             do_dmenu(dmenu, mapping, hist_manager); // blocks
-        if (!query)
+        if (!query) {
+            LOG_F(INFO, "No application has been selected, exitting...");
             exit(0);
+        }
         std::optional<lookup_result> name_lookup = lookup_name(*query, mapping);
 
         // Are we executing a desktop file or a custom command?
@@ -555,18 +676,31 @@ int main(int argc, char **argv) {
                 ? *query
                 : application_command(*name_lookup->app, name_lookup->args);
 
+        if (is_custom)
+            LOG_F(INFO,
+                  "A %s program '%s' has been selected. Raw command '%s'.",
+                  (is_custom ? "custom" : "desktop"), query->c_str(),
+                  command.c_str());
+        else
+            LOG_F(INFO,
+                  "A %s program '%s' has been selected. Raw command '%s', "
+                  "arguments '%s'",
+                  (is_custom ? "custom" : "desktop"), query->c_str(),
+                  command.c_str(), name_lookup->args.c_str());
+
         if (no_exec) {
-            if (wrapper.empty())
+            if (wrapper.empty()) {
                 fprintf(stderr, "%s\n", command.c_str());
-            else
+            } else {
                 fprintf(stderr, "%s \"%s\"\n", wrapper.c_str(),
                         command.c_str());
+            }
             exit(0);
         }
         if (hist_manager && !is_custom)
             hist_manager->increment(*query);
         execute_app(command, wrapper, terminal, shell,
-                    is_custom ? false : name_lookup->app->terminal,
-                    is_custom, i3_ipc_path);
+                    is_custom ? false : name_lookup->app->terminal, is_custom,
+                    i3_ipc_path);
     }
 }

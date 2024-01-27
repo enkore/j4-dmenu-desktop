@@ -34,6 +34,15 @@
 #include <utility>
 #include <vector>
 
+#include <loguru.hpp>
+
+#define PFATALE(msg)                                                           \
+    {                                                                          \
+        LOG_F(ERROR, "Failure occured while calling " msg "(): %s",            \
+              loguru::errno_as_text().c_str());                                \
+        exit(EXIT_FAILURE);                                                    \
+    }
+
 typedef std::vector<std::string> stringlist_t;
 
 stringlist_t split(const std::string &str, char delimiter);
@@ -44,7 +53,6 @@ bool endswith(const std::string &str, const std::string &suffix);
 bool startswith(const std::string &str, const std::string &prefix);
 bool is_directory(const std::string &path);
 std::string get_variable(const std::string &var);
-[[noreturn]] void pfatale(const char *msg);
 std::string get_desktop_id(std::string filename);
 std::string get_desktop_id(std::string filename, std::string_view base);
 ssize_t writen(int fd, const void *buffer, size_t n);

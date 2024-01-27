@@ -25,7 +25,7 @@ NotifyInotify::directory_entry::directory_entry(int r, std::string p)
 NotifyInotify::NotifyInotify(const stringlist_t &search_path) {
     inotifyfd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
     if (inotifyfd == -1)
-        pfatale("inotify_init");
+        PFATALE("inotify_init");
 
     for (int i = 0; i < (int)search_path.size();
          i++) // size() is converted to int to silent warnings about
@@ -34,7 +34,7 @@ NotifyInotify::NotifyInotify(const stringlist_t &search_path) {
         int wd = inotify_add_watch(inotifyfd, search_path[i].c_str(),
                                    IN_DELETE | IN_MODIFY);
         if (wd == -1)
-            pfatale("inotify_add_watch");
+            PFATALE("inotify_add_watch");
         directories.insert({
             wd, {i, {}}
         });

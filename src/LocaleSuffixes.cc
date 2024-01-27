@@ -17,6 +17,8 @@
 
 #include "LocaleSuffixes.hh"
 
+#include <loguru.hpp>
+
 LocaleSuffixes::LocaleSuffixes(std::string locale) {
     size_t uscorepos = 0, dotpos = 0, atpos = 0;
 
@@ -59,11 +61,6 @@ LocaleSuffixes::LocaleSuffixes(std::string locale) {
         this->length = 2;
         this->suffixes[1] = locale.substr(0, (atpos == 0 ? uscorepos : atpos));
     }
-
-#ifdef DEBUG
-    for (int i = 0; i < this->length; ++i)
-        fprintf(stderr, "LocaleSuffix: %s\n", this->suffixes[i].c_str());
-#endif
 }
 
 int LocaleSuffixes::match(const std::string &str) const {
@@ -79,16 +76,25 @@ bool LocaleSuffixes::operator==(const LocaleSuffixes &other) const {
            std::equal(suffixes, suffixes + length, other.suffixes);
 }
 
+std::vector<const std::string *>
+LocaleSuffixes::list_suffixes_for_logging_only() const {
+    std::vector<const std::string *> result;
+    result.reserve(this->length);
+    for (int i = 0; i < this->length; ++i)
+        result.push_back(&this->suffixes[i]);
+    return result;
+}
+
 std::string LocaleSuffixes::set_locale() {
     char *user_locale = setlocale(LC_MESSAGES, "");
     if (!user_locale) {
-        fprintf(stderr, "Locale configuration invalid, check locale(1).\n"
-                        "No translated menu entries will be available.\n");
+        LOG_F(WARNING, "Locale configuration invalid, check locale(1).\n"
+                       "No translated menu entries will be available.\n");
         user_locale = setlocale(LC_MESSAGES, "C");
         if (!user_locale) {
-            fprintf(stderr, "POSIX/C locale is not available, setlocale(3) "
-                            "failed. Bailing.\n");
-            abort();
+            LOG_F(ERROR, "POSIX/C locale is not available, setlocale(3) "
+                         "failed. Bailing.\n");
+            exit(EXIT_FAILURE);
         }
     }
     return user_locale;

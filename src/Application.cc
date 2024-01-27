@@ -45,10 +45,6 @@ Application::Application(const char *path, char **linep, size_t *linesz,
         throw std::runtime_error((std::string) "Couldn't open desktop file - " +
                                  strerror(errno));
 
-#ifdef DEBUG
-    fprintf(stderr, "%s\n", path);
-#endif
-
     while ((linelen = getline(linep, linesz, file.get())) != -1) {
         line = *linep;
         line[--linelen] = 0; // Chop off \n
@@ -94,10 +90,6 @@ Application::Application(const char *path, char **linep, size_t *linesz,
                     if (!desktopenvs.empty()) {
                         stringlist_t values = expandlist("OnlyShowIn", value);
                         if (!have_equal_element(desktopenvs, values)) {
-#ifdef DEBUG
-                            fprintf(stderr, "OnlyShowIn: %s -> app is hidden\n",
-                                    value);
-#endif
                             throw disabled_error(
                                 "Refusing to parse desktop file whose "
                                 "OnlyShowIn field doesn't match current "
@@ -108,10 +100,6 @@ Application::Application(const char *path, char **linep, size_t *linesz,
                     if (!desktopenvs.empty()) {
                         stringlist_t values = expandlist("NotShowIn", value);
                         if (have_equal_element(desktopenvs, values)) {
-#ifdef DEBUG
-                            fprintf(stderr, "NotShowIn: %s -> app is hidden\n",
-                                    value);
-#endif
                             throw disabled_error(
                                 "Refusing to parse desktop file whose "
                                 "NotShowIn field matches current desktop.");
@@ -120,9 +108,6 @@ Application::Application(const char *path, char **linep, size_t *linesz,
                 } else if (strcmp(key, "Hidden") == 0 ||
                            strcmp(key, "NoDisplay") == 0) {
                     if (strcmp(value, "true") == 0) {
-#ifdef DEBUG
-                        fprintf(stderr, "NoDisplay/Hidden\n");
-#endif
                         throw disabled_error("Refusing to parse Hidden or "
                                              "NoDisplay desktop file.");
                     }
@@ -130,17 +115,12 @@ Application::Application(const char *path, char **linep, size_t *linesz,
                     this->terminal = strcmp(value, "true") == 0;
                 }
             } catch (const escape_error &e) {
-                fprintf(stderr, "%s: %s\n", location.c_str(), e.what());
+                LOG_F(ERROR, "%s: %s\n", location.c_str(), e.what());
                 throw;
             }
         } else if (!strcmp(line, "[Desktop Entry]"))
             parse_key_values = true;
     }
-
-#ifdef DEBUG
-    fprintf(stderr, "%s", this->name.c_str());
-    fprintf(stderr, " (%s)\n", this->generic_name.c_str());
-#endif
 }
 
 char Application::convert(char escape) {

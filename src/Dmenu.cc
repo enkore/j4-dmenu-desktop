@@ -19,6 +19,8 @@
 
 #include "Utilities.hh"
 
+#include <loguru.hpp>
+
 Dmenu::Dmenu(const std::string &dmenu_command, const char *sh)
     : dmenu_command(dmenu_command), shell(sh) {}
 
@@ -28,6 +30,7 @@ void Dmenu::write(std::string_view what) {
 }
 
 void Dmenu::display() {
+    LOG_F(9, "Dmenu: Displaying Dmenu.");
     // Closing the pipe produces EOF for dmenu, signalling
     // end of all options. dmenu shows now up on the screen
     // (if -f hasn't been used)
@@ -43,12 +46,15 @@ std::string Dmenu::read_choice() {
     // block when trying to call Dmenu::write().
     if (!WIFEXITED(status)) {
         close(inpipe[0]);
-        fprintf(stderr, "ERROR: Dmenu exited abnormally.\n");
+        LOG_F(ERROR, "Dmenu exited abnormally!");
         exit(EXIT_FAILURE);
     }
     if (WEXITSTATUS(status) !=
         0) { // Dmenu returns 1 when the user exits dmenu with the Escape
              // key, signaling that no choice was made.
+        LOG_IF_F(INFO, WEXITSTATUS(status) != 1,
+                 "Dmenu has exited with unexpected exit status %d.",
+                 WEXITSTATUS(status));
         close(inpipe[0]);
         return {};
     }
@@ -71,6 +77,8 @@ void Dmenu::run() {
     // this speeds up things a bit if the -f flag for dmenu is
     // used
 
+    LOG_F(9, "Dmenu: Running Dmenu.");
+
     if (pipe(this->inpipe) == -1 || pipe(this->outpipe) == -1)
         throw std::runtime_error("Dmenu::create(): pipe() failed");
 
@@ -92,6 +100,7 @@ void Dmenu::run() {
             shell, shell, "-c", this->dmenu_command.c_str(), 0,
             nullptr); // double nulls are needed because of
                       // https://github.com/enkore/j4-dmenu-desktop/pull/66#issuecomment-273126739
+        LOG_F(ERROR, "Couldn't execute dmenu!");
         _exit(EXIT_FAILURE);
     }
 

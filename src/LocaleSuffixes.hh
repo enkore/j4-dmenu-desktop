@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <vector>
 
 class LocaleSuffixes
 {
@@ -36,6 +37,10 @@ public:
     int match(const std::string &str) const;
     bool operator==(const LocaleSuffixes &other) const;
 
+    // This funciton is currelnty used for logging only, it shouldn't be used as
+    // the primary way to match locales.
+    std::vector<const std::string *> list_suffixes_for_logging_only() const;
+
 private:
     std::string suffixes[4];
     // There are three possible values of length:
@@ -46,5 +51,10 @@ private:
 
     static std::string set_locale();
 };
+
+static_assert(std::is_copy_constructible_v<LocaleSuffixes>);
+static_assert(std::is_move_constructible_v<LocaleSuffixes>);
+static_assert(std::is_copy_assignable_v<LocaleSuffixes>);
+static_assert(std::is_move_assignable_v<LocaleSuffixes>);
 
 #endif

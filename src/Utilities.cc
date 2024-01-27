@@ -83,11 +83,6 @@ std::string get_variable(const std::string &var) {
         return "";
 }
 
-void pfatale(const char *msg) {
-    perror(msg);
-    abort();
-}
-
 std::string get_desktop_id(std::string filename) {
     std::string result(std::move(filename));
     replace(result.begin(), result.end(), '/', '-');

@@ -168,11 +168,11 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
                                std::forward_as_tuple(hist_count),
                                std::forward_as_tuple(app.generic_name));
         } catch (std::bad_optional_access &) {
-            fprintf(stderr,
-                    "WARNING: While converting history file '%s' to format "
-                    "1.0, desktop file ID '%s' couldn't be resolved. This "
-                    "destkop file will be omited from the history.\n",
-                    path.c_str(), lineptr);
+            LOG_F(WARNING,
+                  "While converting history file '%s' to format "
+                  "1.0, desktop file ID '%s' couldn't be resolved. This "
+                  "destkop file will be omited from the history.\n",
+                  path.c_str(), lineptr);
         }
     }
 

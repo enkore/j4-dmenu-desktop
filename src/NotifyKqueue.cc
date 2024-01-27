@@ -34,12 +34,12 @@ void NotifyKqueue::process_kqueue(const stringlist_t &search_path,
             case 1:
                 break;
             default:
-                pfatale("kevent");
+                PFATALE("kevent");
             }
 
             DIR *d = opendir((search_path[i.rank] + i.path).c_str());
             if (d == NULL)
-                pfatale("opendir");
+                PFATALE("opendir");
 
             std::set<std::string> files;
 
@@ -86,7 +86,7 @@ void NotifyKqueue::process_kqueue(const stringlist_t &search_path,
 
 NotifyKqueue::NotifyKqueue(const stringlist_t &search_path) {
     if (pipe2(pipefd, O_NONBLOCK | O_CLOEXEC) == -1)
-        pfatale("pipe");
+        PFATALE("pipe");
 
     std::vector<directory_entry> directories;
 
@@ -107,16 +107,16 @@ NotifyKqueue::NotifyKqueue(const stringlist_t &search_path) {
 
             int queue = kqueue();
             if (queue == -1)
-                pfatale("kqueue");
+                PFATALE("kqueue");
             if (fcntl(queue, F_SETFD, FD_CLOEXEC) == -1)
-                pfatale("fcntl");
+                PFATALE("fcntl");
             int fd = open(path.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
             if (fd == -1)
-                pfatale("open");
+                PFATALE("open");
 
             event.ident = fd;
             if (kevent(queue, &event, 1, NULL, 0, NULL) == -1)
-                pfatale("kevent");
+                PFATALE("kevent");
 
             directories.push_back(
                 {queue, i, path.substr(search_path[i].length())});
@@ -124,7 +124,7 @@ NotifyKqueue::NotifyKqueue(const stringlist_t &search_path) {
 
             DIR *d = opendir(path.c_str());
             if (d == NULL)
-                pfatale("opendir");
+                PFATALE("opendir");
 
             struct dirent *file;
             while ((file = readdir(d))) {
@@ -163,6 +163,6 @@ std::vector<filechange> NotifyKqueue::getchanges() {
     while (read(pipefd[0], &dump, 1) != -1)
         ;
     if (errno != EAGAIN)
-        pfatale("read");
+        PFATALE("read");
     return result;
 }
