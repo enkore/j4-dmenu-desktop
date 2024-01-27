@@ -15,6 +15,8 @@ public:
     Dmenu(const Dmenu &dmenu) = delete;
     void operator=(const Dmenu &dmenu) = delete;
 
+    // The caller may wish to handle SIGPIPE to detect dmenu failure when
+    // calling write().
     void write(std::string_view what);
     void display();
     std::string read_choice();

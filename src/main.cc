@@ -142,9 +142,22 @@ static name_map format_name_app_mapping(const AppManager &appm,
     return result;
 }
 
+static void sigpipe_handler(int) {
+    LOG_F(ERROR, "A SIGPIPE occured while communicating with dmenu. Is dmenu "
+                 "installed?");
+    exit(EXIT_FAILURE);
+}
+
 static std::optional<std::string>
 do_dmenu(Dmenu &dmenu, const name_map &mapping,
          const std::optional<HistoryManager> &histm) {
+    // Check for dmenu errors via SIGPIPE.
+    struct sigaction oldact, act;
+    memset(&act, 0, sizeof act);
+    act.sa_handler = sigpipe_handler;
+    if (sigaction(SIGPIPE, &act, &oldact) < 0)
+        PFATALE("sigaction");
+
     // Transfer the names to dmenu
     if (histm) {
         std::set<std::string_view, DynamicCompare> desktop_file_names(
@@ -174,6 +187,9 @@ do_dmenu(Dmenu &dmenu, const name_map &mapping,
     }
 
     dmenu.display();
+
+    if (sigaction(SIGPIPE, &oldact, NULL) < 0)
+        PFATALE("sigaction");
 
     string choice = dmenu.read_choice(); // This blocks
     if (choice.empty())
