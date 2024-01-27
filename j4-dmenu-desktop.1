@@ -11,16 +11,20 @@
 .Nm
 is a faster replacement for i3-dmenu-desktop.
 .Pp
-It's purpose is to find .desktop files and offer you a menu to start an application using dmenu.
+It's purpose is to find .desktop files and offer you a menu to start an
+application using dmenu.
 .Pp
 The arguments are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Ds
 .It Fl b , Fl Fl display-binary
 Display binary name after each entry (off by default).
 .It Fl f , Fl Fl display-binary-base
 Display basename of binary name after each entry (off by default).
 .It Fl d , Fl Fl dmenu Ar command
-Determines the command used to invoke dmenu. Executed with your shell ($SHELL) or
+Determines the command used to invoke dmenu.
+Executed with your shell
+.Pq Ev $SHELL
+or
 .Pa /bin/sh .
 .It Fl Fl no-exec
 Do not execute selected command, send to stdout instead.
@@ -29,33 +33,85 @@ Do not include the generic name of desktop entries.
 .It Fl t , Fl Fl term Ar command
 Sets the terminal emulator used to start terminal apps.
 .It Fl Fl usage-log Ar file
-Must point to a read-writeable file (will create if not exists). In this mode entries are sorted by usage frequency.
+Must point to a read-writeable file (will create if not exists). In this mode
+entries are sorted by usage frequency.
 .It Fl x , Fl Fl use-xdg-de
-Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment.
+Enables reading
+.Ev $XDG_CURRENT_DESKTOP
+to determine the desktop environment.
 .It Fl Fl wait-on Ar path
-Must point to a path where a file can be created. In this mode no menu will be shown. Instead the program waits for
+Must point to a path where a file can be created.
+In this mode no menu will be shown.
+Instead the program waits for
 .Ar path
-to be written to (use echo > path). Every time this happens a menu will be shown. Desktop files are parsed ahead of time. Performing 'echo -n q > path' will exit the program.
+to be written to
+.Po
+use
+.Ql echo > path
+.Pc .
+Every time this happens a menu will be shown.
+Desktop files are parsed ahead of time.
+Performing
+.Ql echo -n q > path
+will exit the program.
 .It Fl Fl wrapper Ar wrapper
-A wrapper binary. Useful in case you want to wrap into 'i3 exec'.
+A wrapper binary.
+Useful in case you want to wrap into 'i3 exec'.
 .It Fl I , Fl Fl i3-ipc
-Execute desktop entries through i3 IPC. Requires i3 to be running.
+Execute desktop entries through i3 IPC.
+Requires i3 to be running.
 .It Fl Fl skip-i3-exec-check
 Disable the check for
-.Cm \-\-wrapper Qq i3 exec .
+.Fl Fl wrapper Qq i3 exec .
 j4-dmenu-desktop has direct support for i3 through the
 .Fl I
 flag which should be used instead of the
-.Fl \-wrapper
+.Fl Fl wrapper
 option. j4-dmenu-desktop detects this and exits.
 This flag overrides this behaviour.
 .It Fl i , Fl Fl case-insensitive
 Sort applications case insensitively
+.It Fl v
+Be more verbose.
+When specified once,
+.Cm INFO
+is used, when twice,
+.Cm DEBUG
+is used.
+See
+.Sx LOG LEVELS .
+.It Fl Fl log-level Ar ERROR | WARNING | INFO | DEBUG
+A more explicit version of
+.Fl v .
+This flag takes precedence over
+.Fl v .
+.It Fl Fl log-file Ar file
+Specify a log file.
+.Ar file
+will be truncated.
+By default, the
+.Cm INFO
+loglevel is used.
+.It Fl Fl log-file-level Ar ERROR | WARNING | INFO | DEBUG
+Set file log level.
 .It Fl h , Fl Fl help
 Display help message.
 .El
+.Ss LOG LEVELS
+Some arguments support setting the log level.
+.Nm
+uses the following log levels:
+.Cm ERROR , WARNING , INFO
+and
+.Cm DEBUG .
+The
+.Cm WARNING
+(and
+.Cm ERROR )
+loglevels are displayed by default.
+Lower loglevels automatically enable higher ones.
 .Sh ENVIRONMENT
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Ev I3SOCK
 This variable overwrites the i3 IPC socket path.
 .El
@@ -65,9 +121,17 @@ This variable overwrites the i3 IPC socket path.
 Copyright (C) 2013 enkore
 .Eo < Mt public+j4-dmenu-desktop@enkore.de Ec >
 .Pp
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
 .Pp
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
 .Pp
-You should have received a copy of the GNU General Public License along with this program. If not, see
+You should have received a copy of the GNU General Public License along with
+this program.
+If not, see
 .Eo < Lk http://www.gnu.org/licenses/ Ec > .
