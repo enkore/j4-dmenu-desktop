@@ -159,7 +159,8 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
                                      strerror(errno));
         lineptr[rsize - 1] = '\0'; // Get rid of \n
         try {
-            const Application &app = appm.lookup_by_ID(lineptr).value();
+            auto lookup = appm.lookup_by_ID(lineptr);
+            const Application &app = lookup.value();
             result.emplace(std::piecewise_construct,
                            std::forward_as_tuple(hist_count),
                            std::forward_as_tuple(app.name));
