@@ -97,7 +97,7 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
 
     auto result = std::async(std::launch::async, handle_request, sfd);
 
-    i3_exec("true", (string)tmpdirname + "/socket");
+    I3Interface::exec("true", (string)tmpdirname + "/socket");
 
     using namespace std::chrono_literals;
     if (result.wait_for(2s) == std::future_status::timeout) {
