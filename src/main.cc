@@ -107,6 +107,9 @@ static void print_usage(FILE *f) {
     );
 }
 
+/*
+ * Code here is divided into several phases designated by their namespace.
+ */
 namespace SetupPhase
 {
 // This returns absolute paths.
@@ -252,6 +255,8 @@ do_dmenu(Dmenu &dmenu, const name_map &mapping,
     return choice;
 }
 
+namespace Lookup
+{
 struct ApplicationLookup
 {
     const Application *app;
@@ -289,17 +294,26 @@ static lookup_res_type lookup_name(const std::string &query,
         return CommandLookup(query);
     }
 }
+}; // namespace Lookup
 
 namespace CommandAssembly
 {
 static std::string i3_assemble_command(const std::string &raw_command,
                                        const std::string &terminal,
-                                       const char *shell) {
+                                       const char *shell, bool is_custom) {
     if (terminal.empty())
         return raw_command;
-    else
+    else {
+        // See comment in RunPhase::CommandAssembly::assemble_command() for
+        // explanation of "exec "
+        std::string command;
+        if (is_custom)
+            command = "exec " + raw_command;
+        else
+            command = raw_command;
         // XXX test this!
-        return terminal + " -e " + shell + " -c '" + raw_command + "'";
+        return terminal + " -e " + shell + " -c '" + command + "'";
+    }
 }
 
 struct Executable
@@ -325,6 +339,7 @@ struct Executable
     }
 };
 
+// If terminal != "", execute raw_command through terminal emulator.
 static Executable assemble_command(std::string raw_command,
                                    const std::string &terminal,
                                    const char *shell, bool is_custom) {
@@ -392,6 +407,8 @@ public:
             LOG_F(INFO, "No application has been selected, exitting...");
             return {};
         }
+
+        using namespace Lookup;
 
         lookup_res_type lookup = lookup_name(*query, this->mapping.get_map());
         bool is_custom = std::holds_alternative<CommandLookup>(lookup);
@@ -517,7 +534,9 @@ public:
     void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
                      &command_info) override {
         std::string command = RunPhase::CommandAssembly::i3_assemble_command(
-            command_info.raw_command, this->terminal, this->shell);
+            command_info.raw_command,
+            command_info.is_terminal ? this->terminal : "", this->shell,
+            command_info.is_custom);
         I3Interface::exec(command, this->i3_ipc_path);
     }
 
@@ -533,6 +552,8 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
            const stringlist_t &search_path,
            RunPhase::CommandRetrievalLoop &command_retreive,
            ExecutePhase::BaseExecutable *executor) {
+    // We need to derermine if we're i3 to know if we need to fork before
+    // executing a program.
     bool is_i3 =
         dynamic_cast<ExecutePhase::NormalExecutable *>(executor) == nullptr;
 
@@ -575,7 +596,7 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                     // Shouldn't be reachable.
                     abort();
                 }
-                // XXX Update name mapping
+                command_retreive.update_mapping(appm);
 #ifdef DEBUG
                 appm.check_inner_state();
 #endif
@@ -810,12 +831,12 @@ int main(int argc, char **argv) {
     LOG_F(9, "I3 IPC interface is %s.", (use_i3_ipc ? "on" : "off"));
 
     std::string i3_ipc_path;
-    // This may abort()/exit()
     if (use_i3_ipc) {
         if (!wrapper.empty()) {
             LOG_F(ERROR, "You can't enable both i3 IPC and a wrapper!");
             exit(EXIT_FAILURE);
         }
+        // This may abort()/exit()
         i3_ipc_path = I3Interface::get_ipc_socket_path();
     }
 
@@ -943,7 +964,6 @@ int main(int argc, char **argv) {
             do_wait_on(notify, wait_on, appm, search_path,
                        command_retrieval_loop, &executor);
         } else {
-
             NormalExecutable executor(std::move(terminal), std::move(wrapper),
                                       shell);
             do_wait_on(notify, wait_on, appm, search_path,
