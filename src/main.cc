@@ -300,7 +300,7 @@ namespace CommandAssembly
 {
 static std::string i3_assemble_command(const std::string &raw_command,
                                        const std::string &terminal,
-                                       const char *shell, bool is_custom) {
+                                       bool is_custom) {
     if (terminal.empty())
         return raw_command;
     else {
@@ -312,7 +312,7 @@ static std::string i3_assemble_command(const std::string &raw_command,
         else
             command = raw_command;
         // XXX test this!
-        return terminal + " -e " + shell + " -c '" + command + "'";
+        return terminal + " -e " + "/bin/sh -c '" + command + "'";
     }
 }
 
@@ -342,10 +342,10 @@ struct Executable
 // If terminal != "", execute raw_command through terminal emulator.
 static Executable assemble_command(std::string raw_command,
                                    const std::string &terminal,
-                                   const char *shell, bool is_custom) {
+                                   bool is_custom) {
     /*
      * Some shells automatically exec() the last command in the
-     * command_string passed in by $SHELL -c but some do not. For
+     * command_string passed in by sh -c but some do not. For
      * example bash does this but dash doesn't. Prepending "exec " to
      * the command ensures that the shell will get replaced. Custom
      * commands might contain complicated expressions so exec()ing them
@@ -356,12 +356,12 @@ static Executable assemble_command(std::string raw_command,
         raw_command = "exec " + raw_command;
     if (terminal.empty())
         return Executable{
-            {shell, "-c", raw_command},
+            {"/bin/sh", "-c", raw_command},
             Executable::PATHNAME
         };
     else
         return Executable{
-            {terminal, "-e", shell, "-c", raw_command},
+            {terminal, "-e", "/bin/sh", "-c", raw_command},
             Executable::FILE
         };
 }
@@ -477,10 +477,8 @@ public:
 class NormalExecutable final : public BaseExecutable
 {
 public:
-    NormalExecutable(std::string terminal, std::string wrapper,
-                     const char *shell)
-        : terminal(std::move(terminal)), wrapper(std::move(wrapper)),
-          shell(shell) {}
+    NormalExecutable(std::string terminal, std::string wrapper)
+        : terminal(std::move(terminal)), wrapper(std::move(wrapper)) {}
 
     // This class could be copied or moved, but it wouldn't make much sense in
     // current implementation. This prevents accidental copy/move.
@@ -496,7 +494,7 @@ public:
             auto command =
                 assemble_command(command_info.raw_command,
                                  command_info.is_terminal ? this->terminal : "",
-                                 this->shell, command_info.is_custom);
+                                 command_info.is_custom);
             execute_app(command);
         } else {
             std::string wrapped_command =
@@ -504,7 +502,7 @@ public:
 
             Executable command = assemble_command(
                 wrapped_command, command_info.is_terminal ? this->terminal : "",
-                this->shell, command_info.is_custom);
+                command_info.is_custom);
             execute_app(command);
         }
         abort();
@@ -513,16 +511,13 @@ public:
 private:
     std::string terminal;
     std::string wrapper; // empty when no wrappe is in use
-    const char *shell;
 };
 
 class I3Executable final : public BaseExecutable
 {
 public:
-    I3Executable(std::string terminal, const char *shell,
-                 std::string i3_ipc_path)
-        : terminal(std::move(terminal)), shell(shell),
-          i3_ipc_path(std::move(i3_ipc_path)) {}
+    I3Executable(std::string terminal, std::string i3_ipc_path)
+        : terminal(std::move(terminal)), i3_ipc_path(std::move(i3_ipc_path)) {}
 
     // This class could be copied or moved, but it wouldn't make much sense in
     // current implementation. This prevents accidental copy/move.
@@ -535,14 +530,13 @@ public:
                      &command_info) override {
         std::string command = RunPhase::CommandAssembly::i3_assemble_command(
             command_info.raw_command,
-            command_info.is_terminal ? this->terminal : "", this->shell,
+            command_info.is_terminal ? this->terminal : "",
             command_info.is_custom);
         I3Interface::exec(command, this->i3_ipc_path);
     }
 
 private:
     std::string terminal;
-    const char *shell;
     std::string i3_ipc_path;
 };
 }; // namespace ExecutePhase
@@ -960,12 +954,11 @@ int main(int argc, char **argv) {
         NotifyInotify notify(search_path);
 #endif
         if (use_i3_ipc) {
-            I3Executable executor(std::move(terminal), shell, i3_ipc_path);
+            I3Executable executor(std::move(terminal), i3_ipc_path);
             do_wait_on(notify, wait_on, appm, search_path,
                        command_retrieval_loop, &executor);
         } else {
-            NormalExecutable executor(std::move(terminal), std::move(wrapper),
-                                      shell);
+            NormalExecutable executor(std::move(terminal), std::move(wrapper));
             do_wait_on(notify, wait_on, appm, search_path,
                        command_retrieval_loop, &executor);
         }
@@ -976,10 +969,10 @@ int main(int argc, char **argv) {
         if (!command)
             return 0;
         if (use_i3_ipc)
-            I3Executable(std::move(terminal), shell, std::move(i3_ipc_path))
+            I3Executable(std::move(terminal), std::move(i3_ipc_path))
                 .execute(*command);
         else
-            NormalExecutable(std::move(terminal), std::move(wrapper), shell)
+            NormalExecutable(std::move(terminal), std::move(wrapper))
                 .execute(*command);
     }
 }
