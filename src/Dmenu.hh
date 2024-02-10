@@ -2,6 +2,7 @@
 #define DMENU_DEF
 
 #include <stdexcept>
+#include <array>
 #include <unistd.h>
 
 #include <sys/stat.h>
@@ -10,10 +11,13 @@
 class Dmenu
 {
 public:
-    Dmenu(const std::string &dmenu_command, const char *sh);
+    Dmenu(std::string dmenu_command, const char *sh);
 
     Dmenu(const Dmenu &dmenu) = delete;
     void operator=(const Dmenu &dmenu) = delete;
+
+    Dmenu(Dmenu &&) = default;
+    Dmenu & operator=(Dmenu &&) = default;
 
     // The caller may wish to handle SIGPIPE to detect dmenu failure when
     // calling write().
@@ -23,11 +27,14 @@ public:
     void run();
 
 private:
-    const std::string &dmenu_command;
+    std::string dmenu_command;
     const char *shell;
 
-    int inpipe[2];
-    int outpipe[2];
+    std::array<int, 2> inpipe;
+    std::array<int, 2> outpipe;
     int pid = 0;
 };
+
+static_assert(std::is_move_constructible_v<Dmenu>);
+
 #endif

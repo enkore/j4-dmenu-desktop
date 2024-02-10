@@ -46,6 +46,7 @@
 typedef std::vector<std::string> stringlist_t;
 
 stringlist_t split(const std::string &str, char delimiter);
+std::string join(const stringlist_t &vec, char delimiter = ' ');
 bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2);
 void replace(std::string &str, const std::string &substr,
              const std::string &substitute);

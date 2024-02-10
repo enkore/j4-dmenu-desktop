@@ -83,4 +83,6 @@ private:
     std::multimap<int, string, std::greater<int>> history;
 };
 
+static_assert(std::is_move_constructible_v<HistoryManager>);
+
 #endif

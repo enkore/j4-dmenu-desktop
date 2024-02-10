@@ -30,6 +30,16 @@ stringlist_t split(const std::string &str, char delimiter) {
     return result;
 }
 
+std::string join(const stringlist_t &vec, char delimiter) {
+    if (vec.empty())
+        return {};
+    std::string result = vec.front();
+    for (auto i = std::next(vec.begin()); i != vec.end(); ++i)
+        result += delimiter + *i;
+
+    return result;
+}
+
 bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2) {
     for (auto e1 : list1) {
         for (auto e2 : list2) {

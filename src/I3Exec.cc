@@ -12,7 +12,9 @@
 
 using std::string;
 
-string i3_get_ipc_socket_path() {
+namespace I3Interface
+{
+string get_ipc_socket_path() {
     int pipefd[2];
     if (pipe(pipefd) == -1)
         PFATALE("pipe");
@@ -137,7 +139,7 @@ static string read_JSON_string(string::const_iterator iter,
     }
 }
 
-void i3_exec(const std::string &command, const std::string &socket_path) {
+void exec(const std::string &command, const std::string &socket_path) {
     if (command.size() > std::numeric_limits<unsigned int>::max()) {
         LOG_F(ERROR, "Command '%s' is too long! (expected <= %lu, got %u)",
               command.c_str(),
@@ -230,3 +232,4 @@ void i3_exec(const std::string &command, const std::string &socket_path) {
         abort();
     }
 }
+};

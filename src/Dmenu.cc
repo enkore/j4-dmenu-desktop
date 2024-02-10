@@ -21,8 +21,8 @@
 
 #include <loguru.hpp>
 
-Dmenu::Dmenu(const std::string &dmenu_command, const char *sh)
-    : dmenu_command(dmenu_command), shell(sh) {}
+Dmenu::Dmenu(std::string dmenu_command, const char *sh)
+    : dmenu_command(std::move(dmenu_command)), shell(sh) {}
 
 void Dmenu::write(std::string_view what) {
     writen(this->outpipe[1], what.data(), what.size());
@@ -79,7 +79,7 @@ void Dmenu::run() {
 
     LOG_F(9, "Dmenu: Running Dmenu.");
 
-    if (pipe(this->inpipe) == -1 || pipe(this->outpipe) == -1)
+    if (pipe(this->inpipe.data()) == -1 || pipe(this->outpipe.data()) == -1)
         throw std::runtime_error("Dmenu::create(): pipe() failed");
 
     this->pid = fork();
