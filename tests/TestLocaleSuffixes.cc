@@ -36,3 +36,27 @@ TEST_CASE("Test short encoding", "[LocaleSuffixes]") {
     REQUIRE(ls.match("en") == 0);
     REQUIRE_FALSE(ls.match("en_US") == 0);
 }
+
+TEST_CASE("Test == operator", "[LocaleSuffixes]") {
+    LocaleSuffixes ls("en");
+    REQUIRE(ls == ls);
+    LocaleSuffixes ls2(ls);
+    REQUIRE(ls == ls2);
+}
+
+TEST_CASE("Test listing suffixes", "[LocaleSuffixes]") {
+    LocaleSuffixes ls("en_US@mod");
+    auto suffixes = ls.list_suffixes_for_logging_only();
+    REQUIRE(suffixes.size() == 4);
+    REQUIRE(*suffixes[0] == "en_US@mod");
+    REQUIRE(*suffixes[1] == "en_US");
+    REQUIRE(*suffixes[2] == "en@mod");
+    REQUIRE(*suffixes[3] == "en");
+
+
+    LocaleSuffixes ls2("en_US.UTF-8");
+    suffixes = ls2.list_suffixes_for_logging_only();
+    REQUIRE(suffixes.size() == 2);
+    REQUIRE(*suffixes[0] == "en_US");
+    REQUIRE(*suffixes[1] == "en");
+}

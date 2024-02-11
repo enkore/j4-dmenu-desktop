@@ -1,0 +1,5 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=First\sName\r\nSecond\tName
+Exec=eagle\t-style plastique

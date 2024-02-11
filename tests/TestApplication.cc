@@ -15,6 +15,56 @@ TEST_CASE("Test Nonexistant file", "[Application]") {
                                ls, {}));
 }
 
+TEST_CASE("Test comparison", "[Application]")
+{
+    LocaleSuffixes ls("en_US");
+    char *buffer = static_cast<char *>(malloc(4096));
+    size_t size = 4096;
+    Application app1(TEST_FILES "applications/eagle.desktop", &buffer, &size,
+                    ls, {});
+
+    Application app2(TEST_FILES "applications/htop.desktop", &buffer, &size,
+                    ls, {});
+
+    REQUIRE(app1 == app1);
+    REQUIRE(app2 == app2);
+
+    REQUIRE_FALSE(app1 == app2);
+    REQUIRE_FALSE(app2 == app1);
+
+    Application app3(app2);
+
+    REQUIRE(app3 == app2);
+
+    free(buffer);
+}
+
+TEST_CASE("Test correct handling of escape sequences",
+          "[Application]") {
+    LocaleSuffixes ls("en_US");
+    char *buffer = static_cast<char *>(malloc(4096));
+    size_t size = 4096;
+    Application app(TEST_FILES "applications/escape.desktop", &buffer, &size,
+                    ls, {});
+
+    REQUIRE(app.exec == "eagle\t-style plastique");
+    REQUIRE(app.name == "First Name\r\nSecond\tName");
+
+    free(buffer);
+}
+
+TEST_CASE("Test invalid escape sequence detection",
+          "[Application]") {
+    LocaleSuffixes ls("en_US");
+    char *buffer = static_cast<char *>(malloc(4096));
+    size_t size = 4096;
+    REQUIRE_THROWS_AS(Application(TEST_FILES "applications/bad-escape.desktop",
+                                  &buffer, &size, ls, {}),
+                      escape_error);
+
+    free(buffer);
+}
+
 TEST_CASE("Validate correct parsing of a simple file",
           "[Application][Application/valid]") {
     LocaleSuffixes ls("en_US");

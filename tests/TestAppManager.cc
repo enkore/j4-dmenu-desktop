@@ -28,8 +28,8 @@ static bool checkmap(const AppManager &appm, const ctype &cmp) {
 
     ctype app_name_mapping;
     app_name_mapping.reserve(original_name_mapping.size());
-    for (const auto &[name, ptr] : original_name_mapping)
-        app_name_mapping.emplace_back((std::string)name, ptr->exec);
+    for (const auto &[name, resolved] : original_name_mapping)
+        app_name_mapping.emplace_back((std::string)name, resolved.app->exec);
 
     ctype cmp_name_mapping = cmp;
 
