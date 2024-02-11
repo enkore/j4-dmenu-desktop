@@ -20,6 +20,10 @@
 Desktop_file_rank::Desktop_file_rank(string b, std::vector<string> f)
     : base_path(std::move(b)), files(std::move(f)) {}
 
+Resolved_application::Resolved_application(const Application *app,
+                                           bool is_generic)
+    : app(app), is_generic(is_generic) {}
+
 AppManager::AppManager(Desktop_file_list files, bool generic_names_enabled,
                        stringlist_t desktopenvs, LocaleSuffixes suffixes)
     : generic_names_enabled(generic_names_enabled),
@@ -57,7 +61,7 @@ AppManager::AppManager(Desktop_file_list files, bool generic_names_enabled,
 
                 // Add the names.
                 auto add_result = this->name_app_mapping.try_emplace(
-                    newly_added.app.name, &newly_added.app);
+                    newly_added.app.name, &newly_added.app, false);
                 LOG_IF_F(9, !add_result.second,
                          "AppManager:     Name '%s' is already taken! Not "
                          "registering.",
@@ -65,7 +69,7 @@ AppManager::AppManager(Desktop_file_list files, bool generic_names_enabled,
                 if (generic_names_enabled &&
                     !newly_added.app.generic_name.empty()) {
                     auto add_result2 = this->name_app_mapping.try_emplace(
-                        newly_added.app.generic_name, &newly_added.app);
+                        newly_added.app.generic_name, &newly_added.app, true);
                     LOG_IF_F(9, !add_result2.second,
                              "AppManager:     GenericName '%s' is already "
                              "taken! Not registering.",
@@ -177,7 +181,7 @@ void AppManager::add(const string &filename, const string &base_path,
     }
 }
 
-const std::unordered_map<string_view, const Application *> &
+const std::unordered_map<string_view, const Resolved_application> &
 AppManager::view_name_app_mapping() const {
     return this->name_app_mapping;
 }
@@ -234,10 +238,14 @@ void AppManager::check_inner_state() const {
         }
     }
 
-    for (const auto &[name, ptr] : this->name_app_mapping) {
+    for (const auto &[name, resolved] : this->name_app_mapping) {
         if (name.empty()) {
             ABORT_F(
                 "AppManager check error: A name in name_app_mapping is empty!");
+        }
+        if (!this->generic_names_enabled && resolved.is_generic) {
+            ABORT_F("AppManager check error: A non-generic name is in "
+                    "name_app_mapping when generic names aren't enabled!");
         }
         // See above for explanation of .data()[]
         if (name.data()[name.size()] != '\0') {
@@ -255,7 +263,7 @@ void AppManager::check_inner_state() const {
                     "to an unknown location not in applications!");
         }
         if (std::find_if(applications.cbegin(), applications.cend(),
-                         [&ptr = ptr](const value_type &val) {
+                         [&ptr = resolved.app](const value_type &val) {
                              return &val.second.app == ptr;
                          }) == applications.cend()) {
             ABORT_F("AppManager check error: An managed application pointer in "

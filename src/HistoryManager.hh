@@ -54,6 +54,7 @@ class v0_version_error : public std::runtime_error
 class HistoryManager
 {
 public:
+    using history_mmap_type = std::multimap<int, string, std::greater<int>>;
     HistoryManager(const string &path);
     HistoryManager(HistoryManager &&other);
     HistoryManager &operator=(HistoryManager &&other);
@@ -62,7 +63,8 @@ public:
     void operator=(const HistoryManager &) = delete;
 
     void increment(const string &name);
-    const std::multimap<int, string, std::greater<int>> &view() const;
+    void remove_obsolete_entry(history_mmap_type::const_iterator iter);
+    const history_mmap_type &view() const;
     static HistoryManager convert_history_from_v0(const string &path,
                                                   const AppManager &appm);
 
@@ -80,7 +82,7 @@ private:
     void write();
 
     std::unique_ptr<FILE, fclose_deleter> file;
-    std::multimap<int, string, std::greater<int>> history;
+    history_mmap_type history;
 };
 
 static_assert(std::is_move_constructible_v<HistoryManager>);

@@ -119,6 +119,10 @@ void HistoryManager::increment(const string &name) {
     write();
 }
 
+void HistoryManager::remove_obsolete_entry(history_mmap_type::const_iterator iter) {
+    this->history.erase(iter);
+}
+
 void HistoryManager::write() {
     FILE *f = this->file.get();
 

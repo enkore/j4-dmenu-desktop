@@ -35,6 +35,12 @@ Sets the terminal emulator used to start terminal apps.
 .It Fl Fl usage-log Ar file
 Must point to a read-writeable file (will create if not exists). In this mode
 entries are sorted by usage frequency.
+.It Fl Fl prune-bad-usage-log-entries
+Remove names marked in usage log for which
+.Nm
+was unable to find a desktop file.
+This can happen when an app marked in usage log no longer exists because it was
+uninstalled.
 .It Fl x , Fl Fl use-xdg-de
 Enables reading
 .Ev $XDG_CURRENT_DESKTOP

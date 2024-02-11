@@ -56,6 +56,14 @@ struct Desktop_file_rank
     Desktop_file_rank(string b, std::vector<string> f);
 };
 
+struct Resolved_application
+{
+    const Application *app;
+    bool is_generic;
+
+    Resolved_application(const Application *app, bool is_generic);
+};
+
 // This class represents the input to the ctor of AppManager.
 // Each element in this vector represents a list of desktop files in a specific
 // rank. An element may be empty.
@@ -66,6 +74,10 @@ using Desktop_file_list = std::vector<Desktop_file_rank>;
 class AppManager
 {
 public:
+    using name_app_mapping_type =
+        std::unordered_map<string_view /*(Generic)Name*/,
+                           const Resolved_application>;
+
     AppManager(const AppManager &) = delete;
     AppManager(AppManager &&) = delete;
     void operator=(const AppManager &) = delete;
@@ -79,7 +91,7 @@ public:
     // and its rank within $XDG_DATA_DIRS
     void add(const string &filename, const string &base_path, int rank);
     std::forward_list<Managed_application>::difference_type count() const;
-    const std::unordered_map<string_view, const Application *> &
+    const std::unordered_map<string_view, const Resolved_application> &
     view_name_app_mapping() const;
     ~AppManager();
 
@@ -120,7 +132,7 @@ private:
         // applications. The application which currently owns the name
         // (it's pointer is associated with the name in name_lookup) must also
         // own the key to maintain the lifetime of the key.
-        if (name_lookup_iter->second == &to_remove.app) {
+        if (name_lookup_iter->second.app == &to_remove.app) {
             name_app_mapping.erase(name_lookup_iter);
             // We will look through all applications to find one with the same
             // (Generic)Name to replace the current one. The match with the
@@ -168,7 +180,7 @@ private:
                 this->name_app_mapping.try_emplace(
                     best_match->name == name ? best_match->name
                                              : best_match->generic_name,
-                    best_match);
+                    best_match, N == NameType::generic_name);
         }
     }
 
@@ -182,11 +194,12 @@ private:
         if (name.empty())
             return;
 
-        auto result = this->name_app_mapping.try_emplace(name, &to_add.app);
+        auto result = this->name_app_mapping.try_emplace(
+            name, &to_add.app, N == NameType::generic_name);
         if (result.second)
             return;
 
-        const Application *&colliding_app_ptr = result.first->second;
+        auto colliding_app_ptr = result.first->second.app;
 
         using value_type = typename decltype(this->applications)::value_type;
         auto colliding_iter =
@@ -208,7 +221,8 @@ private:
             // the key of the element is a string_view. A replacement of the
             // pointer would mess up the lifetime of the key.
             this->name_app_mapping.erase(result.first);
-            this->name_app_mapping.try_emplace(name, &to_add.app);
+            this->name_app_mapping.try_emplace(name, &to_add.app,
+                                               N == NameType::generic_name);
         }
     }
 
@@ -218,8 +232,7 @@ private:
     // reasons.
     std::unordered_map<string /*desktop ID*/, Managed_application> applications;
     // Map used for lookup and name listing.
-    std::unordered_map<string_view /*(Generic)Name*/, const Application *>
-        name_app_mapping;
+    name_app_mapping_type name_app_mapping;
 
     bool generic_names_enabled;
 

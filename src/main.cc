@@ -66,6 +66,9 @@ static void print_usage(FILE *f) {
         "\t\tSets the terminal emulator used to start terminal apps\n"
         "\t--usage-log=<file>\n"
         "\t\tUse file as usage log (enables sorting by usage frequency)\n"
+        "\t--prune-bad-usage-log-entries\n"
+        "\t\tRemove names marked in usage log with no corresponding desktop "
+        "files\n"
         "\t-x, --use-xdg-de\n"
         "\t\tEnables reading $XDG_CURRENT_DESKTOP to determine the desktop "
         "environment\n"
@@ -152,7 +155,9 @@ count_collected_desktop_files(const Desktop_file_list &files) {
 class NameToAppMapping
 {
 public:
-    using name_map = std::map<std::string, const Application *, DynamicCompare>;
+    using formatted_name_map =
+        std::map<std::string, const Resolved_application, DynamicCompare>;
+    using raw_name_map = AppManager::name_app_mapping_type;
 
     NameToAppMapping(application_formatter app_format, bool case_insensitive)
         : app_format(app_format), mapping(DynamicCompare(case_insensitive)) {}
@@ -162,27 +167,106 @@ public:
 
         this->mapping.clear();
 
-        for (const auto &[key, ptr] : orig_mapping)
-            this->mapping.try_emplace(this->app_format(key, *ptr), ptr);
+        for (const auto &[key, resolved] : orig_mapping) {
+            const auto &[ptr, is_generic] = resolved;
+            this->mapping.try_emplace(this->app_format(key, *ptr), ptr,
+                                      is_generic);
+        }
     }
 
-    const name_map &get_map() const {
+    const formatted_name_map &get_formatted_map() const {
         return this->mapping;
+    }
+
+    const raw_name_map &get_unordered_raw_map() const {
+        return this->raw_mapping;
+    }
+
+    application_formatter view_formatter() const {
+        return this->app_format;
     }
 
 private:
     application_formatter app_format;
-    name_map mapping;
+    formatted_name_map mapping;
+    raw_name_map raw_mapping;
 };
 
 static_assert(std::is_move_constructible_v<NameToAppMapping>);
+
+// HistoryManager can't save formatted names. This class handles conversion of
+// raw names to formatted ones.
+class FormattedHistoryManager
+{
+public:
+    void reload(const NameToAppMapping &mapping) {
+        const auto &raw_name_lookup = mapping.get_unordered_raw_map();
+
+        this->formatted_history.clear();
+        const auto &hist_view = this->hist.view();
+        this->formatted_history.reserve(hist_view.size());
+
+        const auto &format = mapping.view_formatter();
+
+        for (auto iter = hist_view.begin(); iter != hist_view.end(); ++iter) {
+            const std::string &raw_name = iter->second;
+
+            auto lookup_result = raw_name_lookup.find(raw_name);
+            if (lookup_result == raw_name_lookup.end()) {
+                if (this->remove_obsolete_entries) {
+                    LOG_F(
+                        WARNING,
+                        "Removing history entry '%s', which doesn't correspond "
+                        "to any known desktop app name.",
+                        raw_name.c_str());
+                    this->hist.remove_obsolete_entry(iter);
+                } else {
+                    LOG_F(WARNING,
+                          "Couldn't find history entry '%s'. Has the program "
+                          "been uninstalled? Use --prune-bad-usage-log-entries "
+                          "to remove these entries.",
+                          raw_name.c_str());
+                }
+                continue;
+            }
+            this->formatted_history.push_back(
+                format(raw_name, *lookup_result->second.app));
+        }
+    }
+
+    FormattedHistoryManager(HistoryManager hist,
+                            const NameToAppMapping &mapping,
+                            bool remove_obsolete_entries)
+        : hist(std::move(hist)),
+          remove_obsolete_entries(remove_obsolete_entries) {
+        reload(mapping);
+    }
+
+    const stringlist_t &view() const {
+        return this->formatted_history;
+    }
+
+    void increment(const string &name) {
+        this->hist.increment(name);
+    }
+
+    void remove_obsolete_entry(
+        HistoryManager::history_mmap_type::const_iterator iter) {
+        this->hist.remove_obsolete_entry(iter);
+    }
+
+private:
+    HistoryManager hist;
+    bool remove_obsolete_entries;
+    stringlist_t formatted_history;
+};
 }; // namespace SetupPhase
 
 // Funclions and classes used in the "main" phase of j4dd after setup.
 // Most of the functions defined here are used in CommandRetrievalLoop.
 namespace RunPhase
 {
-using name_map = SetupPhase::NameToAppMapping::name_map;
+using name_map = SetupPhase::NameToAppMapping::formatted_name_map;
 
 // This is wrapped in a class to unregister the handler in dtor.
 class SIGPIPEHandler
@@ -212,31 +296,30 @@ public:
 };
 
 static std::optional<std::string>
-do_dmenu(Dmenu &dmenu, const name_map &mapping,
-         const std::optional<HistoryManager> &histm) {
+do_dmenu(Dmenu &dmenu, const name_map &mapping, const stringlist_t &history) {
     // Check for dmenu errors via SIGPIPE.
     SIGPIPEHandler sig;
 
     // Transfer the names to dmenu
-    if (histm) {
+    if (!history.empty()) {
         std::set<std::string_view, DynamicCompare> desktop_file_names(
             mapping.key_comp());
         for (const auto &[name, ignored] : mapping)
             desktop_file_names.emplace_hint(desktop_file_names.end(), name);
-        for (const auto &[ignored, name] : histm->view()) {
-            // We don't want to display a single element twice. We can't print
-            // history and then desktop name list because names in history will
-            // also be in desktop name list. Also, if there is a name in history
-            // which isn't in desktop name list, it could mean that the desktop
-            // file corresponding to the history name has been removed, making
-            // the history entry obsolete. The history entry shouldn't be shown
-            // if that is the case.
+        for (const auto &name : history) {
+            // We don't want to display a single element twice. We can't
+            // print history and then desktop name list because names in
+            // history will also be in desktop name list. Also, if there is
+            // a name in history which isn't in desktop name list, it could
+            // mean that the desktop file corresponding to the history name
+            // has been removed, making the history entry obsolete. The
+            // history entry shouldn't be shown if that is the case.
             if (desktop_file_names.erase(name))
                 dmenu.write(name);
             else
-                LOG_F(9,
-                      "DEBUG WARNING: Name '%s' in history will be ignored!\n",
-                      name.c_str());
+                // This shouldn't happen thanks to FormattedHistoryManager
+                ABORT_F("A name in history isn't in name list when it should "
+                        "be there!");
         }
         for (const auto &name : desktop_file_names)
             dmenu.write(name);
@@ -260,12 +343,13 @@ namespace Lookup
 struct ApplicationLookup
 {
     const Application *app;
+    bool is_generic;
     std::string args;
 
-    ApplicationLookup(const Application *a) : app(a) {}
+    ApplicationLookup(const Application *a, bool i) : app(a), is_generic(i) {}
 
-    ApplicationLookup(const Application *a, std::string arg)
-        : app(a), args(std::move(arg)) {}
+    ApplicationLookup(const Application *a, bool i, std::string arg)
+        : app(a), is_generic(i), args(std::move(arg)) {}
 };
 
 struct CommandLookup
@@ -285,11 +369,12 @@ static lookup_res_type lookup_name(const std::string &query,
                                    const name_map &map) {
     auto find = map.find(query);
     if (find != map.end())
-        return ApplicationLookup(find->second);
+        return ApplicationLookup(find->second.app, find->second.is_generic);
     else {
-        for (const auto &[name, ptr] : map) {
+        for (const auto &[name, resolved] : map) {
             if (startswith(query, name))
-                return ApplicationLookup(ptr, query.substr(name.size()));
+                return ApplicationLookup(resolved.app, resolved.is_generic,
+                                         query.substr(name.size()));
         }
         return CommandLookup(query);
     }
@@ -370,9 +455,10 @@ static Executable assemble_command(std::string raw_command,
 class CommandRetrievalLoop
 {
 public:
-    CommandRetrievalLoop(Dmenu dmenu, SetupPhase::NameToAppMapping mapping,
-                         std::optional<HistoryManager> hist_manager,
-                         bool no_exec)
+    CommandRetrievalLoop(
+        Dmenu dmenu, SetupPhase::NameToAppMapping mapping,
+        std::optional<SetupPhase::FormattedHistoryManager> hist_manager,
+        bool no_exec)
         : dmenu(std::move(dmenu)), mapping(std::move(mapping)),
           hist_manager(std::move(hist_manager)), no_exec(no_exec) {}
 
@@ -401,8 +487,10 @@ public:
     }
 
     std::optional<CommandInfo> prompt_user_for_choice() {
-        std::optional<std::string> query = RunPhase::do_dmenu(
-            this->dmenu, this->mapping.get_map(), this->hist_manager); // blocks
+        std::optional<std::string> query =
+            RunPhase::do_dmenu(this->dmenu, this->mapping.get_formatted_map(),
+                               (this->hist_manager ? this->hist_manager->view()
+                                                   : stringlist_t{})); // blocks
         if (!query) {
             LOG_F(INFO, "No application has been selected, exitting...");
             return {};
@@ -410,10 +498,9 @@ public:
 
         using namespace Lookup;
 
-        lookup_res_type lookup = lookup_name(*query, this->mapping.get_map());
+        lookup_res_type lookup =
+            lookup_name(*query, this->mapping.get_formatted_map());
         bool is_custom = std::holds_alternative<CommandLookup>(lookup);
-        if (!is_custom && !this->no_exec && this->hist_manager)
-            this->hist_manager->increment(*query);
 
         std::string raw_command;
         bool terminal = false;
@@ -421,6 +508,11 @@ public:
             raw_command = std::get<CommandLookup>(lookup).command;
         else {
             const ApplicationLookup &appl = std::get<ApplicationLookup>(lookup);
+            if (!this->no_exec && this->hist_manager) {
+                const std::string &name =
+                    (appl.is_generic ? appl.app->name : appl.app->generic_name);
+                this->hist_manager->increment(name);
+            }
             raw_command = application_command(*appl.app, appl.args);
             terminal = appl.app->terminal;
         }
@@ -434,12 +526,14 @@ public:
 
     void update_mapping(const AppManager &appm) {
         this->mapping.load(appm);
+        if (this->hist_manager)
+            this->hist_manager->reload(this->mapping);
     }
 
 private:
     Dmenu dmenu;
     SetupPhase::NameToAppMapping mapping;
-    std::optional<HistoryManager> hist_manager;
+    std::optional<SetupPhase::FormattedHistoryManager> hist_manager;
     bool no_exec;
 };
 }; // namespace RunPhase
@@ -678,6 +772,7 @@ int main(int argc, char **argv) {
     // IPC path.
     bool use_i3_ipc = false;
     bool skip_i3_check = false;
+    bool prune_bad_usage_log_entries = false;
     int verbose_flag = 0;
 
     application_formatter appformatter = appformatter_default;
@@ -687,24 +782,25 @@ int main(int argc, char **argv) {
     while (true) {
         int option_index = 0;
         static struct option long_options[] = {
-            {"dmenu",               required_argument, 0, 'd'},
-            {"use-xdg-de",          no_argument,       0, 'x'},
-            {"term",                required_argument, 0, 't'},
-            {"help",                no_argument,       0, 'h'},
-            {"display-binary",      no_argument,       0, 'b'},
-            {"display-binary-base", no_argument,       0, 'f'},
-            {"no-generic",          no_argument,       0, 'n'},
-            {"usage-log",           required_argument, 0, 'l'},
-            {"wait-on",             required_argument, 0, 'w'},
-            {"no-exec",             no_argument,       0, 'e'},
-            {"wrapper",             required_argument, 0, 'W'},
-            {"case-insensitive",    no_argument,       0, 'i'},
-            {"i3-ipc",              no_argument,       0, 'I'},
-            {"skip-i3-exec-check",  no_argument,       0, 'S'},
-            {"log-level",           required_argument, 0, 'o'},
-            {"log-file",            required_argument, 0, 'O'},
-            {"log-file-level",      required_argument, 0, 'V'},
-            {0,                     0,                 0, 0  }
+            {"dmenu",                       required_argument, 0, 'd'},
+            {"use-xdg-de",                  no_argument,       0, 'x'},
+            {"term",                        required_argument, 0, 't'},
+            {"help",                        no_argument,       0, 'h'},
+            {"display-binary",              no_argument,       0, 'b'},
+            {"display-binary-base",         no_argument,       0, 'f'},
+            {"no-generic",                  no_argument,       0, 'n'},
+            {"usage-log",                   required_argument, 0, 'l'},
+            {"prune-bad-usage-log-entries", no_argument,       0, 'p'},
+            {"wait-on",                     required_argument, 0, 'w'},
+            {"no-exec",                     no_argument,       0, 'e'},
+            {"wrapper",                     required_argument, 0, 'W'},
+            {"case-insensitive",            no_argument,       0, 'i'},
+            {"i3-ipc",                      no_argument,       0, 'I'},
+            {"skip-i3-exec-check",          no_argument,       0, 'S'},
+            {"log-level",                   required_argument, 0, 'o'},
+            {"log-file",                    required_argument, 0, 'O'},
+            {"log-file-level",              required_argument, 0, 'V'},
+            {0,                             0,                 0, 0  }
         };
 
         int c =
@@ -736,6 +832,9 @@ int main(int argc, char **argv) {
             break;
         case 'l':
             usage_log = optarg;
+            break;
+        case 'p':
+            prune_bad_usage_log_entries = true;
             break;
         case 'w':
             wait_on = optarg;
@@ -925,22 +1024,25 @@ int main(int argc, char **argv) {
     LOG_F(INFO, "Read %d .desktop files, found %u apps.", desktop_file_count,
           (unsigned int)appm.count());
 
+    /// Format names
+    SetupPhase::NameToAppMapping mapping(appformatter, case_insensitive);
+    mapping.load(appm);
+
     /// Initialize history
-    std::optional<HistoryManager> hist_manager;
+    std::optional<SetupPhase::FormattedHistoryManager> hist_manager;
 
     if (usage_log != nullptr) {
         try {
-            hist_manager.emplace(usage_log);
+            hist_manager.emplace(HistoryManager(usage_log), mapping,
+                                 prune_bad_usage_log_entries);
         } catch (const v0_version_error &) {
             LOG_F(WARNING, "History file is using old format. Automatically "
                            "converting to new one.");
             hist_manager.emplace(
-                HistoryManager::convert_history_from_v0(usage_log, appm));
+                HistoryManager::convert_history_from_v0(usage_log, appm),
+                mapping, prune_bad_usage_log_entries);
         }
     }
-
-    SetupPhase::NameToAppMapping mapping(appformatter, case_insensitive);
-    mapping.load(appm);
 
     RunPhase::CommandRetrievalLoop command_retrieval_loop(
         std::move(dmenu), std::move(mapping), std::move(hist_manager), no_exec);
