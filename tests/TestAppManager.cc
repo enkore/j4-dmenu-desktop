@@ -50,6 +50,18 @@ static bool checkmap(const AppManager &appm, const ctype &cmp) {
     return true;
 }
 
+TEST_CASE("Test desktop file ID creation", "[AppManager]") {
+    // These samples are taken directly from the standard.
+    REQUIRE(get_desktop_id("/usr/share/applications/foo/bar.desktop",
+                           "/usr/share/applications/") == "foo-bar.desktop");
+    REQUIRE(get_desktop_id("/usr/local/share/applications/org.foo.bar.desktop",
+                           "/usr/local/share/applications/") ==
+            "org.foo.bar.desktop");
+    REQUIRE(get_desktop_id("/usr/share/applications/org.foo.bar.desktop",
+                           "/usr/share/applications/") ==
+            "org.foo.bar.desktop");
+}
+
 TEST_CASE("Test basic functionality + hidden desktop file", "[AppManager]") {
     AppManager apps(
         {
