@@ -1,0 +1,11 @@
+See https://github.com/emilk/loguru/issues/247
+--- a/loguru.cpp
++++ b/loguru.cpp
+@@ -226,6 +226,7 @@
+ 					|| 0 == strcmp(term, "xterm")
+ 					|| 0 == strcmp(term, "xterm-256color")
+ 					|| 0 == strcmp(term, "xterm-termite")
++					|| 0 == strcmp(term, "alacritty")
+ 					|| 0 == strcmp(term, "xterm-color");
+ 			} else {
+ 				return false;

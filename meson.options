@@ -1,0 +1,22 @@
+option(
+    'set-debug',
+    type: 'combo',
+    choices: ['on', 'off', 'auto'],
+    value: 'auto',
+    description: 'Set the DEBUG preprocessor macro. If unset (auto), it will be enabled if builddir has debug enabled.',
+)
+
+option(
+    'split-source',
+    type: 'boolean',
+    value: false,
+    description: 'Make source it\'s own translation unit. This is aimed primarily for developers. It leads to less compilation when compiling both j4-dmenu-desktop and j4-dmenu-tests.',
+)
+
+option(
+    'notify-implementation',
+    type: 'combo',
+    choices: ['inotify', 'kqueeu', 'auto'],
+    value: 'auto',
+    description: 'Set the notify implementation.',
+)

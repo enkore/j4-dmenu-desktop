@@ -1,0 +1,19 @@
+--- a/meson.build
++++ b/meson.build
+@@ -64,16 +64,6 @@
+   gnu_symbol_visibility: 'hidden',
+   soversion: host_machine.system() == 'windows' ? '' : meson.project_version().split('.')[0],
+   version: meson.project_version(),
+-  install: true,
+-)
+-
+-install_headers('loguru.hpp')
+-
+-pkgc = import('pkgconfig')
+-pkgc.generate(
+-  emilk_loguru_lib,
+-  name: 'loguru',
+-  description: 'A lightweight and flexible C++ logging library',
+ )
+ 
+ api = []
