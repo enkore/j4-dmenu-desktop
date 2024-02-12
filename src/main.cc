@@ -163,15 +163,18 @@ public:
         : app_format(app_format), mapping(DynamicCompare(case_insensitive)) {}
 
     void load(const AppManager &appm) {
-        const auto &orig_mapping = appm.view_name_app_mapping();
+        this->raw_mapping = appm.view_name_app_mapping();
 
         this->mapping.clear();
 
-        for (const auto &[key, resolved] : orig_mapping) {
+        for (const auto &[key, resolved] : this->raw_mapping) {
             const auto &[ptr, is_generic] = resolved;
             this->mapping.try_emplace(this->app_format(key, *ptr), ptr,
                                       is_generic);
         }
+
+        if (this->raw_mapping.size() != this->mapping.size())
+            ABORT_F("Formatter has created a collision!");
     }
 
     const formatted_name_map &get_formatted_map() const {
