@@ -120,6 +120,13 @@ Lower loglevels automatically enable higher ones.
 .Bl -tag -width Ds
 .It Ev I3SOCK
 This variable overwrites the i3 IPC socket path.
+.It Ev XDG_DATA_HOME
+Directories containing desktop files.
+.It Ev XDG_CURRENT_DESKTOP
+Current desktop environment used for enabling/disabling desktop environemnt
+dependent desktop files.
+Must be enabled by
+.Fl Fl use-xdg-de .
 .El
 .Sh SEE ALSO
 .Lk https://github.com/enkore/j4-dmenu-desktop
