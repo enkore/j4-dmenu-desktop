@@ -739,12 +739,13 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                     close(fd);
                     setsid();
                     executor->execute(*user_response);
+                    abort();
                 }
             }
         }
-        close(fd);
-        exit(EXIT_SUCCESS);
     }
+    // Make reaaly sure [[noreturn]] is upheld.
+    abort();
 }
 
 // clang-format off
