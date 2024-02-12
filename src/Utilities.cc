@@ -50,8 +50,8 @@ bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2) {
     return false;
 }
 
-inline void replace(std::string &str, const std::string &substr,
-                    const std::string &substitute) {
+void replace(std::string &str, const std::string &substr,
+             const std::string &substitute) {
     if (substr.empty())
         return;
     size_t start_pos = 0;
