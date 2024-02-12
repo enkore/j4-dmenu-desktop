@@ -655,7 +655,7 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
     int fd;
     if (mkfifo(wait_on, 0600) && errno != EEXIST)
         PFATALE("mkfifo");
-    fd = open(wait_on, O_RDWR);
+    fd = open(wait_on, O_RDONLY | O_NONBLOCK);
     if (fd == -1)
         PFATALE("open");
     pollfd watch[] = {
@@ -691,9 +691,19 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
             }
         }
         if (watch[0].revents & POLLIN) {
+            // It can happen that the user tries to execute j4dd several times
+            // but has forgot to start j4dd. They then run it in wait on mode
+            // and then j4dd would be invoked several times because the FIFO has
+            // a bunch of events piled up. This nonblocking read() loop prevents
+            // this.
             char data;
-            if (read(fd, &data, sizeof(data)) < 1)
+            ssize_t err;
+            while ((err = read(fd, &data, sizeof(data))) == 1)
+                continue;
+            if (err == -1 && errno != EAGAIN)
                 PFATALE("read");
+            // Only the last event is taken into account (there is usually only
+            // a single event).
             if (data == 'q')
                 exit(EXIT_SUCCESS);
 
