@@ -474,6 +474,8 @@ public:
         std::string raw_command;
         bool is_custom;
         bool is_terminal; // Correcponds to Terminal field.
+        std::string path; // CWD of app if not empty; corresponds to Path
+                          // desktop entry key
     };
 
     // This function is separate from prompt_user_for_choice() because it needs
@@ -504,6 +506,7 @@ public:
 
         std::string raw_command;
         bool terminal = false;
+        std::string path;
         if (is_custom)
             raw_command = std::get<CommandLookup>(lookup).command;
         else {
@@ -515,13 +518,15 @@ public:
             }
             raw_command = application_command(*appl.app, appl.args);
             terminal = appl.app->terminal;
+            path = appl.app->path;
         }
 
         if (this->no_exec) {
             fprintf(stderr, "%s\n", raw_command.c_str());
             return {};
         } else
-            return CommandInfo{std::move(raw_command), is_custom, terminal};
+            return CommandInfo{std::move(raw_command), is_custom, terminal,
+                               path};
     }
 
     void update_mapping(const AppManager &appm) {
@@ -584,6 +589,12 @@ public:
     void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
                      &command_info) override {
         using namespace RunPhase::CommandAssembly;
+        if (!command_info.path.empty()) {
+            if (chdir(command_info.path.c_str()) == -1)
+                LOG_F(WARNING, "Coudln't chdir to '%s': %s",
+                      command_info.path.c_str(),
+                      loguru::errno_as_text().c_str());
+        }
         if (this->wrapper.empty()) {
             auto command =
                 assemble_command(command_info.raw_command,

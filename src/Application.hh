@@ -51,7 +51,7 @@ public:
     // Command line
     std::string exec;
 
-    // Path
+    // CWD of program
     std::string path;
 
     // Path of .desktop file
