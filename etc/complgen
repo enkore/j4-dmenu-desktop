@@ -1,0 +1,25 @@
+j4-dmenu-desktop (-h | --help);
+
+j4-dmenu-desktop [<OPTION>]...;
+
+<OPTION> ::= (-b | --display-binary) "Display binary name after each entry"
+    | (-f | --display-binary-base) "Display basename of binary name after each entry"
+    | (-d <PATH> | --dmenu <PATH>) "Command used to invoke dmenu"
+    | --no-exec "Do not execute selected command, send to stdout instead"
+    | --no-generic "Do not include the generic name of desktop entries"
+    | (-t <PATH> | --term <PATH>) "Sets the terminal emulator used to start terminal apps"
+    | --usage-log <PATH> "Set usage log"
+    | --prune-bad-usage-log-entries "Remove bad history entries"
+    | (-x | --use-xdg-de) "Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment"
+    | --wait-on <PATH> "Enable daemon mode"
+    | --wrapper <PATH> "A wrapper binary"
+    | (-I | --i3-ipc) "Execute desktop entries through i3 IPC"
+    | --skip-i3-exec-check "Disable the check for '--wrapper \"i3 exec\"'"
+    | (-i | --case-insensitive) "Sort applications case insensitively"
+    | -v "Be more verbose, can be specified multiple times"
+    | --log-level <LEVEL> "Set loglevel"
+    | --log-file <PATH> "Specify a log file"
+    | --log-file-level <LEVEL> "Set file loglevel"
+    ;
+
+<LEVEL> ::= ERROR | WARNING | INFO | DEBUG;

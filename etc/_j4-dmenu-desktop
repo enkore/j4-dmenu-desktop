@@ -1,0 +1,26 @@
+#compdef j4-dmenu-desktop
+
+# Some of the flags accept executables. They are matced with _files -g \(\*\).
+# This is a glob that maches files that are executable.
+
+# shellcheck disable=SC2016
+_arguments -s \
+    '(- *)'{-h,--help}'[Print help message]' `#- and * mean that no flags shall follow --help` \
+    '(-b --display-binary)'{-b,--display-binary}'[Display binary name after each entry]' \
+    '(-f --display-binary-base)'{-f,--display-binary-base}'[Display basename of binary name after each entry]' \
+    '(-d --dmenu)'{-d,--dmenu}'=[Command used to invoke dmenu]:command:_files -g \*\(\*\)' \
+    '--no-exec[Do not execute selected command, send to stdout instead]' \
+    '--no-generic[Do not include the generic name of desktop entries]' \
+    '(-t --term)'{-t,--term}'=[Sets the terminal emulator used to start terminal apps]:command:_files -g \*\(\*\)' \
+    '--usage-log=[Set usage log]:file:_files' \
+    '--prune-bad-usage-log-entries[Remove bad history entries]' \
+    '(-x --use-xdg-de)'{-x,--use-xdg-de}'[Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment]' \
+    '--wait-on=[Enable daemon mode]:path:_files' \
+    '--wrapper=[A wrapper binary]:command:_files -g \*\(\*\)' \
+    '(-I --i3-ipc)'{-I,--i3-ipc}'[Execute desktop entries through i3 IPC]' \
+    '--skip-i3-exec-check[Disable the check for '\''--wrapper "i3 exec"'\'']' \
+    '(-i --case-insensitive)'{-i,--case-insensitive}'[Sort applications case insensitively]' \
+    '-v[Be more verbose, can be specified multiple times]' \
+    '--log-level=[Set loglevel]:level:(ERROR WARNING INFO DEBUG)' \
+    '--log-file=[Specify a log file]:file:_files' \
+    '--log-file-level=[Set file loglevel]:level:(ERROR WARNING INFO DEBUG)'
