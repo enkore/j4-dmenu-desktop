@@ -4,9 +4,11 @@ The AppManager class is a specialized container for the Application. The contain
 1. Initialize all Applications.
 
    The initialization happens in the constructor. It receives a list of .desktop file paths divided into [ranks](#ranks). It then traverses the list from the lowest rank to the highest rank to avoid collisions (this is further described in [collisions](#collisions)).
-2. Provide a (Generic)Name to `Application` mapping.
+2. Provide a (Generic)Name to `Application` (+ `is_generic`) mapping.
 
-   The mapping isn't required to have any particular order. It is used in the process of creating a list of names for dmenu to display (see [Names](#names) for caveats) and for resolving the selected name to `Application`. 
+   The mapping isn't required to have any particular order. It is used in the process of creating a list of names for dmenu to display (see [Names](#names) for caveats) and for resolving the selected name to `Application`.
+
+   This mapping also stores whether the name is generic or not. This is used in history management.
 
    1. The list of application names must not contain duplicates.
 
