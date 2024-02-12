@@ -93,16 +93,6 @@ std::string get_variable(const std::string &var) {
         return "";
 }
 
-std::string get_desktop_id(std::string filename) {
-    std::string result(std::move(filename));
-    replace(result.begin(), result.end(), '/', '-');
-    return result;
-}
-
-std::string get_desktop_id(std::string filename, std::string_view base) {
-    return get_desktop_id(filename.substr(base.size()));
-}
-
 void fclose_deleter::operator()(FILE *f) const noexcept {
     fclose(f);
 }

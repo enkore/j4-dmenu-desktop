@@ -54,8 +54,6 @@ bool endswith(const std::string &str, const std::string &suffix);
 bool startswith(const std::string &str, const std::string &prefix);
 bool is_directory(const std::string &path);
 std::string get_variable(const std::string &var);
-std::string get_desktop_id(std::string filename);
-std::string get_desktop_id(std::string filename, std::string_view base);
 ssize_t writen(int fd, const void *buffer, size_t n);
 
 // This ScopeGuard is taken from https://stackoverflow.com/a/61242721

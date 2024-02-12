@@ -17,6 +17,16 @@
 
 #include "AppManager.hh"
 
+std::string get_desktop_id(std::string filename) {
+    std::string result(std::move(filename));
+    replace(result.begin(), result.end(), '/', '-');
+    return result;
+}
+
+std::string get_desktop_id(const std::string &filename, std::string_view base) {
+    return get_desktop_id(filename.substr(base.size()));
+}
+
 Desktop_file_rank::Desktop_file_rank(string b, std::vector<string> f)
     : base_path(std::move(b)), files(std::move(f)) {}
 

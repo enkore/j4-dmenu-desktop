@@ -37,6 +37,9 @@ using std::string_view;
 // See doc/AppManager.md for a more high level explanation of the function of
 // AppManager.
 
+std::string get_desktop_id(std::string filename);
+std::string get_desktop_id(const std::string &filename, std::string_view base);
+
 // This class is basically an Application with added info needed for AppManager.
 struct Managed_application
 {
