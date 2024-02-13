@@ -79,7 +79,7 @@ class AppManager
 public:
     using name_app_mapping_type =
         std::unordered_map<string_view /*(Generic)Name*/,
-                           const Resolved_application>;
+                           Resolved_application>;
 
     AppManager(const AppManager &) = delete;
     AppManager(AppManager &&) = delete;
@@ -94,7 +94,7 @@ public:
     // and its rank within $XDG_DATA_DIRS
     void add(const string &filename, const string &base_path, int rank);
     std::forward_list<Managed_application>::difference_type count() const;
-    const std::unordered_map<string_view, const Resolved_application> &
+    const name_app_mapping_type &
     view_name_app_mapping() const;
     ~AppManager();
 
