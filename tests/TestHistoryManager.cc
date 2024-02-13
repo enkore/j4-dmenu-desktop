@@ -58,10 +58,6 @@ TEST_CASE("Test loading history", "[History]") {
     }
     close(origfd);
 
-    if (syncfs(tmpfilefd) < 0) {
-        WARN("Coudln't syncfs(): " << strerror(errno));
-    }
-
     std::multimap<int, string, std::greater<int>> history = {
         {8, "Pinta"       },
         {8, "XScreenSaver"},
@@ -135,10 +131,6 @@ TEST_CASE("Test conversion from v0 to v1", "[History]") {
                                     << e.what());
     }
     close(origfd);
-
-    if (syncfs(tmpfilefd) < 0) {
-        WARN("Coudln't syncfs(): " << strerror(errno));
-    }
 
     std::multimap<int, string, std::greater<int>> history = {
         {7, "Htop"                          },

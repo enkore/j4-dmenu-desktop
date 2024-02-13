@@ -15,7 +15,13 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <stack>
+
 #include "NotifyKqueue.hh"
+#include "Utilities.hh"
 
 NotifyKqueue::directory_entry::directory_entry(int q, int r, std::string p)
     : queue(q), rank(r), path(std::move(p)) {}
@@ -24,7 +30,8 @@ void NotifyKqueue::process_kqueue(const stringlist_t &search_path,
                                   std::vector<directory_entry> directories,
                                   NotifyKqueue &instance) {
     struct kevent event;
-    timespec timeout = {0};
+    timespec timeout;
+    memset(&timeout, 0, sizeof timeout);
 
     while (true) {
         for (auto &i : directories) {
@@ -152,7 +159,7 @@ int NotifyKqueue::getfd() const {
     return pipefd[0];
 }
 
-std::vector<filechange> NotifyKqueue::getchanges() {
+std::vector<NotifyBase::filechange> NotifyKqueue::getchanges() {
     std::vector<filechange> result;
     {
         std::lock_guard<std::mutex> lock(changes_mutex);

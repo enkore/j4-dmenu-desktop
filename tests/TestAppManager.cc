@@ -648,10 +648,6 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
     }
     close(origfd);
 
-    if (syncfs(tmpfilefd) < 0) {
-        WARN("Coudln't syncfs(): " << strerror(errno));
-    }
-
     AppManager apps(
         {
             {TEST_FILES "a/applications/",
@@ -719,10 +715,6 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
              << "' to '" << tmpfilename << ": " << e.what());
     }
     close(origfd);
-
-    if (syncfs(tmpfilefd) < 0) {
-        WARN("Coudln't syncfs(): " << strerror(errno));
-    }
 
     apps.add(tmpfilename, "/tmp/", 1);
 
