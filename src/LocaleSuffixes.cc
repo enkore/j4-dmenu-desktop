@@ -19,6 +19,8 @@
 
 #include <loguru.hpp>
 
+#include <locale.h>
+
 LocaleSuffixes::LocaleSuffixes(std::string locale) {
     size_t uscorepos = 0, dotpos = 0, atpos = 0;
 

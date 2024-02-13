@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <array>
+#include <string>
 #include <unistd.h>
 
 #include <sys/stat.h>

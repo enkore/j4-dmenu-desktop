@@ -7,6 +7,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <thread>
+#include <set>
+
+using stringlist_t = std::vector<std::string>;
 
 /*
  * This is the Notify implementation for systems using kqueue.
