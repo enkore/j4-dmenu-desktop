@@ -536,7 +536,7 @@ public:
             const ApplicationLookup &appl = std::get<ApplicationLookup>(lookup);
             if (!this->no_exec && this->hist_manager) {
                 const std::string &name =
-                    (appl.is_generic ? appl.app->name : appl.app->generic_name);
+                    (appl.is_generic ? appl.app->generic_name : appl.app->name);
                 this->hist_manager->increment(name);
             }
             raw_command = application_command(*appl.app, appl.args);
