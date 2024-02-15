@@ -9,12 +9,21 @@ You can also execute shell commands using it.
 
 ## Build requirements
 
-* Compiler with basic C++11 support (GCC 4.77 or later required, Clang works, too)
-* CMake
+* Compiler with C++17 support
+* CMake or Meson
 
-Building is the usual cmake/make thingy:
+Building with Meson:
 
-    cmake .
+    ./meson-setup.sh build
+    cd build
+    ninja src/j4-dmenu-desktop
+    sudo meson install
+
+Building with CMake:
+
+    mkdir build
+    cd build
+    cmake ..
     make
     sudo make install
 
