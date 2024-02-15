@@ -5,6 +5,8 @@ using [complgen](https://github.com/adaszko/complgen). Contributions with a
 better bash completion are welcome.
 
 Moving to an automatic completion generation system would be nice. Now, when a
-flag is changed, `j4-dmenu-desktop`'s `--help` message must be changed, its
-manpage must be changed, ZSH, fish and complgen completions must be changed. The
-aforementioned complgen is close, but it isn't feature complete (yet).
+flag is changed or added, a lot of things depend on it. See
+[contributing](../CONTRIBUTING.md#commandline-arguments). The aforementioned
+complgen is close, but it isn't feature complete (yet). If it improves or if
+some other tool or framework will be able to replace it, completions could be
+delegated to it.
