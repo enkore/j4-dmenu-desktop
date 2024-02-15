@@ -42,7 +42,7 @@ class v0_version_error : public std::runtime_error
 // changing the history format in the future. As of the time of writing, only
 // two formats of history file exist, and one one of them employs the versioning
 // mechanism. The "v0" version which doesn't have the version header has to be
-// handled spacially. If new version of history file should be made, checking
+// handled specially. If new version of history file should be made, checking
 // the versions will involve only comparing the version in the header to the
 // current one.
 

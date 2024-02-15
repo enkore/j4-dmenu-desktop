@@ -457,21 +457,21 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
     char tmpfilename[] = "/tmp/j4dd-appmanager-unit-test-XXXXXX";
     int tmpfilefd = mkstemp(tmpfilename);
     if (tmpfilefd == -1) {
-        SKIP("Coudln't create a temporary file '" << tmpfilename
+        SKIP("Couldn't create a temporary file '" << tmpfilename
                                                   << "': " << strerror(errno));
     }
 
     OnExit rm_guard = [&tmpfilename, tmpfilefd]() {
         close(tmpfilefd);
         if (unlink(tmpfilename) < 0) {
-            WARN("Coudln't unlink() '" << tmpfilename
+            WARN("Couldn't unlink() '" << tmpfilename
                                        << "': " << strerror(errno));
         }
     };
 
     int origfd = open(TEST_FILES "a/applications/firefox.desktop", O_RDONLY);
     if (origfd == -1) {
-        SKIP("Coudln't open desktop file '"
+        SKIP("Couldn't open desktop file '"
              << TEST_FILES "a/applications/firefox.desktop"
              << "': " << strerror(errno));
     }
@@ -530,16 +530,16 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
 
     // Now we change it.
     if (lseek(tmpfilefd, 0, SEEK_SET) == (off_t)-1) {
-        SKIP("Coudln't lseek(): " << strerror(errno));
+        SKIP("Couldn't lseek(): " << strerror(errno));
     }
     if (ftruncate(tmpfilefd, 0) == -1) {
-        SKIP("Coudln't ftruncate(): " << strerror(errno));
+        SKIP("Couldn't ftruncate(): " << strerror(errno));
     }
 
     origfd =
         open(TEST_FILES "a/applications/firefox-changed.desktop", O_RDONLY);
     if (origfd == -1) {
-        SKIP("Coudln't open desktop file '"
+        SKIP("Couldn't open desktop file '"
              << TEST_FILES "a/applications/firefox-changed.desktop"
              << "': " << strerror(errno));
     }

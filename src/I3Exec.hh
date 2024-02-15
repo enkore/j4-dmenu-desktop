@@ -22,7 +22,7 @@
 
 namespace I3Interface
 {
-// Get the socket path required for i3_exec(). It is benefitial to call this
+// Get the socket path required for i3_exec(). It is beneficial to call this
 // function early, because it will abort() if i3 isn't available.
 std::string get_ipc_socket_path();
 void exec(const std::string & command, const std::string &socket_path);

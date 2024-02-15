@@ -209,25 +209,25 @@ void exec(const std::string &command, const std::string &socket_path) {
                 string error = read_JSON_string(response.cbegin() + where + 8,
                                                 response.cend());
                 LOG_F(ERROR,
-                      "An error occured while communicating with i3 (executing "
+                      "An error occurred while communicating with i3 (executing "
                       "command '%s'): %s",
                       command.c_str(), error.c_str());
             } catch (const JSONError &) {
                 LOG_F(ERROR,
-                      "An error occured while communicating with i3 (executing "
+                      "An error occurred while communicating with i3 (executing "
                       "command '%s'): j4-dmenu-desktop has received invalid "
                       "response.",
                       command.c_str());
             }
         } else
             LOG_F(ERROR,
-                  "An error occured while communicating with i3 (executing "
+                  "An error occurred while communicating with i3 (executing "
                   "command '%s')!",
                   command.c_str());
         exit(EXIT_FAILURE);
     } else {
         LOG_F(ERROR,
-              "A parsing error occured while reading i3's response (executing "
+              "A parsing error occurred while reading i3's response (executing "
               "command '%s')!", command.c_str());
         abort();
     }

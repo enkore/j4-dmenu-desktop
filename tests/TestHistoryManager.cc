@@ -31,21 +31,21 @@ TEST_CASE("Test loading history", "[History]") {
     char tmpfilename[] = "/tmp/j4dd-history-unit-test-XXXXXX";
     int tmpfilefd = mkstemp(tmpfilename);
     if (tmpfilefd == -1) {
-        SKIP("Coudln't create a temporary file '" << tmpfilename
+        SKIP("Couldn't create a temporary file '" << tmpfilename
                                                   << "': " << strerror(errno));
     }
 
     OnExit rm_guard = [&tmpfilename, tmpfilefd]() {
         close(tmpfilefd);
         if (unlink(tmpfilename) < 0) {
-            WARN("Coudln't unlink() '" << tmpfilename
+            WARN("Couldn't unlink() '" << tmpfilename
                                        << "': " << strerror(errno));
         }
     };
 
     int origfd = open(TEST_FILES "history", O_RDONLY);
     if (origfd == -1) {
-        SKIP("Coudln't open history file '" << TEST_FILES "history"
+        SKIP("Couldn't open history file '" << TEST_FILES "history"
                                             << "': " << strerror(errno));
     }
     try {
@@ -109,21 +109,21 @@ TEST_CASE("Test conversion from v0 to v1", "[History]") {
     char tmpfilename[] = "/tmp/j4dd-history-unit-test-XXXXXX";
     int tmpfilefd = mkstemp(tmpfilename);
     if (tmpfilefd == -1) {
-        SKIP("Coudln't create a temporary file '" << tmpfilename
+        SKIP("Couldn't create a temporary file '" << tmpfilename
                                                   << "': " << strerror(errno));
     }
 
     OnExit rm_guard = [&tmpfilename, tmpfilefd]() {
         close(tmpfilefd);
         if (unlink(tmpfilename) < 0) {
-            WARN("Coudln't unlink() '" << tmpfilename
+            WARN("Couldn't unlink() '" << tmpfilename
                                        << "': " << strerror(errno));
         }
     };
 
     int origfd = open(TEST_FILES "old-history", O_RDONLY);
     if (origfd == -1) {
-        SKIP("Coudln't open history file '" << TEST_FILES "old-history"
+        SKIP("Couldn't open history file '" << TEST_FILES "old-history"
                                             << "': " << strerror(errno));
     }
     try {

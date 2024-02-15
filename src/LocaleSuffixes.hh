@@ -37,7 +37,7 @@ public:
     int match(const std::string &str) const;
     bool operator==(const LocaleSuffixes &other) const;
 
-    // This funciton is currelnty used for logging only, it shouldn't be used as
+    // This function is currently used for logging only, it shouldn't be used as
     // the primary way to match locales.
     std::vector<const std::string *> list_suffixes_for_logging_only() const;
 

@@ -38,7 +38,7 @@
 
 #define PFATALE(msg)                                                           \
     {                                                                          \
-        LOG_F(ERROR, "Failure occured while calling " msg "(): %s",            \
+        LOG_F(ERROR, "Failure occurred while calling " msg "(): %s",            \
               loguru::errno_as_text().c_str());                                \
         exit(EXIT_FAILURE);                                                    \
     }

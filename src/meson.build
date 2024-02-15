@@ -2,7 +2,7 @@
 
 comp = meson.get_compiler('cpp')
 
-# Implement semiautomatic detection of kqueue/inotify.
+# Implement semi-automatic detection of kqueue/inotify.
 if get_option('notify-implementation') == 'auto'
   if target_machine.system() in ['freebsd', 'dragonfly', 'netbsd', 'openbsd']
     if comp.check_header('sys/event.h')
@@ -92,7 +92,7 @@ else
   src += files('NotifyKqueue.cc')
 endif
 
-# If enabled, src won't have to be compiled twice (once for j4-dmenu-destkop and once for j4-dmenu-tests).
+# If enabled, src won't have to be compiled twice (once for j4-dmenu-desktop and once for j4-dmenu-tests).
 if get_option('split-source')
   source_lib = static_library(
     'source_lib',

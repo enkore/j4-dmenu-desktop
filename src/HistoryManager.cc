@@ -82,7 +82,7 @@ HistoryManager::HistoryManager(const string &path)
     if (cmp != 0) {
         throw std::runtime_error(
             (string) "History file is incompatible with the current build "
-                     "of j4-demnu-desktop! History file format is too " +
+                     "of j4-dmenu-desktop! History file format is too " +
             (cmp < 0 ? "old" : "new") + "! Expected version " +
             std::to_string(J4DDHIST_MAJOR_VERSION) + '.' +
             std::to_string(J4DDHIST_MINOR_VERSION) + ", got version " +
@@ -201,13 +201,13 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
             LOG_F(WARNING,
                   "While converting history file '%s' to format "
                   "1.0, desktop file ID '%s' couldn't be resolved. This "
-                  "destkop file will be omited from the history.\n",
+                  "desktop file will be omitted from the history.\n",
                   path.c_str(), line);
         }
     }
 
     f.reset();
-    // This file won't be actually used for appeding, write() will rewind it
+    // This file won't be actually used for appending, write() will rewind it
     // to the beginning and then truncate it.
     FILE *newf = fopen(path.c_str(), "a");
 

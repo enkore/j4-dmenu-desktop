@@ -73,7 +73,7 @@ const std::string application_command(const Application &app,
                 result += quote(app.location);
                 break;
             case 'i': // icons aren't handled
-            case 'd': // ignore despeaced entries
+            case 'd': // ignore deprecated entries
             case 'D':
             case 'n':
             case 'N':

@@ -302,7 +302,7 @@ private:
 };
 }; // namespace SetupPhase
 
-// Funclions and classes used in the "main" phase of j4dd after setup.
+// Functions and classes used in the "main" phase of j4dd after setup.
 // Most of the functions defined here are used in CommandRetrievalLoop.
 namespace RunPhase
 {
@@ -316,7 +316,7 @@ private:
 
     static void sigpipe_handler(int) {
         LOG_F(ERROR,
-              "A SIGPIPE occured while communicating with dmenu. Is dmenu "
+              "A SIGPIPE occurred while communicating with dmenu. Is dmenu "
               "installed?");
         exit(EXIT_FAILURE);
     }
@@ -513,7 +513,7 @@ public:
     {
         std::string raw_command;
         bool is_custom;
-        bool is_terminal; // Correcponds to Terminal field.
+        bool is_terminal; // Corresponds to Terminal field.
         std::string path; // CWD of app if not empty; corresponds to Path
                           // desktop entry key
     };
@@ -534,7 +534,7 @@ public:
                                (this->hist_manager ? this->hist_manager->view()
                                                    : stringlist_t{})); // blocks
         if (!query) {
-            LOG_F(INFO, "No application has been selected, exitting...");
+            LOG_F(INFO, "No application has been selected, exiting...");
             return {};
         }
 
@@ -631,7 +631,7 @@ public:
         using namespace RunPhase::CommandAssembly;
         if (!command_info.path.empty()) {
             if (chdir(command_info.path.c_str()) == -1)
-                LOG_F(WARNING, "Coudln't chdir to '%s': %s",
+                LOG_F(WARNING, "Couldn't chdir to '%s': %s",
                       command_info.path.c_str(),
                       loguru::errno_as_text().c_str());
         }
@@ -655,7 +655,7 @@ public:
 
 private:
     std::string terminal;
-    std::string wrapper; // empty when no wrappe is in use
+    std::string wrapper; // empty when no wrapper is in use
 };
 
 class I3Executable final : public BaseExecutable
@@ -689,9 +689,9 @@ private:
 [[noreturn]] static void
 do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
            const stringlist_t &search_path,
-           RunPhase::CommandRetrievalLoop &command_retreive,
+           RunPhase::CommandRetrievalLoop &command_retrieve,
            ExecutePhase::BaseExecutable *executor) {
-    // We need to derermine if we're i3 to know if we need to fork before
+    // We need to determine if we're i3 to know if we need to fork before
     // executing a program.
     bool is_i3 =
         dynamic_cast<ExecutePhase::NormalExecutable *>(executor) == nullptr;
@@ -735,7 +735,7 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                     // Shouldn't be reachable.
                     abort();
                 }
-                command_retreive.update_mapping(appm);
+                command_retrieve.update_mapping(appm);
 #ifdef DEBUG
                 appm.check_inner_state();
 #endif
@@ -758,9 +758,9 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
             if (data == 'q')
                 exit(EXIT_SUCCESS);
 
-            command_retreive.run_dmenu();
+            command_retrieve.run_dmenu();
 
-            auto user_response = command_retreive.prompt_user_for_choice();
+            auto user_response = command_retrieve.prompt_user_for_choice();
             if (!user_response)
                 continue;
 
@@ -782,7 +782,7 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
         }
         if (watch[0].revents & POLLHUP) {
             // The writing client has closed. We won't be able to poll()
-            // properly untill POLLHUP is cleared. This happens when a) someone
+            // properly until POLLHUP is cleared. This happens when a) someone
             // opens the FIFO for writing again b) reopen it. a) is useless
             // here, we have to reopen. See poll(3p) (not poll(2), it isn't
             // documented there).
@@ -815,7 +815,7 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
  *       If query is empty, terminate/continue. If it isn't a valid name,
  *       treat is as a raw command.
  *    9) add query to history (if it isn't a custom command)
- *   10) construct a usable commandline
+ *   10) construct a usable command line
  *       This part is pretty involved. Wrapper, i3 integration, Terminal=true +
  *       more have to be supported.
  *   11) execute
@@ -1060,7 +1060,7 @@ int main(int argc, char **argv) {
 
     /// Collect desktop files
     auto desktop_file_list = SetupPhase::collect_files(search_path);
-    LOG_F(9, "The following destop files have been found:");
+    LOG_F(9, "The following desktop files have been found:");
     for (const auto &item : desktop_file_list) {
         LOG_F(9, " %s", item.base_path.c_str());
         for (const std::string &file : item.files)
@@ -1080,7 +1080,7 @@ int main(int argc, char **argv) {
     appm.check_inner_state();
 #endif
 
-    // The followind message is printed twice. Once directly and once as a
+    // The following message is printed twice. Once directly and once as a
     // log. The log won't be shown (unless the user has set higher logging
     // verbosity).
     // It is printed twice because it should be shown, but it doesn't

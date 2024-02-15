@@ -218,7 +218,7 @@ void AppManager::check_inner_state() const {
     // I (meator) run all unit tests with AddressSanitizer and with gnu
     // libstdc++ debug mode enabled which should catch all errors.
     // Even if this function detects no errors itself, it will try to
-    // access all relevant data which will trigger asan if anything bad
+    // access all relevant data which will trigger ASAN if anything bad
     // happened.
     // By the way, we can't just do desktop_ID[desktop_ID.size()]
     // because that is undefined behavior. desktop_ID.data() +

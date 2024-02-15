@@ -40,12 +40,12 @@ void copy_file(const char *from, const char *to) {
     if (in < 0) {
         if (out < 0)
             close(out);
-        throw std::runtime_error((string) "Coudln't open '" + from +
+        throw std::runtime_error((string) "Couldn't open '" + from +
                                  "': " + strerror(errno));
     }
     if (out < 0) {
         close(in);
-        throw std::runtime_error((string) "Coudln't open '" + to +
+        throw std::runtime_error((string) "Couldn't open '" + to +
                                  "': " + strerror(errno));
     }
 
@@ -66,12 +66,12 @@ bool compare_files(const char *a, const char *b) {
     if (afd < 0) {
         if (bfd < 0)
             close(bfd);
-        throw std::runtime_error((string) "Coudln't open '" + a +
+        throw std::runtime_error((string) "Couldn't open '" + a +
                                  "': " + strerror(errno));
     }
     if (bfd < 0) {
         close(afd);
-        throw std::runtime_error((string) "Coudln't open '" + b +
+        throw std::runtime_error((string) "Couldn't open '" + b +
                                  "': " + strerror(errno));
     }
 
