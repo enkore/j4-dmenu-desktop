@@ -25,7 +25,7 @@ Building is the usual cmake/make thingy:
 
 The package is provided by the AUR. You can install it with an AUR helper of your choice: `j4-dmenu-desktop-git` or `j4-dmenu-desktop`. Else, you may install it manually by invoking the following commands as a regular user. (to build packages from the AUR, the `base-devel` package group is assumed to be installed)
 
-    git clone https://aur.archlinux.org/j4-dmenu-desktop.git    
+    git clone https://aur.archlinux.org/j4-dmenu-desktop.git
     cd j4-dmenu-desktop
     makepkg -si
 
@@ -53,7 +53,7 @@ The package is also provided by the `gentoo-el` overlay. You can install it with
     layman -a gentoo-el
     echo "=x11-misc/j4-dmenu-desktop-9999 **" >> /etc/portage/package.accept_keywords
     emerge x11-misc/j4-dmenu-desktop
-    
+
 ### Ubuntu
 
 The package is now in the apt repository. You can install it via
@@ -71,7 +71,7 @@ j4-dmenu-desktop is in Debian stable:
 j4-dmenu-desktop is in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/j4-dmenu-desktop/default.nix):
 
     nix-env --install j4-dmenu-desktop
-    # Or use pkgs attribute of the same name in NixOS configuration 
+    # Or use pkgs attribute of the same name in NixOS configuration
 
 
 ## Invocation
@@ -140,4 +140,3 @@ Exchanging the `cat` and `(stest ... sort -u)` parts will swap the two parts (j4
     ./j4-dmenu-desktop --dmenu=cat  0.01s user 0.01s system 107% cpu 0.015 total
 
 More than 25 times faster :)
-
