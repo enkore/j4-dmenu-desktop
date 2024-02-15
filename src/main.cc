@@ -269,6 +269,19 @@ public:
     }
 
     const stringlist_t &view() const {
+#ifdef DEBUG
+        std::unordered_set<string_view> ensure_uniqueness;
+        for (const std::string &hist_entry : this->formatted_history) {
+            if (!ensure_uniqueness.emplace(hist_entry).second) {
+                LOG_F(
+                    ERROR,
+                    "Error while processing history file '%s': History doesn't "
+                    "contain unique entries! Duplicate entry '%s' is present!",
+                    this->hist.get_filename().c_str(), hist_entry.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+#endif
         return this->formatted_history;
     }
 
