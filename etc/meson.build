@@ -19,3 +19,5 @@ custom_target(
     install: true,
     install_dir: get_option('datadir') / 'bash-completion/completions',
 )
+
+summary({'complgen Bash completion': complgen_exe.found()}, bool_yn: true, section: 'Generation')
