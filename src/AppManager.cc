@@ -198,7 +198,6 @@ AppManager::view_name_app_mapping() const {
 
 std::forward_list<Managed_application>::difference_type
 AppManager::count() const {
-    // This has linear complexity.
     return this->applications.size();
 }
 
