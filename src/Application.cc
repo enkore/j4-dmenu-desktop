@@ -38,18 +38,18 @@ Application::Application(const char *path, LineReader &liner,
     int locale_match = -1, locale_generic_match = -1;
 
     bool parse_key_values = false;
-    ssize_t linelen;
+    ssize_t line_length;
     std::unique_ptr<FILE, fclose_deleter> file(fopen(path, "r"));
     if (!file)
         throw std::runtime_error((std::string) "Couldn't open desktop file - " +
                                  strerror(errno));
 
-    while ((linelen = liner.getline(file.get())) != -1) {
+    while ((line_length = liner.getline(file.get())) != -1) {
         char *line = liner.get_lineptr();
-        line[--linelen] = 0; // Chop off \n
+        line[--line_length] = 0; // Chop off \n
 
         // Blank line or comment
-        if (!linelen || line[0] == '#')
+        if (!line_length || line[0] == '#')
             continue;
 
         if (parse_key_values) {
