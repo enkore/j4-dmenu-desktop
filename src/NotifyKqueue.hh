@@ -39,7 +39,7 @@ private:
         directory_entry(int q, int r, std::string p);
     };
 
-    std::vector<filechange> changes;
+    std::vector<FileChange> changes;
     std::mutex changes_mutex;
 
     static void process_kqueue(const stringlist_t &search_path,
@@ -49,7 +49,7 @@ private:
 public:
     NotifyKqueue(const stringlist_t &search_path);
     int getfd() const;
-    std::vector<filechange> getchanges();
+    std::vector<FileChange> getchanges();
 };
 
 #endif

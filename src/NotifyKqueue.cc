@@ -159,8 +159,8 @@ int NotifyKqueue::getfd() const {
     return pipefd[0];
 }
 
-std::vector<NotifyBase::filechange> NotifyKqueue::getchanges() {
-    std::vector<filechange> result;
+std::vector<NotifyBase::FileChange> NotifyKqueue::getchanges() {
+    std::vector<FileChange> result;
     {
         std::lock_guard<std::mutex> lock(changes_mutex);
         result = changes;

@@ -55,10 +55,10 @@ int NotifyInotify::getfd() const {
     return inotifyfd;
 }
 
-std::vector<NotifyInotify::filechange> NotifyInotify::getchanges() {
+std::vector<NotifyInotify::FileChange> NotifyInotify::getchanges() {
     char buffer alignas(inotify_event)[4096];
     ssize_t len;
-    std::vector<filechange> result;
+    std::vector<FileChange> result;
 
     while ((len = read(inotifyfd, buffer, sizeof buffer)) > 0) {
         const inotify_event *event;

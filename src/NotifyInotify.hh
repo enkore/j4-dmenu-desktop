@@ -31,6 +31,6 @@ public:
     void operator=(const NotifyInotify &) = delete;
 
     int getfd() const;
-    std::vector<filechange> getchanges();
+    std::vector<FileChange> getchanges();
 };
 #endif

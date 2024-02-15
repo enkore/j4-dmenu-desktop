@@ -17,18 +17,18 @@ public:
     // files so only a single flag is used for them.
     enum changetype { modified, deleted };
 
-    struct filechange
+    struct FileChange
     {
         int rank;
         std::string name;
         changetype status;
 
-        filechange(int r, std::string n, changetype s)
+        FileChange(int r, std::string n, changetype s)
             : rank(r), name(std::move(n)), status(s) {}
     };
 
-    // filechange have absolute paths (they are relative to spearch_path
+    // FileChange has absolute paths (they are relative to search_path
     // specified in ctor; search_path is absolute so this must be too).
-    virtual std::vector<filechange> getchanges() = 0;
+    virtual std::vector<FileChange> getchanges() = 0;
 };
 #endif
