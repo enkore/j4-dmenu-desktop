@@ -681,7 +681,7 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
     int fd;
     if (mkfifo(wait_on, 0600) && errno != EEXIST)
         PFATALE("mkfifo");
-    fd = open(wait_on, O_RDONLY | O_NONBLOCK);
+    fd = open(wait_on, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
     if (fd == -1)
         PFATALE("open");
     pollfd watch[] = {
@@ -754,6 +754,18 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                     abort();
                 }
             }
+        }
+        if (watch[0].revents & POLLHUP) {
+            // The writing client has closed. We won't be able to poll()
+            // properly untill POLLHUP is cleared. This happens when a) someone
+            // opens the FIFO for writing again b) reopen it. a) is useless
+            // here, we have to reopen. See poll(3p) (not poll(2), it isn't
+            // documented there).
+            close(fd);
+            fd = open(wait_on, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+            if (fd == -1)
+                PFATALE("open");
+            watch[0].fd = fd;
         }
     }
     // Make reaaly sure [[noreturn]] is upheld.
