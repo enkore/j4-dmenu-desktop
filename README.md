@@ -27,6 +27,8 @@ Building with CMake:
     make
     sudo make install
 
+See [`BUILDING`](BUILDING.md) for more info.
+
 ## Distribution packages
 
 ### Archlinux <a href="https://repology.org/project/j4-dmenu-desktop/versions"><img src="https://repology.org/badge/vertical-allrepos/j4-dmenu-desktop.svg" alt="Packaging status" align="right"></a>
