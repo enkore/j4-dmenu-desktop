@@ -252,6 +252,8 @@ public:
                 }
                 continue;
             }
+            if (this->exclude_generic && lookup_result->second.is_generic)
+                continue;
             this->formatted_history.push_back(
                 format(raw_name, *lookup_result->second.app));
         }
@@ -259,9 +261,10 @@ public:
 
     FormattedHistoryManager(HistoryManager hist,
                             const NameToAppMapping &mapping,
-                            bool remove_obsolete_entries)
+                            bool remove_obsolete_entries, bool exclude_generic)
         : hist(std::move(hist)),
-          remove_obsolete_entries(remove_obsolete_entries) {
+          remove_obsolete_entries(remove_obsolete_entries),
+          exclude_generic(exclude_generic) {
         reload(mapping);
     }
 
@@ -280,8 +283,9 @@ public:
 
 private:
     HistoryManager hist;
-    bool remove_obsolete_entries;
     stringlist_t formatted_history;
+    bool remove_obsolete_entries;
+    bool exclude_generic;
 };
 }; // namespace SetupPhase
 
@@ -1091,13 +1095,13 @@ int main(int argc, char **argv) {
     if (usage_log != nullptr) {
         try {
             hist_manager.emplace(HistoryManager(usage_log), mapping,
-                                 prune_bad_usage_log_entries);
+                                 prune_bad_usage_log_entries, exclude_generic);
         } catch (const v0_version_error &) {
             LOG_F(WARNING, "History file is using old format. Automatically "
                            "converting to new one.");
             hist_manager.emplace(
                 HistoryManager::convert_history_from_v0(usage_log, appm),
-                mapping, prune_bad_usage_log_entries);
+                mapping, prune_bad_usage_log_entries, exclude_generic);
         }
     }
 
