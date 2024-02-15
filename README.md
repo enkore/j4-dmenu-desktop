@@ -82,50 +82,6 @@ j4-dmenu-desktop is in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pk
     nix-env --install j4-dmenu-desktop
     # Or use pkgs attribute of the same name in NixOS configuration
 
-
-## Invocation
-
-Usage:
-
-    j4-dmenu-desktop [--dmenu="dmenu -i"] [--term="i3-sensible-terminal"]
-    j4-dmenu-desktop --help
-
-Options:
-
-    --dmenu=<command>
-        Determines the command used to invoke dmenu
-        Executed with your shell ($SHELL) or /bin/sh
-    --use-xdg-de
-        Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment
-    --display-binary
-        Display binary name after each entry (off by default)
-    --no-generic
-        Do not include the generic name of desktop entries
-    --wrapper=<wrapper>
-        A wrapper binary. Useful in case you want to wrap into 'i3 exec'
-    --term=<command>
-        Sets the terminal emulator used to start terminal apps
-    --usage-log=<file>
-        Must point to a read-writeable file (will create if not exists).
-        In this mode entries are sorted by usage frequency.
-    --wait-on=<path>
-        Must point to a path where a file can be created.
-        In this mode no menu will be shown. Instead the program waits for <path>
-        to be written to (use echo > path). Every time this happens a menu will be shown.
-        Desktop files are parsed ahead of time.
-        Perfoming 'echo -n q > path' will exit the program.
-    --case-insensitive
-        Sort applications case insensitively
-    --no-exec
-        Do not execute selected command, send to stdout instead
-    --help
-        Display this help message
-
-Environment variables
-
-- $SHELL is respected, and if absent /bin/sh is used
-- XDG-spec variables (XDG_CURRENT_DESKTOP, XDG_DATA_HOME, HOME) are respected
-
 ## FAQ / RAQ / RMR
 
 ### I want it to display normal binaries, too, yes?
