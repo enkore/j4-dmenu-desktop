@@ -1,0 +1,6 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=hidden app
+GenericName=some hidden app
+Exec=hiddenApp

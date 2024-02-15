@@ -745,3 +745,67 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
         apps.check_inner_state();
     }
 }
+
+TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
+    SECTION("Hidden app last")
+    {
+        AppManager apps(
+            {
+                {TEST_FILES "usr/local/share/applications",
+                {TEST_FILES "usr/local/share/applications/couldbehidden.desktop"}},
+                {TEST_FILES "usr/share/applications", {}}
+        },
+            {}, LocaleSuffixes());
+
+        apps.check_inner_state();
+
+        REQUIRE(apps.count() == 1);
+        {
+            ctype check{
+                {"hidden app",      "hiddenApp"},
+                {"some hidden app", "hiddenApp"},
+            };
+            REQUIRE(checkmap(apps, check));
+        }
+
+        apps.add(TEST_FILES "usr/share/applications/couldbehidden.desktop", TEST_FILES "usr/share/applications/", 1);
+
+        apps.check_inner_state();
+
+        REQUIRE(apps.count() == 1);
+        {
+            ctype check{
+                {"hidden app",      "hiddenApp"},
+                {"some hidden app", "hiddenApp"},
+            };
+            REQUIRE(checkmap(apps, check));
+        }
+    }
+    SECTION("Hidden app first")
+    {
+        AppManager apps(
+            {
+                {TEST_FILES "usr/share/applications",
+                {TEST_FILES "usr/share/applications/couldbehidden.desktop"}},
+                {TEST_FILES "usr/local/share/applications", {}}
+        },
+            {}, LocaleSuffixes());
+
+        apps.check_inner_state();
+
+        REQUIRE(apps.count() == 0);
+
+        apps.add(TEST_FILES "usr/local/share/applications/couldbehidden.desktop", TEST_FILES "usr/local/share/applications/", 1);
+
+        apps.check_inner_state();
+
+        REQUIRE(apps.count() == 1);
+        {
+            ctype check{
+                {"hidden app",      "hiddenApp"},
+                {"some hidden app", "hiddenApp"},
+            };
+            REQUIRE(checkmap(apps, check));
+        }
+    }
+}
