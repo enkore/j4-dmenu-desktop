@@ -171,8 +171,10 @@ public:
         std::map<std::string, const Resolved_application, DynamicCompare>;
     using raw_name_map = AppManager::name_app_mapping_type;
 
-    NameToAppMapping(application_formatter app_format, bool case_insensitive)
-        : app_format(app_format), mapping(DynamicCompare(case_insensitive)) {}
+    NameToAppMapping(application_formatter app_format, bool case_insensitive,
+                     bool exclude_generic)
+        : app_format(app_format), mapping(DynamicCompare(case_insensitive)),
+          exclude_generic(exclude_generic) {}
 
     void load(const AppManager &appm) {
         LOG_F(INFO, "Received request to load NameToAppMapping, formatting all "
@@ -183,13 +185,15 @@ public:
 
         for (const auto &[key, resolved] : this->raw_mapping) {
             const auto &[ptr, is_generic] = resolved;
+            if (this->exclude_generic && is_generic)
+                continue;
             std::string formatted = this->app_format(key, *ptr);
             LOG_F(9, "Formatted '%s' -> '%s'", key.data(), formatted.c_str());
-            this->mapping.try_emplace(std::move(formatted), ptr, is_generic);
+            auto safety_check = this->mapping.try_emplace(std::move(formatted),
+                                                          ptr, is_generic);
+            if (!safety_check.second)
+                ABORT_F("Formatter has created a collision!");
         }
-
-        if (this->raw_mapping.size() != this->mapping.size())
-            ABORT_F("Formatter has created a collision!");
     }
 
     const formatted_name_map &get_formatted_map() const {
@@ -208,6 +212,7 @@ private:
     application_formatter app_format;
     formatted_name_map mapping;
     raw_name_map raw_mapping;
+    bool exclude_generic;
 };
 
 static_assert(std::is_move_constructible_v<NameToAppMapping>);
@@ -1052,8 +1057,7 @@ int main(int argc, char **argv) {
             LOG_F(9, " %s", ptr->c_str());
     }
     /// Construct AppManager
-    AppManager appm(desktop_file_list, !exclude_generic, desktopenvs,
-                    std::move(locales));
+    AppManager appm(desktop_file_list, desktopenvs, std::move(locales));
 
 #ifdef DEBUG
     appm.check_inner_state();
@@ -1077,7 +1081,8 @@ int main(int argc, char **argv) {
           (unsigned int)appm.count());
 
     /// Format names
-    SetupPhase::NameToAppMapping mapping(appformatter, case_insensitive);
+    SetupPhase::NameToAppMapping mapping(appformatter, case_insensitive,
+                                         exclude_generic);
     mapping.load(appm);
 
     /// Initialize history
