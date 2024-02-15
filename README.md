@@ -82,6 +82,30 @@ j4-dmenu-desktop is in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pk
     nix-env --install j4-dmenu-desktop
     # Or use pkgs attribute of the same name in NixOS configuration
 
+## Examples
+
+Run j4-dmenu-desktop:
+
+    j4-dmenu-desktop
+
+Specify custom dmenu (useful on Wayland, [tofi](https://github.com/philj56/tofi)
+is used as example):
+
+    j4-dmenu-desktop --dmenu=tofi
+
+Display 5 entries vertically at once:
+
+    j4-dmenu-desktop --dmenu="dmenu -l5"
+
+display binary name alongside name (for example `Chromium` will become `Chromium
+(/usr/bin/chromium)`):
+
+    j4-dmenu-desktop --display-binary
+
+Don't display generic names and use `alacritty` as terminal emulator:
+
+    j4-dmenu-desktop --no-generic --term alacritty
+
 ## FAQ / RAQ / RMR
 
 ### I want it to display normal binaries, too, yes?
