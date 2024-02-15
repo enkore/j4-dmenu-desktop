@@ -136,10 +136,22 @@ static Desktop_file_list collect_files(const stringlist_t &search_path) {
 
 // This helper function is most likely useless, but I, meator, ran into
 // a situation where a directory was specified twice in $XDG_DATA_DIRS.
-static void test_search_path_uniqueness(const stringlist_t &search_path) {
-    if (std::unordered_set<std::string>{search_path.begin(), search_path.end()}
-            .size() != search_path.size())
-        LOG_F(WARNING, "Search path contains duplicit elements!");
+static void validate_search_path(stringlist_t &search_path) {
+    std::unordered_set<std::string> is_unique;
+    for (auto iter = search_path.begin(); iter != search_path.end(); ++iter) {
+        const std::string &path = *iter;
+        if (path.empty())
+            LOG_F(WARNING, "Empty path in $XDG_DATA_DIRS!");
+        else if (path.front() != '/') {
+            LOG_F(WARNING,
+                  "Relative path '%s' found in $XDG_DATA_DIRS, ignoring...",
+                  path.c_str());
+            search_path.erase(iter);
+        }
+        if (!is_unique.emplace(path).second)
+            LOG_F(WARNING, "$XDG_DATA_DIRS contains duplicate element '%s'!",
+                  path.c_str());
+    }
 }
 
 static unsigned int
@@ -1007,7 +1019,7 @@ int main(int argc, char **argv) {
         LOG_F(INFO, " %s", path.c_str());
     }
 
-    SetupPhase::test_search_path_uniqueness(search_path);
+    SetupPhase::validate_search_path(search_path);
 
     /// Collect desktop files
     auto desktop_file_list = SetupPhase::collect_files(search_path);
