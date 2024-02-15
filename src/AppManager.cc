@@ -34,10 +34,9 @@ Resolved_application::Resolved_application(const Application *app,
                                            bool is_generic)
     : app(app), is_generic(is_generic) {}
 
-AppManager::AppManager(Desktop_file_list files, bool generic_names_enabled,
-                       stringlist_t desktopenvs, LocaleSuffixes suffixes)
-    : generic_names_enabled(generic_names_enabled),
-      suffixes(std::move(suffixes)), desktopenvs(desktopenvs) {
+AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
+                       LocaleSuffixes suffixes)
+    : suffixes(std::move(suffixes)), desktopenvs(desktopenvs) {
     LOG_F(9, "AppManager: Entered AppManager");
     if (files.size() > std::numeric_limits<int>::max()) {
         LOG_F(ERROR, "Rank overflow in AppManager ctor!");
@@ -76,8 +75,7 @@ AppManager::AppManager(Desktop_file_list files, bool generic_names_enabled,
                          "AppManager:     Name '%s' is already taken! Not "
                          "registering.",
                          newly_added.app.name.c_str());
-                if (generic_names_enabled &&
-                    !newly_added.app.generic_name.empty()) {
+                if (!newly_added.app.generic_name.empty()) {
                     auto add_result2 = this->name_app_mapping.try_emplace(
                         newly_added.app.generic_name, &newly_added.app, true);
                     LOG_IF_F(9, !add_result2.second,
@@ -112,7 +110,7 @@ void AppManager::remove(const string &filename, const string &base_path) {
 
     Managed_application &app = app_iter->second;
     remove_name_mapping<NameType::name>(app);
-    if (this->generic_names_enabled)
+    if (!app.app.generic_name.empty())
         remove_name_mapping<NameType::generic_name>(app);
 
     this->applications.erase(app_iter);
@@ -158,14 +156,14 @@ void AppManager::add(const string &filename, const string &base_path,
         }
 
         remove_name_mapping<NameType::name>(managed_app);
-        if (this->generic_names_enabled)
+        if (!managed_app.app.generic_name.empty())
             remove_name_mapping<NameType::generic_name>(managed_app);
 
         managed_app.rank = rank;
         managed_app.app = std::move(*new_app);
 
         replace_name_mapping<NameType::name>(managed_app);
-        if (this->generic_names_enabled)
+        if (!managed_app.app.generic_name.empty())
             replace_name_mapping<NameType::generic_name>(managed_app);
     } else {
         LOG_F(9, "AppManager:   File '%s' has no ID collision.",
@@ -186,7 +184,7 @@ void AppManager::add(const string &filename, const string &base_path,
         Managed_application &app = *app_ptr;
 
         replace_name_mapping<NameType::name>(app);
-        if (this->generic_names_enabled)
+        if (!app.app.generic_name.empty())
             replace_name_mapping<NameType::generic_name>(app);
     }
 }
@@ -252,10 +250,6 @@ void AppManager::check_inner_state() const {
         if (name.empty()) {
             ABORT_F(
                 "AppManager check error: A name in name_app_mapping is empty!");
-        }
-        if (!this->generic_names_enabled && resolved.is_generic) {
-            ABORT_F("AppManager check error: A non-generic name is in "
-                    "name_app_mapping when generic names aren't enabled!");
         }
         // See above for explanation of .data()[]
         if (name.data()[name.size()] != '\0') {

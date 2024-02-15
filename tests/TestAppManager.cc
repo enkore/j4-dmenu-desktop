@@ -70,7 +70,7 @@ TEST_CASE("Test basic functionality + hidden desktop file", "[AppManager]") {
               TEST_FILES "a/applications/firefox.desktop",
               TEST_FILES "a/applications/hidden.desktop"}}
     },
-        true, {}, LocaleSuffixes());
+        {}, LocaleSuffixes());
 
     REQUIRE(apps.count() == 2);
 
@@ -102,7 +102,7 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            true, {"i3"}, LocaleSuffixes());
+            {"i3"}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 1);
     }
@@ -114,7 +114,7 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            true, {"Kde"}, LocaleSuffixes());
+            {"Kde"}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 0);
     }
@@ -126,7 +126,7 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            true, {"Gnome"}, LocaleSuffixes());
+            {"Gnome"}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 1);
     }
@@ -141,7 +141,7 @@ TEST_CASE("Test ID collisions", "[AppManager]") {
                 {TEST_FILES "usr/local/share/applications/",
                  {TEST_FILES "usr/local/share/applications/collision.desktop"}},
         },
-            true, {}, LocaleSuffixes());
+            {}, LocaleSuffixes());
         REQUIRE(apps.count() == 1);
         {
             ctype check{
@@ -160,7 +160,7 @@ TEST_CASE("Test ID collisions", "[AppManager]") {
                 {TEST_FILES "usr/share/applications/",
                  {TEST_FILES "usr/share/applications/collision.desktop"}      },
         },
-            true, {}, LocaleSuffixes());
+            {}, LocaleSuffixes());
         REQUIRE(apps.count() == 1);
         {
             ctype check{
@@ -183,7 +183,7 @@ TEST_CASE("Test collisions and remove()", "[AppManager]") {
              {TEST_FILES "b/applications/chrome.desktop",
               TEST_FILES "b/applications/safari.desktop"} },
     },
-        true, {}, LocaleSuffixes());
+        {}, LocaleSuffixes());
 
     REQUIRE(apps.count() == 4);
 
@@ -281,7 +281,7 @@ TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
                 {TEST_FILES "applications/",
                  {TEST_FILES "applications/chromium-variant1.desktop"} },
         },
-            true, {}, LocaleSuffixes());
+            {}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 3);
 
@@ -318,7 +318,7 @@ TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
                  {TEST_FILES "applications/chromium-variant1.desktop",
                   TEST_FILES "applications/chromium-variant2.desktop"}},
         },
-            true, {}, LocaleSuffixes());
+            {}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 2);
 
@@ -334,66 +334,6 @@ TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
 
         REQUIRE(apps.view_name_app_mapping().count("Chromium"));
         REQUIRE(apps.view_name_app_mapping().count("Chrome based browser"));
-    }
-}
-
-TEST_CASE("Test removing app with shadowed name without generic names", "[AppManager]") {
-    SECTION("Differing ranks") {
-        AppManager apps(
-            {
-                {TEST_FILES "a/applications/",
-                 {TEST_FILES "a/applications/chromium.desktop",
-                  TEST_FILES "a/applications/firefox.desktop"}},
-                {TEST_FILES "applications/",
-                 {TEST_FILES "applications/chromium-variant1.desktop"} },
-        },
-            false, {}, LocaleSuffixes());
-
-        REQUIRE(apps.count() == 3);
-
-        apps.check_inner_state();
-
-        {
-            ctype check{
-                {"Chromium",             "chromium"},
-                {"Firefox",              "firefox" },
-            };
-            REQUIRE(checkmap(apps, check));
-        }
-
-        apps.check_inner_state();
-
-        apps.remove(TEST_FILES "a/applications/chromium.desktop",
-                    TEST_FILES "a/applications/");
-        {
-            ctype check{
-                {"Chromium",             "chromium-apps"},
-                {"Firefox",              "firefox"      },
-            };
-            REQUIRE(checkmap(apps, check));
-        }
-    }
-    SECTION("Same rank") {
-        AppManager apps(
-            {
-                {TEST_FILES "applications/",
-                 {TEST_FILES "applications/chromium-variant1.desktop",
-                  TEST_FILES "applications/chromium-variant2.desktop"}},
-        },
-            false, {}, LocaleSuffixes());
-
-        REQUIRE(apps.count() == 2);
-
-        apps.check_inner_state();
-
-        REQUIRE(apps.view_name_app_mapping().count("Chromium"));
-
-        apps.remove(TEST_FILES "applications/chromium-variant1.desktop", TEST_FILES "applications/");
-        apps.check_inner_state();
-
-        REQUIRE(apps.count() == 1);
-
-        REQUIRE(apps.view_name_app_mapping().count("Chromium"));
     }
 }
 
@@ -410,7 +350,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
             {TEST_FILES "c/applications/",
              {TEST_FILES "c/applications/vivaldi.desktop"}}
     },
-        true, {}, LocaleSuffixes());
+        {}, LocaleSuffixes());
     REQUIRE(apps.count() == 3);
 
     {
@@ -509,109 +449,6 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     }
 }
 
-TEST_CASE("Test collisions, remove() and add() with disabled generic names", "[AppManager]") {
-    AppManager apps(
-        {
-            {TEST_FILES "a/applications/",
-           //{TEST_FILES "a/applications/chromium.desktop",
-             {TEST_FILES "a/applications/firefox.desktop",
-              TEST_FILES "a/applications/hidden.desktop"} },
-            {TEST_FILES "b/applications/",
-             {TEST_FILES "b/applications/chrome.desktop"} },
-            //TEST_FILES "b/applications/safari.desktop"}},
-            {TEST_FILES "c/applications/",
-             {TEST_FILES "c/applications/vivaldi.desktop"}}
-    },
-        false, {}, LocaleSuffixes());
-    REQUIRE(apps.count() == 3);
-
-    {
-        ctype check{
-            {"Firefox", "firefox"},
-            {"Chrome",  "chrome" },
-            {"Vivaldi", "vivaldi"},
-        };
-
-        REQUIRE(checkmap(apps, check));
-    }
-
-    apps.check_inner_state();
-
-    apps.add(TEST_FILES "a/applications/chromium.desktop",
-             TEST_FILES "a/applications/", 0);
-
-    REQUIRE(apps.count() == 4);
-
-    {
-        ctype check{
-            {"Firefox",  "firefox" },
-            {"Chrome",   "chrome"  },
-            {"Chromium", "chromium"},
-            {"Vivaldi",  "vivaldi" },
-        };
-
-        REQUIRE(checkmap(apps, check));
-    }
-
-    apps.check_inner_state();
-
-    apps.remove(TEST_FILES "b/applications/chrome.desktop",
-                TEST_FILES "b/applications/");
-
-    REQUIRE(apps.count() == 3);
-
-    {
-        ctype check{
-            {"Firefox",  "firefox" },
-          //{"Chrome",   "chrome"  },
-            {"Chromium", "chromium"},
-            {"Vivaldi",  "vivaldi" },
-        };
-
-        REQUIRE(checkmap(apps, check));
-    }
-
-    apps.check_inner_state();
-
-    apps.add(TEST_FILES "b/applications/safari.desktop",
-             TEST_FILES "b/applications/", 1);
-
-    REQUIRE(apps.count() == 4);
-
-    {
-        ctype check{
-            {"Firefox",     "firefox" },
-          //{"Web browser", "firefox" },
-          //{"Chrome",      "chrome"  },
-            {"Chromium",    "chromium"},
-            {"Vivaldi",     "vivaldi" },
-            {"Safari",      "safari"  },
-        };
-
-        REQUIRE(checkmap(apps, check));
-    }
-
-    apps.check_inner_state();
-
-    apps.remove(TEST_FILES "a/applications/firefox.desktop",
-                TEST_FILES "a/applications/");
-
-    REQUIRE(apps.count() == 3);
-
-    {
-        ctype check{
-          //{"Firefox",     "firefox" },
-          //{"Web browser", "firefox" },
-          //{"Chrome",      "chrome"  },
-            {"Chromium",    "chromium"},
-            {"Vivaldi",     "vivaldi" },
-            {"Safari",      "safari"  },
-        };
-
-        REQUIRE(checkmap(apps, check));
-    }
-}
-
 TEST_CASE("Test overwriting with add()", "[AppManager]") {
     // This testcase tests a situation where a desktop file is loaded, then it's
     // changed and then AppManager.add() is called to update the (same) file.
@@ -657,7 +494,7 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
             {TEST_FILES "c/applications/",
              {TEST_FILES "c/applications/vivaldi.desktop"}}
     },
-        true, {}, LocaleSuffixes());
+        {}, LocaleSuffixes());
 
     apps.check_inner_state();
 
@@ -742,7 +579,7 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
                 {TEST_FILES "usr/share/applications/",
                  {TEST_FILES "usr/share/applications/collision.desktop"}},
         },
-            true, {}, LocaleSuffixes());
+            {}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 1);
 
@@ -764,7 +601,7 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
                 {TEST_FILES "usr/local/share/applications/",
                  {TEST_FILES "usr/local/share/applications/collision.desktop"}},
         },
-            true, {}, LocaleSuffixes());
+            {}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 1);
         {
@@ -792,7 +629,7 @@ TEST_CASE("Test adding a disabled file", "[AppManager]") {
              {TEST_FILES "a/applications/chromium.desktop",
               TEST_FILES "a/applications/firefox.desktop"}},
     },
-        true, {}, LocaleSuffixes());
+        {}, LocaleSuffixes());
 
     REQUIRE(apps.count() == 2);
 
@@ -821,7 +658,7 @@ TEST_CASE("Test lookup by ID", "[AppManager]") {
               TEST_FILES "a/applications/firefox.desktop",
               TEST_FILES "a/applications/hidden.desktop"}}
     },
-        true, {}, LocaleSuffixes());
+        {}, LocaleSuffixes());
 
     REQUIRE(apps.lookup_by_ID("chromium.desktop").value().get().name ==
             "Chromium");
@@ -837,7 +674,7 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
                 {TEST_FILES "applications/",
                  {TEST_FILES "applications/notShowIn.desktop"}}
         },
-            true, {"Kde"}, LocaleSuffixes());
+            {"Kde"}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 2);
         {
@@ -875,7 +712,7 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
                 {TEST_FILES "applications/",
                  {TEST_FILES "applications/notShowIn.desktop"}}
         },
-            true, {"i3"}, LocaleSuffixes());
+            {"i3"}, LocaleSuffixes());
 
         REQUIRE(apps.count() == 2);
         {

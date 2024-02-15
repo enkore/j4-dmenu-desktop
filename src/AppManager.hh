@@ -78,24 +78,22 @@ class AppManager
 {
 public:
     using name_app_mapping_type =
-        std::unordered_map<string_view /*(Generic)Name*/,
-                           Resolved_application>;
+        std::unordered_map<string_view /*(Generic)Name*/, Resolved_application>;
 
     AppManager(const AppManager &) = delete;
     AppManager(AppManager &&) = delete;
     void operator=(const AppManager &) = delete;
     void operator=(AppManager &&) = delete;
 
-    AppManager(Desktop_file_list files, bool generic_names_enabled,
-               stringlist_t desktopenvs, LocaleSuffixes suffixes);
+    AppManager(Desktop_file_list files, stringlist_t desktopenvs,
+               LocaleSuffixes suffixes);
 
     void remove(const string &filename, const string &base_path);
     // This function accepts path to the desktop file relative to $XDG_DATA_DIRS
     // and its rank within $XDG_DATA_DIRS
     void add(const string &filename, const string &base_path, int rank);
     std::forward_list<Managed_application>::difference_type count() const;
-    const name_app_mapping_type &
-    view_name_app_mapping() const;
+    const name_app_mapping_type &view_name_app_mapping() const;
     ~AppManager();
 
     // This function should be used only for debugging.
@@ -120,9 +118,6 @@ private:
         string &name = N == NameType::name ? to_remove.app.name
                                            : to_remove.app.generic_name;
 
-        if (name.empty())
-            return;
-
         auto name_lookup_iter = name_app_mapping.find(name);
         if (name_lookup_iter == name_app_mapping.end()) {
             ABORT_F("AppManager has reached a inconsistent state. Tried to "
@@ -140,50 +135,48 @@ private:
             // We will look through all applications to find one with the same
             // (Generic)Name to replace the current one. The match with the
             // lowest rank wins.
-            Application *best_match;
+            string_view best_match_name;
+            const Application *best_match_app;
+            bool best_match_is_generic;
             int best_match_rank = std::numeric_limits<int>::max();
 
-            // If we have generic names enabled, we need to search for them.
             for (auto iter = this->applications.begin();
                  iter != this->applications.end(); ++iter) {
                 Managed_application &managed_app = iter->second;
                 Application &app = managed_app.app;
 
-                if (this->generic_names_enabled) {
-                    if (app.name == name || app.generic_name == name) {
-                        if (&managed_app == &to_remove)
-                            continue;
-                        // When there are multiple candidates in the same rank,
-                        // the replacement isn't chosen "deterministically", it
-                        // isn't sorted so the choice depends on the ordering of
-                        // unordered_map.
+                if (app.name == name || app.generic_name == name) {
+                    if (&managed_app == &to_remove)
+                        continue;
+                    // When there are multiple candidates in the same rank,
+                    // the replacement isn't chosen "deterministically", it
+                    // isn't sorted so the choice depends on the ordering of
+                    // unordered_map.
 
-                        // We are looking for the match with the lowest rank.
-                        // This match has a higher rank (or the same), we aren't
-                        // interested in it.
-                        if (managed_app.rank >= best_match_rank)
-                            continue;
+                    // We are looking for the match with the lowest rank.
+                    // This match has a higher rank (or the same), we aren't
+                    // interested in it.
+                    if (managed_app.rank >= best_match_rank)
+                        continue;
 
-                        best_match_rank = managed_app.rank;
-                        best_match = &app;
-                    }
-                } else {
+                    // We have found a better match. We have to know whether we
+                    // have matched a Name or a GenericName.
+                    best_match_app = &app;
+                    best_match_rank = managed_app.rank;
                     if (app.name == name) {
-                        if (&managed_app == &to_remove)
-                            continue;
-                        if (managed_app.rank >= best_match_rank)
-                            continue;
-                        best_match_rank = managed_app.rank;
-                        best_match = &app;
+                        best_match_name = string_view(app.name);
+                        best_match_is_generic = false;
+                    } else {
+                        best_match_name = string_view(app.generic_name);
+                        best_match_is_generic = true;
                     }
                 }
             }
 
-            if (best_match_rank != std::numeric_limits<int>::max())
+            if (best_match_rank != std::numeric_limits<int>::max()) {
                 this->name_app_mapping.try_emplace(
-                    best_match->name == name ? best_match->name
-                                             : best_match->generic_name,
-                    best_match, N == NameType::generic_name);
+                    best_match_name, best_match_app, best_match_is_generic);
+            }
         }
     }
 
@@ -193,9 +186,6 @@ private:
     void replace_name_mapping(Managed_application &to_add) {
         string &name =
             N == NameType::name ? to_add.app.name : to_add.app.generic_name;
-
-        if (name.empty())
-            return;
 
         auto result = this->name_app_mapping.try_emplace(
             name, &to_add.app, N == NameType::generic_name);
@@ -236,8 +226,6 @@ private:
     std::unordered_map<string /*desktop ID*/, Managed_application> applications;
     // Map used for lookup and name listing.
     name_app_mapping_type name_app_mapping;
-
-    bool generic_names_enabled;
 
     // Things needed to construct Application:
     char *linep = nullptr;
