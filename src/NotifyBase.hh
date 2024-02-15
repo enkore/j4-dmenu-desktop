@@ -13,7 +13,7 @@ public:
     // desktop entries have been modified.
     virtual int getfd() const = 0;
 
-    // Applicaions doesn't see a difference between created and modified desktop
+    // AppManager doesn't see a difference between created and modified desktop
     // files so only a single flag is used for them.
     enum changetype { modified, deleted };
 
