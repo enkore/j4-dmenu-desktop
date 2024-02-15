@@ -175,14 +175,17 @@ public:
         : app_format(app_format), mapping(DynamicCompare(case_insensitive)) {}
 
     void load(const AppManager &appm) {
+        LOG_F(INFO, "Received request to load NameToAppMapping, formatting all "
+                    "names...");
         this->raw_mapping = appm.view_name_app_mapping();
 
         this->mapping.clear();
 
         for (const auto &[key, resolved] : this->raw_mapping) {
             const auto &[ptr, is_generic] = resolved;
-            this->mapping.try_emplace(this->app_format(key, *ptr), ptr,
-                                      is_generic);
+            std::string formatted = this->app_format(key, *ptr);
+            LOG_F(9, "Formatted '%s' -> '%s'", key.data(), formatted.c_str());
+            this->mapping.try_emplace(std::move(formatted), ptr, is_generic);
         }
 
         if (this->raw_mapping.size() != this->mapping.size())
