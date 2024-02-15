@@ -119,7 +119,8 @@ void HistoryManager::increment(const string &name) {
     write();
 }
 
-void HistoryManager::remove_obsolete_entry(history_mmap_type::const_iterator iter) {
+void HistoryManager::remove_obsolete_entry(
+    history_mmap_type::const_iterator iter) {
     this->history.erase(iter);
 }
 
@@ -255,6 +256,10 @@ void HistoryManager::read_file(const string &name) {
             throw std::runtime_error("Error while reading history file '" +
                                      name + "': " + strerror(errno));
         }
+
+        if (read_size == 1)
+            throw std::runtime_error("Error while reading history file '" +
+                                     name + "': Empty history entry present!");
 
         history.emplace(std::piecewise_construct,
                         std::forward_as_tuple(history_count),

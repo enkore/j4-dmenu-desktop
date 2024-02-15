@@ -101,6 +101,10 @@ TEST_CASE("Test too new history", "[History]") {
     REQUIRE_THROWS(HistoryManager(TEST_FILES "too-new-history"));
 }
 
+TEST_CASE("Test bad history with empty entry", "[History]") {
+    REQUIRE_THROWS(HistoryManager(TEST_FILES "bad-history"));
+}
+
 TEST_CASE("Test conversion from v0 to v1", "[History]") {
     char tmpfilename[] = "/tmp/j4dd-history-unit-test-XXXXXX";
     int tmpfilefd = mkstemp(tmpfilename);
