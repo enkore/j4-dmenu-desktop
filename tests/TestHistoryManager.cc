@@ -130,7 +130,7 @@ TEST_CASE("Test conversion from v0 to v1", "[History]") {
         FSUtils::copy_file_fd(origfd, tmpfilefd);
     } catch (const std::exception &e) {
         close(origfd);
-        SKIP("Couldn't copy file '" << TEST_FILES "history"
+        SKIP("Couldn't copy file '" << TEST_FILES "old-history"
                                     << "' to '" << tmpfilename << ": "
                                     << e.what());
     }
