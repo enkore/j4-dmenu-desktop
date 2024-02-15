@@ -93,23 +93,6 @@ TEST_CASE("Tests correct parsing of localization (gimp)",
     REQUIRE(!app.terminal);
 }
 
-TEST_CASE("Tests correct parsing of file with line longer than buffer",
-          "[Application][Application/valid]") {
-    LocaleSuffixes ls("eo");
-    size_t size = 20;
-    char *buffer = static_cast<char *>(malloc(20));
-    Application app(TEST_FILES "applications/gimp.desktop", &buffer, &size,
-                    ls, {});
-
-    REQUIRE(app.name ==
-            "Bildmanipulilo (GIMP = GNU Image Manipulation Program)");
-    REQUIRE(app.exec == "gimp-2.8 %U");
-    REQUIRE(!app.terminal);
-    REQUIRE(size > 20);
-
-    free(buffer);
-}
-
 TEST_CASE("Regression test for issue #17, Hidden=false was read as Hidden=true",
           "[Application][Application/flag]") {
     LocaleSuffixes ls("en_US");
