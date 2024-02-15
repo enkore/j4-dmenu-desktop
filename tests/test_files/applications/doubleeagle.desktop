@@ -1,0 +1,10 @@
+# Desktop file which has Name == GenericName
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Eagle
+GenericName=Eagle
+TryExec=/usr/bin/eagle
+Exec=eagle -style plastique
+Icon=/opt/eagle/bin/eagleicon50.png
+Categories=Development;

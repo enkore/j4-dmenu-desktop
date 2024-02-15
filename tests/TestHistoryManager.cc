@@ -166,3 +166,58 @@ TEST_CASE("Test conversion from v0 to v1", "[History]") {
         // XXX
     }
 }
+
+TEST_CASE("Test imperfect conversion from history v0 to v1", "[History]") {
+    char tmpfilename[] = "/tmp/j4dd-history-unit-test-XXXXXX";
+    int tmpfilefd = mkstemp(tmpfilename);
+    if (tmpfilefd == -1) {
+        SKIP("Couldn't create a temporary file '" << tmpfilename
+                                                  << "': " << strerror(errno));
+    }
+
+    OnExit rm_guard = [&tmpfilename, tmpfilefd]() {
+        close(tmpfilefd);
+        if (unlink(tmpfilename) < 0) {
+            WARN("Couldn't unlink() '" << tmpfilename
+                                       << "': " << strerror(errno));
+        }
+    };
+
+    int origfd = open(TEST_FILES "old-double-history", O_RDONLY);
+    if (origfd == -1) {
+        SKIP("Couldn't open history file '" << TEST_FILES "old-double-history"
+                                            << "': " << strerror(errno));
+    }
+    try {
+        FSUtils::copy_file_fd(origfd, tmpfilefd);
+    } catch (const std::exception &e) {
+        close(origfd);
+        SKIP("Couldn't copy file '" << TEST_FILES "old-double-history"
+                                    << "' to '" << tmpfilename << ": "
+                                    << e.what());
+    }
+    close(origfd);
+
+    std::multimap<int, string, std::greater<int>> history = {
+        {3, "Eagle"},
+    };
+
+    {
+        REQUIRE_THROWS_AS(HistoryManager(tmpfilename), v0_version_error);
+        AppManager apps(
+            {
+                {TEST_FILES "applications/",
+                 {
+                     // This is actually important.
+                     TEST_FILES "applications/doubleeagle.desktop",
+                     // These are just filler desktop files.
+                     TEST_FILES "applications/web.desktop",
+                     TEST_FILES "applications/visible.desktop",
+                 }}
+        },
+            {}, LocaleSuffixes());
+        HistoryManager hist =
+            HistoryManager::convert_history_from_v0(tmpfilename, apps);
+        REQUIRE(compare_maps(hist.view(), history));
+    }
+}

@@ -151,6 +151,16 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
                                  "' for conversion: " + strerror(errno));
 
     std::multimap<int, string, std::greater<int>> result;
+    // Since all displayed names are unique (thanks to AppManager), all names in
+    // HistoryManager shall be unique too. Conversion from v0 to v1 might yield
+    // duplicate names. For example Tor Browser has "Tor Browser" as both Name
+    // and GenericName. But collisions can also of course happen between
+    // different desktop files.
+    // History file is parsed from top to bottom. Both v0 and v1 formats order
+    // history entries from highest to lowest. History entries with highest
+    // history count will naturally have higher precedence thanks to this
+    // parsing.
+    std::unordered_set<string_view> ensure_uniqueness;
 
     LineReader liner;
 
@@ -165,13 +175,26 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
         try {
             auto lookup = appm.lookup_by_ID(line);
             const Application &app = lookup.value();
-            result.emplace(std::piecewise_construct,
-                           std::forward_as_tuple(hist_count),
-                           std::forward_as_tuple(app.name));
-            if (!app.generic_name.empty())
+            if (ensure_uniqueness.emplace(app.name).second)
                 result.emplace(std::piecewise_construct,
                                std::forward_as_tuple(hist_count),
-                               std::forward_as_tuple(app.generic_name));
+                               std::forward_as_tuple(app.name));
+            else
+                LOG_F(INFO,
+                      "History conversion v0 -> v1: Prevented duplicate Name "
+                      "'%s' from appearing in history",
+                      app.name.c_str());
+            if (!app.generic_name.empty()) {
+                if (ensure_uniqueness.emplace(app.generic_name).second)
+                    result.emplace(std::piecewise_construct,
+                                   std::forward_as_tuple(hist_count),
+                                   std::forward_as_tuple(app.generic_name));
+                else
+                    LOG_F(INFO,
+                          "History conversion v0 -> v1: Prevented duplicate "
+                          "GenericName '%s' from appearing in history",
+                          app.name.c_str());
+            }
         } catch (std::bad_optional_access &) {
             LOG_F(WARNING,
                   "While converting history file '%s' to format "
