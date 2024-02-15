@@ -20,7 +20,7 @@ using stringlist_t = std::vector<std::string>;
  * removal on package uninstallation.
  */
 
-class NotifyKqueue : public NotifyBase
+class NotifyKqueue final : public NotifyBase
 {
 private:
     int pipefd[2];

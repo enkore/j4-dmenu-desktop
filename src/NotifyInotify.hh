@@ -8,7 +8,7 @@
 #include "NotifyBase.hh"
 #include "Utilities.hh"
 
-class NotifyInotify : public NotifyBase
+class NotifyInotify final : public NotifyBase
 {
 private:
     int inotifyfd;
