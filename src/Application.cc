@@ -24,7 +24,7 @@ bool Application::operator==(const Application &other) const {
            id == other.id;
 }
 
-Application::Application(const char *path, char **linep, size_t *linesz,
+Application::Application(const char *path, LineReader &liner,
                          const LocaleSuffixes &locale_suffixes,
                          const stringlist_t &desktopenvs) {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -39,14 +39,13 @@ Application::Application(const char *path, char **linep, size_t *linesz,
 
     bool parse_key_values = false;
     ssize_t linelen;
-    char *line;
     std::unique_ptr<FILE, fclose_deleter> file(fopen(path, "r"));
     if (!file)
         throw std::runtime_error((std::string) "Couldn't open desktop file - " +
                                  strerror(errno));
 
-    while ((linelen = getline(linep, linesz, file.get())) != -1) {
-        line = *linep;
+    while ((linelen = liner.getline(file.get())) != -1) {
+        char *line = liner.get_lineptr();
         line[--linelen] = 0; // Chop off \n
 
         // Blank line or comment

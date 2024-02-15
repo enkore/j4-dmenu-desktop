@@ -57,8 +57,8 @@ AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
 
             try {
                 auto try_add = this->applications.try_emplace(
-                    desktop_file_ID, rank, filename.c_str(), &this->linep,
-                    &this->linesz, this->suffixes, this->desktopenvs);
+                    desktop_file_ID, rank, filename.c_str(), this->liner,
+                    this->suffixes, this->desktopenvs);
 
                 // Handle desktop file ID collision.
                 if (!try_add.second) {
@@ -147,8 +147,8 @@ void AppManager::add(const string &filename, const string &base_path,
         // later. We first try to construct Application in a std::optional.
         std::optional<Application> new_app;
         try {
-            new_app.emplace(filename.c_str(), &this->linep, &this->linesz,
-                            this->suffixes, this->desktopenvs);
+            new_app.emplace(filename.c_str(), this->liner, this->suffixes,
+                            this->desktopenvs);
         } catch (disabled_error &e) {
             LOG_F(9, "AppManager:     App is disabled: %s", e.what());
             // Skip disabled files.
@@ -171,8 +171,7 @@ void AppManager::add(const string &filename, const string &base_path,
         Managed_application *app_ptr;
         try {
             app_ptr = &this->applications
-                           .try_emplace(ID, rank, filename.c_str(),
-                                        &this->linep, &this->linesz,
+                           .try_emplace(ID, rank, filename.c_str(), this->liner,
                                         this->suffixes, this->desktopenvs)
                            .first->second;
         } catch (disabled_error &e) {
@@ -197,11 +196,6 @@ AppManager::view_name_app_mapping() const {
 std::forward_list<Managed_application>::difference_type
 AppManager::count() const {
     return this->applications.size();
-}
-
-AppManager::~AppManager() {
-    if (this->linep)
-        free(this->linep);
 }
 
 // This function should be used only for debugging.

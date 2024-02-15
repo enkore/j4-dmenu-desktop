@@ -46,6 +46,7 @@ HistoryManager::HistoryManager(const string &path)
     }
 
     FILE *f = this->file.get();
+    LineReader liner;
 
     // Check whether the header is there. If not, the history file is either
     // invalid or it's using the old version which didn't have the history
@@ -54,7 +55,7 @@ HistoryManager::HistoryManager(const string &path)
     auto rcount = std::fread(start, J4DDHIST_HEADER_LENGTH, 1, f);
     if (rcount != 1 ||
         memcmp(start, J4DDHIST_HEADER, J4DDHIST_HEADER_LENGTH) != 0) {
-        if (is_v0())
+        if (is_v0(liner))
             throw v0_version_error("History file '" + path + "' is outdated!");
         else
             throw std::runtime_error("History file '" + path +
@@ -88,7 +89,7 @@ HistoryManager::HistoryManager(const string &path)
             std::to_string(major) + '.' + std::to_string(minor));
     }
 
-    read_file(path);
+    read_file(path, liner);
 }
 
 HistoryManager::HistoryManager(HistoryManager &&other)
@@ -151,20 +152,18 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
 
     std::multimap<int, string, std::greater<int>> result;
 
-    size_t linesz = 0;
-    char *lineptr = nullptr;
-
-    OnExit free_lineptr = [&lineptr]() { std::free(lineptr); };
+    LineReader liner;
 
     unsigned int hist_count;
     while (fscanf(f.get(), "%u,", &hist_count) == 1) {
-        auto rsize = getline(&lineptr, &linesz, f.get());
+        auto rsize = liner.getline(f.get());
         if (rsize == -1)
             throw std::runtime_error((std::string) "Read error: " +
                                      strerror(errno));
-        lineptr[rsize - 1] = '\0'; // Get rid of \n
+        char *line = liner.get_lineptr();
+        line[rsize - 1] = '\0'; // Get rid of \n
         try {
-            auto lookup = appm.lookup_by_ID(lineptr);
+            auto lookup = appm.lookup_by_ID(line);
             const Application &app = lookup.value();
             result.emplace(std::piecewise_construct,
                            std::forward_as_tuple(hist_count),
@@ -178,7 +177,7 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
                   "While converting history file '%s' to format "
                   "1.0, desktop file ID '%s' couldn't be resolved. This "
                   "destkop file will be omited from the history.\n",
-                  path.c_str(), lineptr);
+                  path.c_str(), line);
         }
     }
 
@@ -196,16 +195,11 @@ HistoryManager::HistoryManager(
     FILE *f, std::multimap<int, string, std::greater<int>> hist)
     : file(f), history(std::move(hist)) {}
 
-bool HistoryManager::is_v0() {
+bool HistoryManager::is_v0(LineReader &liner) {
     FILE *f = this->file.get();
     std::rewind(f);
 
     enum { COUNT, FILENAME } state = COUNT;
-
-    size_t linesz = 0;
-    char *lineptr = nullptr;
-
-    OnExit free_lineptr = [&lineptr]() { std::free(lineptr); };
 
     // The file format is: [number],[filename which ends in .desktop]\n
     char c;
@@ -220,16 +214,18 @@ bool HistoryManager::is_v0() {
                 return false;
             }
         } else {
-            auto rsize = getline(&lineptr, &linesz, f);
+            auto rsize = liner.getline(f);
             if (rsize == -1) {
                 return false;
             }
+
+            char *line = liner.get_lineptr();
 
             if (rsize < 9) {
                 return false;
             }
 
-            if (memcmp(lineptr + rsize - 9, ".desktop\n", 9) != 0) {
+            if (memcmp(line + rsize - 9, ".desktop\n", 9) != 0) {
                 return false;
             }
             state = COUNT;
@@ -239,19 +235,14 @@ bool HistoryManager::is_v0() {
     return true;
 }
 
-void HistoryManager::read_file(const string &name) {
+void HistoryManager::read_file(const string &name, LineReader &liner) {
     FILE *f = this->file.get();
-
-    size_t linesz = 0;
-    char *lineptr = nullptr;
-
-    OnExit free_lineptr = [&lineptr]() { std::free(lineptr); };
 
     unsigned int history_count;
 
     int result;
     while ((result = std::fscanf(f, "%u,", &history_count) == 1)) {
-        auto read_size = getline(&lineptr, &linesz, f);
+        auto read_size = liner.getline(f);
         if (read_size < 0) {
             throw std::runtime_error("Error while reading history file '" +
                                      name + "': " + strerror(errno));
@@ -261,9 +252,9 @@ void HistoryManager::read_file(const string &name) {
             throw std::runtime_error("Error while reading history file '" +
                                      name + "': Empty history entry present!");
 
-        history.emplace(std::piecewise_construct,
-                        std::forward_as_tuple(history_count),
-                        std::forward_as_tuple(lineptr, read_size - 1));
+        history.emplace(
+            std::piecewise_construct, std::forward_as_tuple(history_count),
+            std::forward_as_tuple(liner.get_lineptr(), read_size - 1));
     }
 
     if (result == -1)

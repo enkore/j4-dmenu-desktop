@@ -73,11 +73,11 @@ private:
 
     // This function tests whether file is the "v0.0" version of the history
     // file. This version doesn't contain the header.
-    bool is_v0();
+    bool is_v0(LineReader &);
 
     // This is called in the ctor. It is expected that file is open and the
     // header has already been read.
-    void read_file(const string &name);
+    void read_file(const string &name, LineReader &liner);
 
     void write();
 

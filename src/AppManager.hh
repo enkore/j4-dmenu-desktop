@@ -47,7 +47,7 @@ struct Managed_application
     int rank;
 
     template <typename... Args>
-    Managed_application(int rank, Args... forwarded)
+    Managed_application(int rank, Args&&... forwarded)
         : app(std::forward<Args>(forwarded)...), rank(rank) {}
 };
 
@@ -94,7 +94,6 @@ public:
     void add(const string &filename, const string &base_path, int rank);
     std::forward_list<Managed_application>::difference_type count() const;
     const name_app_mapping_type &view_name_app_mapping() const;
-    ~AppManager();
 
     // This function should be used only for debugging.
     void check_inner_state() const;
@@ -228,8 +227,7 @@ private:
     name_app_mapping_type name_app_mapping;
 
     // Things needed to construct Application:
-    char *linep = nullptr;
-    size_t linesz = 0;
+    LineReader liner;
     LocaleSuffixes suffixes;
     stringlist_t desktopenvs;
 };

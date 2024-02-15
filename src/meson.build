@@ -80,6 +80,7 @@ src = files(
   'Formatters.cc',
   'HistoryManager.cc',
   'I3Exec.cc',
+  'LineReader.cc',
   'LocaleSuffixes.cc',
   'SearchPath.cc',
   'Utilities.cc',
@@ -106,7 +107,7 @@ if get_option('split-source')
     dependencies: loguru,
     cpp_args: flags,
     link_with: source_lib,
-    install: true
+    install: true,
   )
 else
   executable(
@@ -115,7 +116,7 @@ else
     'main.cc',
     cpp_args: flags,
     dependencies: loguru,
-    install: true
+    install: true,
   )
 endif
 

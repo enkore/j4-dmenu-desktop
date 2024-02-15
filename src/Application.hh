@@ -28,6 +28,7 @@
 
 #include "LocaleSuffixes.hh"
 #include "Utilities.hh"
+#include "LineReader.hh"
 
 struct disabled_error : public std::runtime_error
 {
@@ -68,7 +69,7 @@ public:
     bool operator==(const Application &other) const;
 
     // If desktopenvs is {}, notShowIn and onlyShowIn will be ignored.
-    Application(const char *path, char **linep, size_t *linesz,
+    Application(const char *path, LineReader &liner,
                 const LocaleSuffixes &locale_suffixes,
                 const stringlist_t &desktopenvs);
 

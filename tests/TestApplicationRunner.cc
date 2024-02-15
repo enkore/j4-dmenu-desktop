@@ -52,24 +52,20 @@ static stringlist_t getshell(const std::string &args) {
 TEST_CASE("Tests proper handling of special characters",
           "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
-    char *data = nullptr;
-    size_t size;
-    Application app(TEST_FILES "applications/gimp.desktop", &data, &size,
+    LineReader liner;
+    Application app(TEST_FILES "applications/gimp.desktop", liner,
                     ls, {});
 
     auto result = getshell(application_command(app, R"--(@#$%^&*}{)(\)--"));
 
     stringlist_t cmp({"gimp-2.8", R"--(@#$%^&*}{)(\)--"});
     REQUIRE(result == cmp);
-
-    free(data);
 }
 
 TEST_CASE("Test field codes", "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
-    char *data = nullptr;
-    size_t size;
-    Application app(TEST_FILES "applications/field_codes.desktop", &data, &size,
+    LineReader liner;
+    Application app(TEST_FILES "applications/field_codes.desktop", liner,
                     ls, {});
 
     auto result = getshell(application_command(app, "arg1 arg2\\ arg3"));
@@ -77,21 +73,16 @@ TEST_CASE("Test field codes", "[ApplicationRunner]") {
                       TEST_FILES "applications/field_codes.desktop", "arg1",
                       "arg2\\", "arg3"});
     REQUIRE(result == cmp);
-
-    free(data);
 }
 
 TEST_CASE("Regression test for issue #18, %c was not escaped",
           "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
-    char *data = nullptr;
-    size_t size;
-    Application app(TEST_FILES "applications/caption.desktop", &data, &size,
+    LineReader liner;
+    Application app(TEST_FILES "applications/caption.desktop", liner,
                     ls, {});
 
     auto result = getshell(application_command(app, ""));
     stringlist_t cmp({"1234", "--caption", "Regression Test 18"});
     REQUIRE(result == cmp);
-
-    free(data);
 }
