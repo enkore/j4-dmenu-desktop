@@ -68,8 +68,12 @@ public:
     static HistoryManager convert_history_from_v0(const string &path,
                                                   const AppManager &appm);
 
+    // This is primarily for logging.
+    const std::string &get_filename() const;
+
 private:
-    HistoryManager(FILE *f, std::multimap<int, string, std::greater<int>> hist);
+    HistoryManager(FILE *f, std::multimap<int, string, std::greater<int>> hist,
+                   std::string filename);
 
     // This function tests whether file is the "v0.0" version of the history
     // file. This version doesn't contain the header.
@@ -83,6 +87,8 @@ private:
 
     std::unique_ptr<FILE, fclose_deleter> file;
     history_mmap_type history;
+
+    std::string filename;
 };
 
 static_assert(std::is_move_constructible_v<HistoryManager>);

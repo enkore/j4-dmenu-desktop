@@ -34,7 +34,7 @@ constexpr static int compare_versions(unsigned int major, unsigned int minor) {
 }
 
 HistoryManager::HistoryManager(const string &path)
-    : file(std::fopen(path.c_str(), "r+")) {
+    : file(std::fopen(path.c_str(), "r+")), filename(path) {
     // We first try to open the file in the initializer list. If that
     // doesn't work, we go for fallback.
     if (!this->file) {
@@ -93,12 +93,14 @@ HistoryManager::HistoryManager(const string &path)
 }
 
 HistoryManager::HistoryManager(HistoryManager &&other)
-    : file(std::move(other.file)), history(std::move(other.history)) {}
+    : file(std::move(other.file)), history(std::move(other.history)),
+      filename(other.filename) {}
 
 HistoryManager &HistoryManager::operator=(HistoryManager &&other) {
     if (this != &other) {
         this->file = std::move(other.file);
         this->history = std::move(other.history);
+        this->filename = std::move(other.filename);
     }
     return *this;
 }
@@ -209,14 +211,19 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
     // to the beginning and then truncate it.
     FILE *newf = fopen(path.c_str(), "a");
 
-    auto histm = HistoryManager(newf, result);
+    auto histm = HistoryManager(newf, result, path);
     histm.write();
     return histm;
 }
 
+const std::string &HistoryManager::get_filename() const {
+    return this->filename;
+}
+
 HistoryManager::HistoryManager(
-    FILE *f, std::multimap<int, string, std::greater<int>> hist)
-    : file(f), history(std::move(hist)) {}
+    FILE *f, std::multimap<int, string, std::greater<int>> hist,
+    std::string filename)
+    : file(f), history(std::move(hist)), filename(std::move(filename)) {}
 
 bool HistoryManager::is_v0(LineReader &liner) {
     FILE *f = this->file.get();
