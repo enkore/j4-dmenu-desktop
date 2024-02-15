@@ -207,6 +207,7 @@ AppManager::~AppManager() {
         free(this->linep);
 }
 
+// This function should be used only for debugging.
 void AppManager::check_inner_state() const {
     // The lifetimes in this class are kinda funky because the lifetime
     // of everything indirectly depends on applications.
