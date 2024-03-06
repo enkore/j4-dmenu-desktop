@@ -36,14 +36,13 @@ overridden).
 Catch2 can be provided externally. `WITH_GIT_CATCH` option must be set to `OFF`
 when CMake is used. Meson needs no additional setup.
 
-CMake doesn't support getting loguru externally, although I am not aware of any
-distro or repository that would package loguru. Meson should theoretically be
-able to use system installed loguru.
-
-If your repository requires packages to depend on stable versioned dependencies,
-you **must use Meson**. CMake pulls loguru from master, because proper CMake
-dependency support for loguru was added after latest release (see
+It uses a not released version of loguru, because proper CMake dependency
+support for loguru was added after latest release (see
 [this](https://github.com/emilk/loguru/pull/215)).
+
+This can be provided externally. `WITH_GIT_LOGURU` option must be set to `OFF`
+when CMake is used. Meson should theoretically be able to use system installed
+loguru.
 
 ## Support
 J4-dmenu-desktop has been tested on glibc and musl, cross compilation has been
