@@ -24,6 +24,11 @@ std::string get_desktop_id(std::string filename) {
 }
 
 std::string get_desktop_id(const std::string &filename, std::string_view base) {
+#ifdef DEBUG
+    CHECK_F(startswith(filename, std::string(base)),
+            "Filename '%s' must begin with base path '%s'!", filename.c_str(),
+            std::string(base).c_str());
+#endif
     return get_desktop_id(filename.substr(base.size()));
 }
 
