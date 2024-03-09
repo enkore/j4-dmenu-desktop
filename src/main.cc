@@ -743,10 +743,12 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                     continue;
                 switch (i.status) {
                 case NotifyBase::changetype::modified:
-                    appm.add(i.name, search_path[i.rank], i.rank);
+                    appm.add(search_path[i.rank] + i.name, search_path[i.rank],
+                             i.rank);
                     break;
                 case NotifyBase::changetype::deleted:
-                    appm.remove(i.name, search_path[i.rank]);
+                    appm.remove(search_path[i.rank] + i.name,
+                                search_path[i.rank]);
                     break;
                 default:
                     // Shouldn't be reachable.
