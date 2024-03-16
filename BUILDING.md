@@ -16,8 +16,9 @@ overall better development experience.
 Out-of-source builds are fully supported.
 
 CMake will automatically download Catch2 and loguru dependencies. You can
-override Catch2 behaviour with `WITH_TESTS` and `WITH_GIT_CATCH` options. This
-is useful if you want to use system installed Catch2.
+override Catch2 behaviour with `WITH_TESTS` and `WITH_GIT_CATCH` options and
+loguru with `WITH_GIT_LOGURU`. This is useful if you want to use system
+installed Catch2 or loguru.
 
 Bash completion is **not** provided by CMake. Meson has to be used instead. If
 that isn't desirable, a pregenerated bash completion is provided in the

@@ -4,6 +4,7 @@ project(j4-dmenu CXX)
 
 option(WITH_TESTS "Build and run tests" ON)
 option(WITH_GIT_CATCH "Use a Git checkout of Catch to build the tests" ON)
+option(WITH_GIT_LOGURU "Use a Git checkout of loguru to build" ON)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -41,14 +42,20 @@ endif()
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-include(FetchContent)
-FetchContent_Declare(LoguruGitRepo
-	GIT_REPOSITORY "https://github.com/emilk/loguru"
-  # Version v2.1.0 unfortunatelly doesn't work. Use Meson if you want versioned dependencies.
-	GIT_TAG        "master"
-  GIT_SHALLOW    true
-)
-FetchContent_MakeAvailable(LoguruGitRepo)
+if(WITH_GIT_LOGURU)
+  include(FetchContent)
+  FetchContent_Declare(LoguruGitRepo
+          GIT_REPOSITORY "https://github.com/emilk/loguru"
+    # Version v2.1.0 unfortunatelly doesn't work. Use Meson if you want versioned dependencies.
+          GIT_TAG        "master"
+    GIT_SHALLOW    true
+  )
+  FetchContent_MakeAvailable(LoguruGitRepo)
+else()
+  # Use system-installed version of Catch
+  find_package(loguru 2.1.0 REQUIRED)
+endif(WITH_GIT_LOGURU)
+
 
 add_executable(j4-dmenu-desktop ${SOURCE} src/main.cc)
 target_link_libraries(j4-dmenu-desktop PRIVATE loguru::loguru)
