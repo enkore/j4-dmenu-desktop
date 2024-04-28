@@ -93,6 +93,10 @@ AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
                       e.what());
                 // Skip disabled files.
                 continue;
+            } catch (open_error &e) {
+                LOG_F(WARNING, "Couldn't open file '%s': %s", filename.c_str(),
+                      e.what());
+                continue;
             }
         }
     }
@@ -158,6 +162,10 @@ void AppManager::add(const string &filename, const string &base_path,
             LOG_F(9, "AppManager:     App is disabled: %s", e.what());
             // Skip disabled files.
             return;
+        } catch (open_error &e) {
+            LOG_F(WARNING, "Couldn't open newly added file '%s': %s",
+                  filename.c_str(), e.what());
+            return;
         }
 
         remove_name_mapping<NameType::name>(managed_app);
@@ -182,6 +190,10 @@ void AppManager::add(const string &filename, const string &base_path,
         } catch (disabled_error &e) {
             LOG_F(9, "AppManager:     App is disabled: %s", e.what());
             // Skip disabled files.
+            return;
+        } catch (open_error &e) {
+            LOG_F(WARNING, "Couldn't open newly added file '%s': %s",
+                  filename.c_str(), e.what());
             return;
         }
 

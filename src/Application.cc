@@ -41,8 +41,7 @@ Application::Application(const char *path, LineReader &liner,
     ssize_t line_length;
     std::unique_ptr<FILE, fclose_deleter> file(fopen(path, "r"));
     if (!file)
-        throw std::runtime_error((std::string) "Couldn't open desktop file - " +
-                                 strerror(errno));
+        throw open_error(strerror(errno));
 
     while ((line_length = liner.getline(file.get())) != -1) {
         char *line = liner.get_lineptr();
