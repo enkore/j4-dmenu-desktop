@@ -35,7 +35,7 @@ using std::string;
 using std::string_view;
 
 void copy_file_fd(int in, int out);
-bool compare_files(const char *a, const char *b);
+bool compare_files_fd(int afd, int bfd, const char *a, const char *b);
 void rmdir_recursive(const char *dirname);
 
 class TempFile

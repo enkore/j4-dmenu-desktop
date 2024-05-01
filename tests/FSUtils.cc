@@ -36,25 +36,7 @@ void copy_file_fd(int in, int out) {
     }
 }
 
-bool compare_files(const char *a, const char *b) {
-    int afd = open(a, O_RDONLY), bfd = open(b, O_RDONLY);
-    if (afd < 0) {
-        if (bfd < 0)
-            close(bfd);
-        throw std::runtime_error((string) "Couldn't open '" + a +
-                                 "': " + strerror(errno));
-    }
-    if (bfd < 0) {
-        close(afd);
-        throw std::runtime_error((string) "Couldn't open '" + b +
-                                 "': " + strerror(errno));
-    }
-
-    OnExit close_guard = [afd, bfd]() {
-        close(afd);
-        close(bfd);
-    };
-
+bool compare_files_fd(int afd, int bfd, const char *a, const char *b) {
     struct stat astat, bstat;
 
     if (fstat(afd, &astat) < 0) {
