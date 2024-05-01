@@ -34,33 +34,6 @@ void copy_file_fd(int in, int out) {
     }
 }
 
-void copy_file(const char *from, const char *to) {
-    int in = open(from, O_RDONLY),
-        out = open(to, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-    if (in < 0) {
-        if (out < 0)
-            close(out);
-        throw std::runtime_error((string) "Couldn't open '" + from +
-                                 "': " + strerror(errno));
-    }
-    if (out < 0) {
-        close(in);
-        throw std::runtime_error((string) "Couldn't open '" + to +
-                                 "': " + strerror(errno));
-    }
-
-    try {
-        copy_file_fd(in, out);
-    } catch (const std::runtime_error &e) {
-        close(in);
-        close(out);
-        throw std::runtime_error((string) "Error while copying file from '" +
-                                 from + "' to '" + to + "': " + e.what());
-    }
-    close(in);
-    close(out);
-}
-
 bool compare_files(const char *a, const char *b) {
     int afd = open(a, O_RDONLY), bfd = open(b, O_RDONLY);
     if (afd < 0) {

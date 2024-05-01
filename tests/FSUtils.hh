@@ -34,7 +34,6 @@ namespace FSUtils
 using std::string;
 
 void copy_file_fd(int in, int out);
-void copy_file(const char *from, const char *to);
 bool compare_files(const char *a, const char *b);
 void rmdir_recursive(const char *dirname);
 }; // namespace FSUtils
