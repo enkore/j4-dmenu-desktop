@@ -164,6 +164,26 @@ void TempFile::copy_from_fd(int in) {
     copy_file_fd(in, this->fd);
 }
 
+bool TempFile::compare_file(const char *other) {
+    int otherfd = open(other, O_RDONLY);
+    if (otherfd < 0) {
+        throw std::runtime_error((string) "Couldn't open '" + other +
+                                 "': " + strerror(errno));
+    }
+    if (lseek(this->fd, 0, SEEK_SET) == (off_t) -1)
+        throw std::runtime_error((string) "Couldn't lseek() '" + this->name +
+                                 "': " + strerror(errno));
+    bool result;
+    try {
+        result = compare_files_fd(this->fd, otherfd, this->name.c_str(), other);
+        close(otherfd);
+        return result;
+    } catch (...) {
+        close(otherfd);
+        throw;
+    }
+}
+
 const std::string &TempFile::get_name() const {
     return this->name;
 }

@@ -45,6 +45,7 @@ public:
     ~TempFile();
 
     void copy_from_fd(int in);
+    bool compare_file(const char *other);
     const std::string &get_name() const;
 
     // This function should be used rarely. Please do not call close() on the
