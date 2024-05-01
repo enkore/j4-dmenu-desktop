@@ -27,12 +27,12 @@
 #include <string.h>
 #include <unistd.h>
 
-using std::string;
-
 // These helper functions are currently used only in unit tests to set up the
 // testing environment.
 namespace FSUtils
 {
+using std::string;
+
 void copy_file_fd(int in, int out);
 void copy_file(const char *from, const char *to);
 bool compare_files(const char *a, const char *b);

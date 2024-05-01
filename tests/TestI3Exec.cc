@@ -27,6 +27,8 @@
 
 #include "I3Exec.hh"
 
+using std::string;
+
 #define SUCCESS_MESSAGE "[{\"success\":true}]"
 
 static string handle_request(int sfd) {
