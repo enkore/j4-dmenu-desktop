@@ -45,20 +45,13 @@ static bool compare_maps(const std::multimap<Key, T, Compare> &a,
 }
 
 TEST_CASE("Test loading history", "[History]") {
-    char tmpfilename[] = "/tmp/j4dd-history-unit-test-XXXXXX";
-    int tmpfilefd = mkstemp(tmpfilename);
-    if (tmpfilefd == -1) {
-        SKIP("Couldn't create a temporary file '" << tmpfilename
-                                                  << "': " << strerror(errno));
+    std::optional<FSUtils::TempFile> tmpfile_container;
+    try {
+        tmpfile_container.emplace("j4dd-history-unit-test");
+    } catch (std::runtime_error &e) {
+        SKIP(e.what());
     }
-
-    OnExit rm_guard = [&tmpfilename, tmpfilefd]() {
-        close(tmpfilefd);
-        if (unlink(tmpfilename) < 0) {
-            WARN("Couldn't unlink() '" << tmpfilename
-                                       << "': " << strerror(errno));
-        }
-    };
+    FSUtils::TempFile &tmpfile = *tmpfile_container;
 
     int origfd = open(TEST_FILES "history", O_RDONLY);
     if (origfd == -1) {
@@ -66,12 +59,11 @@ TEST_CASE("Test loading history", "[History]") {
                                             << "': " << strerror(errno));
     }
     try {
-        FSUtils::copy_file_fd(origfd, tmpfilefd);
+        tmpfile.copy_from_fd(origfd);
     } catch (const std::exception &e) {
         close(origfd);
-        SKIP("Couldn't copy file '" << TEST_FILES "history"
-                                    << "' to '" << tmpfilename << ": "
-                                    << e.what());
+        SKIP("Couldn't copy file '" TEST_FILES "history' to '"
+             << tmpfile.get_name() << ": " << e.what());
     }
     close(origfd);
 
@@ -98,13 +90,11 @@ TEST_CASE("Test loading history", "[History]") {
     };
 
     {
-        HistoryManager hist(tmpfilename);
+        HistoryManager hist(tmpfile.get_name());
         REQUIRE(compare_maps(hist.view(), history));
 
-        REQUIRE((FSUtils::compare_files(tmpfilename,
-                                        TEST_FILES "history-variant1") ||
-                 FSUtils::compare_files(tmpfilename,
-                                        TEST_FILES "history-variant2")));
+        REQUIRE((tmpfile.compare_file(TEST_FILES "history-variant1") ||
+                 tmpfile.compare_file(TEST_FILES "history-variant2")));
 
         hist.increment("Kdenlive");
         REQUIRE(compare_maps(hist.view(), history_modified));
@@ -123,20 +113,13 @@ TEST_CASE("Test bad history with empty entry", "[History]") {
 }
 
 TEST_CASE("Test conversion from v0 to v1", "[History]") {
-    char tmpfilename[] = "/tmp/j4dd-history-unit-test-XXXXXX";
-    int tmpfilefd = mkstemp(tmpfilename);
-    if (tmpfilefd == -1) {
-        SKIP("Couldn't create a temporary file '" << tmpfilename
-                                                  << "': " << strerror(errno));
+    std::optional<FSUtils::TempFile> tmpfile_container;
+    try {
+        tmpfile_container.emplace("j4dd-history-unit-test");
+    } catch (std::runtime_error &e) {
+        SKIP(e.what());
     }
-
-    OnExit rm_guard = [&tmpfilename, tmpfilefd]() {
-        close(tmpfilefd);
-        if (unlink(tmpfilename) < 0) {
-            WARN("Couldn't unlink() '" << tmpfilename
-                                       << "': " << strerror(errno));
-        }
-    };
+    FSUtils::TempFile &tmpfile = *tmpfile_container;
 
     int origfd = open(TEST_FILES "old-history", O_RDONLY);
     if (origfd == -1) {
@@ -144,12 +127,11 @@ TEST_CASE("Test conversion from v0 to v1", "[History]") {
                                             << "': " << strerror(errno));
     }
     try {
-        FSUtils::copy_file_fd(origfd, tmpfilefd);
+        tmpfile.copy_from_fd(origfd);
     } catch (const std::exception &e) {
         close(origfd);
-        SKIP("Couldn't copy file '" << TEST_FILES "old-history"
-                                    << "' to '" << tmpfilename << ": "
-                                    << e.what());
+        SKIP("Couldn't copy file '" TEST_FILES "old-history' to '"
+             << tmpfile.get_name() << ": " << e.what());
     }
     close(origfd);
 
@@ -162,7 +144,7 @@ TEST_CASE("Test conversion from v0 to v1", "[History]") {
     };
 
     {
-        REQUIRE_THROWS_AS(HistoryManager(tmpfilename), v0_version_error);
+        REQUIRE_THROWS_AS(HistoryManager(tmpfile.get_name()), v0_version_error);
         AppManager apps(
             {
                 {TEST_FILES "applications/",
@@ -178,27 +160,20 @@ TEST_CASE("Test conversion from v0 to v1", "[History]") {
         },
             {}, LocaleSuffixes());
         HistoryManager hist =
-            HistoryManager::convert_history_from_v0(tmpfilename, apps);
+            HistoryManager::convert_history_from_v0(tmpfile.get_name(), apps);
         REQUIRE(compare_maps(hist.view(), history));
         // XXX
     }
 }
 
 TEST_CASE("Test imperfect conversion from history v0 to v1", "[History]") {
-    char tmpfilename[] = "/tmp/j4dd-history-unit-test-XXXXXX";
-    int tmpfilefd = mkstemp(tmpfilename);
-    if (tmpfilefd == -1) {
-        SKIP("Couldn't create a temporary file '" << tmpfilename
-                                                  << "': " << strerror(errno));
+    std::optional<FSUtils::TempFile> tmpfile_container;
+    try {
+        tmpfile_container.emplace("j4dd-history-unit-test");
+    } catch (std::runtime_error &e) {
+        SKIP(e.what());
     }
-
-    OnExit rm_guard = [&tmpfilename, tmpfilefd]() {
-        close(tmpfilefd);
-        if (unlink(tmpfilename) < 0) {
-            WARN("Couldn't unlink() '" << tmpfilename
-                                       << "': " << strerror(errno));
-        }
-    };
+    FSUtils::TempFile &tmpfile = *tmpfile_container;
 
     int origfd = open(TEST_FILES "old-double-history", O_RDONLY);
     if (origfd == -1) {
@@ -206,12 +181,11 @@ TEST_CASE("Test imperfect conversion from history v0 to v1", "[History]") {
                                             << "': " << strerror(errno));
     }
     try {
-        FSUtils::copy_file_fd(origfd, tmpfilefd);
+        tmpfile.copy_from_fd(origfd);
     } catch (const std::exception &e) {
         close(origfd);
-        SKIP("Couldn't copy file '" << TEST_FILES "old-double-history"
-                                    << "' to '" << tmpfilename << ": "
-                                    << e.what());
+        SKIP("Couldn't copy file '" TEST_FILES "old-double-history' to '"
+             << tmpfile.get_name() << ": " << e.what());
     }
     close(origfd);
 
@@ -220,7 +194,7 @@ TEST_CASE("Test imperfect conversion from history v0 to v1", "[History]") {
     };
 
     {
-        REQUIRE_THROWS_AS(HistoryManager(tmpfilename), v0_version_error);
+        REQUIRE_THROWS_AS(HistoryManager(tmpfile.get_name()), v0_version_error);
         AppManager apps(
             {
                 {TEST_FILES "applications/",
@@ -234,7 +208,7 @@ TEST_CASE("Test imperfect conversion from history v0 to v1", "[History]") {
         },
             {}, LocaleSuffixes());
         HistoryManager hist =
-            HistoryManager::convert_history_from_v0(tmpfilename, apps);
+            HistoryManager::convert_history_from_v0(tmpfile.get_name(), apps);
         REQUIRE(compare_maps(hist.view(), history));
     }
 }

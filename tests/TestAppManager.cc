@@ -344,7 +344,8 @@ TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
         REQUIRE(apps.view_name_app_mapping().count("Chromium"));
         REQUIRE(apps.view_name_app_mapping().count("Chrome based browser"));
 
-        apps.remove(TEST_FILES "applications/chromium-variant1.desktop", TEST_FILES "applications/");
+        apps.remove(TEST_FILES "applications/chromium-variant1.desktop",
+                    TEST_FILES "applications/");
         apps.check_inner_state();
 
         REQUIRE(apps.count() == 1);
@@ -471,20 +472,14 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
     // changed and then AppManager.add() is called to update the (same) file.
     // Tests never modify files in the test_files/ directory, so we make a
     // temporary file.
-    char tmpfilename[] = "/tmp/j4dd-appmanager-unit-test-XXXXXX";
-    int tmpfilefd = mkstemp(tmpfilename);
-    if (tmpfilefd == -1) {
-        SKIP("Couldn't create a temporary file '" << tmpfilename
-                                                  << "': " << strerror(errno));
-    }
 
-    OnExit rm_guard = [&tmpfilename, tmpfilefd]() {
-        close(tmpfilefd);
-        if (unlink(tmpfilename) < 0) {
-            WARN("Couldn't unlink() '" << tmpfilename
-                                       << "': " << strerror(errno));
-        }
-    };
+    std::optional<FSUtils::TempFile> tmpfile_container;
+    try {
+        tmpfile_container.emplace("j4dd-appmanager-unit-test");
+    } catch (std::runtime_error &e) {
+        SKIP(e.what());
+    }
+    FSUtils::TempFile &tmpfile = *tmpfile_container;
 
     int origfd = open(TEST_FILES "a/applications/firefox.desktop", O_RDONLY);
     if (origfd == -1) {
@@ -493,12 +488,12 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
              << "': " << strerror(errno));
     }
     try {
-        FSUtils::copy_file_fd(origfd, tmpfilefd);
+        tmpfile.copy_from_fd(origfd);
     } catch (const std::exception &e) {
         close(origfd);
-        SKIP("Couldn't copy file '"
-             << TEST_FILES "a/applications/firefox.desktop"
-             << "' to '" << tmpfilename << ": " << e.what());
+        SKIP("Couldn't copy file '" TEST_FILES
+             "a/applications/firefox.desktop' to '"
+             << tmpfile.get_name() << ": " << e.what());
     }
     close(origfd);
 
@@ -506,10 +501,10 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
         {
             {TEST_FILES "a/applications/",
              {TEST_FILES "a/applications/chromium.desktop",
-              TEST_FILES "a/applications/hidden.desktop"} },
-            {"/tmp/",                      {tmpfilename}  },
+              TEST_FILES "a/applications/hidden.desktop"}      },
+            {"/tmp/",                      {tmpfile.get_name()}},
             {TEST_FILES "c/applications/",
-             {TEST_FILES "c/applications/vivaldi.desktop"}}
+             {TEST_FILES "c/applications/vivaldi.desktop"}     }
     },
         {}, LocaleSuffixes());
 
@@ -529,7 +524,7 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
 
     // Try to reload the file without changing it. apps should be left in the
     // same state.
-    apps.add(tmpfilename, "/tmp/", 1);
+    apps.add(tmpfile.get_name(), "/tmp/", 1);
 
     apps.check_inner_state();
 
@@ -546,10 +541,10 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
     }
 
     // Now we change it.
-    if (lseek(tmpfilefd, 0, SEEK_SET) == (off_t)-1) {
+    if (lseek(tmpfile.get_internal_fd(), 0, SEEK_SET) == (off_t)-1) {
         SKIP("Couldn't lseek(): " << strerror(errno));
     }
-    if (ftruncate(tmpfilefd, 0) == -1) {
+    if (ftruncate(tmpfile.get_internal_fd(), 0) == -1) {
         SKIP("Couldn't ftruncate(): " << strerror(errno));
     }
 
@@ -561,16 +556,16 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
              << "': " << strerror(errno));
     }
     try {
-        FSUtils::copy_file_fd(origfd, tmpfilefd);
+        tmpfile.copy_from_fd(origfd);
     } catch (const std::exception &e) {
         close(origfd);
-        SKIP("Couldn't copy file '"
-             << TEST_FILES "a/applications/firefox-changed.desktop"
-             << "' to '" << tmpfilename << ": " << e.what());
+        SKIP("Couldn't copy file '" TEST_FILES
+             "a/applications/firefox-changed.desktop' to '"
+             << tmpfile.get_name() << ": " << e.what());
     }
     close(origfd);
 
-    apps.add(tmpfilename, "/tmp/", 1);
+    apps.add(tmpfile.get_name(), "/tmp/", 1);
 
     apps.check_inner_state();
 
@@ -607,7 +602,9 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
 
         REQUIRE(apps.count() == 1);
         {
-            ctype check{{"First", "true"}};
+            ctype check{
+                {"First", "true"}
+            };
             REQUIRE(checkmap(apps, check));
         }
     }
@@ -622,7 +619,9 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
 
         REQUIRE(apps.count() == 1);
         {
-            ctype check{{"Second", "true"}};
+            ctype check{
+                {"Second", "true"}
+            };
             REQUIRE(checkmap(apps, check));
         }
 
@@ -633,7 +632,9 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
 
         REQUIRE(apps.count() == 1);
         {
-            ctype check{{"First", "true"}};
+            ctype check{
+                {"First", "true"}
+            };
             REQUIRE(checkmap(apps, check));
         }
     }
@@ -785,7 +786,8 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
             REQUIRE(checkmap(apps, check));
         }
 
-        apps.add(TEST_FILES "usr/share/applications/couldbehidden.desktop", TEST_FILES "usr/share/applications/", 1);
+        apps.add(TEST_FILES "usr/share/applications/couldbehidden.desktop",
+                 TEST_FILES "usr/share/applications/", 1);
 
         apps.check_inner_state();
 
@@ -812,7 +814,9 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
 
         REQUIRE(apps.count() == 0);
 
-        apps.add(TEST_FILES "usr/local/share/applications/couldbehidden.desktop", TEST_FILES "usr/local/share/applications/", 1);
+        apps.add(TEST_FILES
+                 "usr/local/share/applications/couldbehidden.desktop",
+                 TEST_FILES "usr/local/share/applications/", 1);
 
         apps.check_inner_state();
 
