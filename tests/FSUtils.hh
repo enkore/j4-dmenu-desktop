@@ -32,10 +32,34 @@
 namespace FSUtils
 {
 using std::string;
+using std::string_view;
 
 void copy_file_fd(int in, int out);
 bool compare_files(const char *a, const char *b);
 void rmdir_recursive(const char *dirname);
+
+class TempFile
+{
+public:
+    TempFile(string_view name_prefix);
+    ~TempFile();
+
+    void copy_from_fd(int in);
+    const std::string &get_name() const;
+
+    // This function should be used rarely. Please do not call close() on the
+    // return value!
+    int get_internal_fd();
+
+    TempFile(const TempFile &) = delete;
+    TempFile(TempFile &&) = delete;
+    void operator=(const TempFile &) = delete;
+    void operator=(TempFile &&) = delete;
+
+private:
+    int fd;
+    string name;
+};
 }; // namespace FSUtils
 
 #endif

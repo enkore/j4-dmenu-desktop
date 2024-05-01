@@ -17,6 +17,8 @@
 
 #include "FSUtils.hh"
 
+#include <catch2/catch_test_macros.hpp>
+
 namespace FSUtils
 {
 void copy_file_fd(int in, int out) {
@@ -155,5 +157,37 @@ void rmdir_recursive(const char *dirname) {
     if (rmdir(dirname) == -1)
         throw std::runtime_error((string) "Error while calling rmdir() on '" +
                                  dirname + "': " + strerror(errno));
+}
+
+TempFile::TempFile(string_view name_prefix)
+    : name("/tmp/" + string(name_prefix) + "-XXXXXX") {
+    int fd = mkstemp(this->name.data());
+    if (fd == -1)
+        throw std::runtime_error((string) "Couldn't create temporary file '" +
+                                 this->name + "': " + strerror(errno));
+    this->fd = fd;
+}
+
+TempFile::~TempFile() {
+    if (unlink(this->name.c_str()) == -1) {
+        WARN("Couldn't unlink() '" << this->name << "': " << strerror(errno));
+    }
+    close(this->fd);
+}
+
+void TempFile::copy_from_fd(int in) {
+    if (lseek(this->fd, 0, SEEK_SET) == (off_t) -1)
+        throw std::runtime_error((string) "Couldn't lseek() '" + this->name +
+                                 "': " + strerror(errno));
+    copy_file_fd(in, this->fd);
+}
+
+const std::string &TempFile::get_name() const {
+    return this->name;
+}
+
+int TempFile::get_internal_fd()
+{
+    return this->fd;
 }
 }; // namespace FSUtils
