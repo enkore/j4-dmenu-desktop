@@ -830,3 +830,72 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
         }
     }
 }
+
+TEST_CASE("Test reading a nonreadable file.", "[AppManager]") {
+    std::optional<FSUtils::TempFile> unreadable1_container;
+    try {
+        // Make it unreadable.
+        auto old_mask = umask(0400);
+        OnExit remask = [old_mask]() { umask(old_mask); };
+        unreadable1_container.emplace("j4dd-appmanager-unit-test");
+    } catch (std::runtime_error &e) {
+        SKIP(e.what());
+    }
+    FSUtils::TempFile &unreadable1 = *unreadable1_container;
+
+    std::optional<AppManager> container;
+    REQUIRE_NOTHROW(container.emplace(
+        Desktop_file_list{
+            {TEST_FILES "applications",
+             {TEST_FILES "applications/eagle.desktop"}          },
+            {"/tmp/",                   {unreadable1.get_name()}}
+    },
+        stringlist_t{}, LocaleSuffixes{}));
+
+    AppManager &apps = *container;
+
+    apps.check_inner_state();
+
+    // Make a normal (readable) file in /tmp
+    std::optional<FSUtils::TempFile> gimp_container;
+    try {
+        gimp_container.emplace("j4dd-appmanager-unit-test");
+    } catch (std::runtime_error &e) {
+        SKIP(e.what());
+    }
+    FSUtils::TempFile &gimp = *gimp_container;
+
+    int gimpfd = open(TEST_FILES "applications/gimp.desktop", O_RDONLY);
+    if (gimpfd == -1) {
+        SKIP("Couldn't open desktop file '" TEST_FILES
+             "applications/gimp.desktop': "
+             << strerror(errno));
+    }
+    try {
+        gimp.copy_from_fd(gimpfd);
+    } catch (const std::exception &e) {
+        close(gimpfd);
+        SKIP("Couldn't copy file '" TEST_FILES
+             "applications/gimp.desktop': ' to '"
+             << gimp.get_name() << ": " << e.what());
+    }
+    close(gimpfd);
+
+    REQUIRE_NOTHROW(apps.add(gimp.get_name(), "/tmp/", 1));
+
+    std::optional<FSUtils::TempFile> unreadable2_container;
+    try {
+        // Make it unreadable.
+        auto old_mask = umask(0400);
+        OnExit remask = [old_mask]() { umask(old_mask); };
+        unreadable2_container.emplace("j4dd-appmanager-unit-test");
+    } catch (std::runtime_error &e) {
+        SKIP(e.what());
+    }
+    FSUtils::TempFile &unreadable2 = *unreadable2_container;
+
+    // This time add an unreadable file. This tests that unreadable files work
+    // not only in the ctor, but also in add(), which can also be used to add
+    // things.
+    REQUIRE_NOTHROW(apps.add(unreadable2.get_name(), "/tmp/", 1));
+}
