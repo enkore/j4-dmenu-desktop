@@ -21,6 +21,9 @@ while getopts dhb: o; do
 Usage: meson-setup.sh [-h] [-d] [-b release | debug | sanitize] DIR
 Helper script to initialize Meson builddir.
 
+Note that the sanitized build style will NOT utilize system-installed
+dependencies; instead, they will be fetched and built manually.
+
   -h   Print this help message
   -d   Dry run - print commands that would have been executed
   -b   Specify build style; set to release when not specified
@@ -55,7 +58,8 @@ debug)
     exec $DRYRUN meson setup -Dsplit-source=true "$1"
     ;;
 sanitize)
-    exec $DRYRUN meson setup -Dsplit-source=true -Db_sanitize=address,undefined -Dcpp_debugstl=true -Db_lundef=false "$1"
+    # See https://github.com/catchorg/Catch2/issues/2811 for explanation of forcefallback
+    exec $DRYRUN meson setup -Dsplit-source=true -Db_sanitize=address,undefined -Dcpp_debugstl=true -Db_lundef=false --wrap-mode forcefallback "$1"
     ;;
 *)
     echo "Unknown build style $build_type!" 1>&2
