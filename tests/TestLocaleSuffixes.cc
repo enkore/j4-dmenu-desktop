@@ -72,7 +72,6 @@ TEST_CASE("Test listing suffixes", "[LocaleSuffixes]") {
     REQUIRE(*suffixes[2] == "en@mod");
     REQUIRE(*suffixes[3] == "en");
 
-
     LocaleSuffixes ls2("en_US.UTF-8");
     suffixes = ls2.list_suffixes_for_logging_only();
     REQUIRE(suffixes.size() == 2);

@@ -17,19 +17,19 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <algorithm>
+#include <errno.h>
 #include <exception>
+#include <fcntl.h>
 #include <functional>
 #include <optional>
 #include <stdexcept>
+#include <string.h>
 #include <string>
 #include <string_view>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -312,9 +312,9 @@ TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
             {
                 {TEST_FILES "a/applications/",
                  {TEST_FILES "a/applications/chromium.desktop",
-                  TEST_FILES "a/applications/firefox.desktop"}},
+                  TEST_FILES "a/applications/firefox.desktop"}        },
                 {TEST_FILES "applications/",
-                 {TEST_FILES "applications/chromium-variant1.desktop"} },
+                 {TEST_FILES "applications/chromium-variant1.desktop"}},
         },
             {}, LocaleSuffixes());
 
@@ -374,6 +374,7 @@ TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
 }
 
 TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
+    // clang-format off
     AppManager apps(
         {
             {TEST_FILES "a/applications/",
@@ -387,6 +388,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
              {TEST_FILES "c/applications/vivaldi.desktop"}}
     },
         {}, LocaleSuffixes());
+    // clang-format on
     REQUIRE(apps.count() == 3);
 
     {
@@ -429,6 +431,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     REQUIRE(apps.count() == 3);
 
     {
+        // clang-format off
         ctype check{
             {"Firefox",              "firefox" },
             {"Web browser",          "firefox" },
@@ -437,6 +440,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
             {"Chrome based browser", "chromium"},
             {"Vivaldi",              "vivaldi" },
         };
+        // clang-format on
 
         REQUIRE(checkmap(apps, check));
     }
@@ -449,6 +453,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     REQUIRE(apps.count() == 4);
 
     {
+        // clang-format off
         ctype check{
             {"Firefox",              "firefox" },
             {"Web browser",          "firefox" },
@@ -458,6 +463,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
             {"Vivaldi",              "vivaldi" },
             {"Safari",               "safari"  },
         };
+        // clang-format on
 
         REQUIRE(checkmap(apps, check));
     }
@@ -470,6 +476,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     REQUIRE(apps.count() == 3);
 
     {
+        // clang-format off
         ctype check{
           //{"Firefox",              "firefox" },
           //{"Web browser",          "firefox" },
@@ -480,6 +487,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
             {"Safari",               "safari"  },
             {"Web browser",          "safari"  },
         };
+        // clang-format on
 
         REQUIRE(checkmap(apps, check));
     }
@@ -588,15 +596,17 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
     apps.check_inner_state();
 
     {
+        // clang-format off
         ctype check{
             {"Firefox",              "firefox" },
             {"Internet browser",     "firefox" },
-        //{"Web browser",          "firefox" },
+          //{"Web browser",          "firefox" },
             {"Chromium",             "chromium"},
             {"Chrome based browser", "chromium"},
             {"Vivaldi",              "vivaldi" },
             {"Web browser",          "vivaldi" },
         };
+        // clang-format on
 
         REQUIRE(checkmap(apps, check));
     }
@@ -783,15 +793,17 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
 }
 
 TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
-    SECTION("Hidden app last")
-    {
+    SECTION("Hidden app last") {
+        // clang-format off
         AppManager apps(
             {
                 {TEST_FILES "usr/local/share/applications",
-                {TEST_FILES "usr/local/share/applications/couldbehidden.desktop"}},
+                 {TEST_FILES
+                  "usr/local/share/applications/couldbehidden.desktop"}},
                 {TEST_FILES "usr/share/applications", {}}
         },
             {}, LocaleSuffixes());
+        // clang-format on
 
         apps.check_inner_state();
 
@@ -818,15 +830,16 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
             REQUIRE(checkmap(apps, check));
         }
     }
-    SECTION("Hidden app first")
-    {
+    SECTION("Hidden app first") {
+        // clang-format off
         AppManager apps(
             {
                 {TEST_FILES "usr/share/applications",
-                {TEST_FILES "usr/share/applications/couldbehidden.desktop"}},
+                 {TEST_FILES "usr/share/applications/couldbehidden.desktop"}},
                 {TEST_FILES "usr/local/share/applications", {}}
         },
             {}, LocaleSuffixes());
+        // clang-format on
 
         apps.check_inner_state();
 

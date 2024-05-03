@@ -20,11 +20,11 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdexcept>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <stdexcept>
 
 #include "FSUtils.hh"
 #include "Utilities.hh"
@@ -168,7 +168,7 @@ TempFile::~TempFile() {
 }
 
 void TempFile::copy_from_fd(int in) {
-    if (lseek(this->fd, 0, SEEK_SET) == (off_t) -1)
+    if (lseek(this->fd, 0, SEEK_SET) == (off_t)-1)
         throw std::runtime_error((string) "Couldn't lseek() '" + this->name +
                                  "': " + strerror(errno));
     copy_file_fd(in, this->fd);
@@ -180,7 +180,7 @@ bool TempFile::compare_file(const char *other) {
         throw std::runtime_error((string) "Couldn't open '" + other +
                                  "': " + strerror(errno));
     }
-    if (lseek(this->fd, 0, SEEK_SET) == (off_t) -1)
+    if (lseek(this->fd, 0, SEEK_SET) == (off_t)-1)
         throw std::runtime_error((string) "Couldn't lseek() '" + this->name +
                                  "': " + strerror(errno));
     bool result;
@@ -198,8 +198,7 @@ const std::string &TempFile::get_name() const {
     return this->name;
 }
 
-int TempFile::get_internal_fd()
-{
+int TempFile::get_internal_fd() {
     return this->fd;
 }
 }; // namespace FSUtils

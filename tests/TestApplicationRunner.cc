@@ -20,9 +20,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <string>
 
 #include "Application.hh"
 #include "ApplicationRunner.hh"
@@ -76,8 +76,7 @@ TEST_CASE("Tests proper handling of special characters",
           "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
     LineReader liner;
-    Application app(TEST_FILES "applications/gimp.desktop", liner,
-                    ls, {});
+    Application app(TEST_FILES "applications/gimp.desktop", liner, ls, {});
 
     auto result = getshell(application_command(app, R"--(@#$%^&*}{)(\)--"));
 
@@ -88,8 +87,8 @@ TEST_CASE("Tests proper handling of special characters",
 TEST_CASE("Test field codes", "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
     LineReader liner;
-    Application app(TEST_FILES "applications/field_codes.desktop", liner,
-                    ls, {});
+    Application app(TEST_FILES "applications/field_codes.desktop", liner, ls,
+                    {});
 
     auto result = getshell(application_command(app, "arg1 arg2\\ arg3"));
     stringlist_t cmp({"true", "--name=%c", "--location",
@@ -102,8 +101,7 @@ TEST_CASE("Regression test for issue #18, %c was not escaped",
           "[ApplicationRunner]") {
     LocaleSuffixes ls("en_US");
     LineReader liner;
-    Application app(TEST_FILES "applications/caption.desktop", liner,
-                    ls, {});
+    Application app(TEST_FILES "applications/caption.desktop", liner, ls, {});
 
     auto result = getshell(application_command(app, ""));
     stringlist_t cmp({"1234", "--caption", "Regression Test 18"});

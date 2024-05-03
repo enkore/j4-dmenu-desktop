@@ -19,19 +19,19 @@
 
 #include <bits/chrono.h>
 #include <errno.h>
+#include <exception>
 #include <fcntl.h>
+#include <future>
 #include <inttypes.h>
 #include <signal.h>
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <exception>
-#include <future>
-#include <stdexcept>
-#include <string>
 
 #include "FSUtils.hh"
 #include "I3Exec.hh"
