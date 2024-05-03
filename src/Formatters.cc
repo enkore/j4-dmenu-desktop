@@ -17,25 +17,28 @@
 
 #include "Formatters.hh"
 
-std::string appformatter_default(string_view name, const Application &) {
-    return (std::string)name;
+using std::string_view;
+using std::string;
+
+string appformatter_default(string_view name, const Application &) {
+    return (string)name;
 }
 
-std::string appformatter_with_binary_name(string_view name, const Application &app) {
+string appformatter_with_binary_name(string_view name, const Application &app) {
     // get name and the first part of exec
-    return (std::string)name + " (" + app.exec.substr(0, app.exec.find(' ')) + ")";
+    return (string)name + " (" + app.exec.substr(0, app.exec.find(' ')) + ")";
 }
 
-std::string appformatter_with_base_binary_name(string_view name, const Application &app) {
+string appformatter_with_base_binary_name(string_view name, const Application &app) {
     auto command_end = app.exec.find(' ');
     auto last_slash = app.exec.rfind('/', command_end);
 
-    if (last_slash == std::string::npos)
+    if (last_slash == string::npos)
         last_slash = 0; // exec is relative, it doesn't contain slashes in path
     else
         last_slash++;
-    if (command_end != std::string::npos)
+    if (command_end != string::npos)
         command_end -= last_slash; // make command_end an offset from last_slash
 
-    return (std::string)name + " (" + app.exec.substr(last_slash, command_end) + ")";
+    return (string)name + " (" + app.exec.substr(last_slash, command_end) + ")";
 }

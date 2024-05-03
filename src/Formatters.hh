@@ -22,12 +22,10 @@
 
 #include "Application.hh"
 
-using std::string_view;
+using application_formatter = std::string (*)(std::string_view, const Application &);
 
-using application_formatter = std::string (*)(string_view, const Application &);
-
-std::string appformatter_default(string_view name, const Application &app);
-std::string appformatter_with_binary_name(string_view name, const Application &app);
-std::string appformatter_with_base_binary_name(string_view name, const Application &app);
+std::string appformatter_default(std::string_view name, const Application &app);
+std::string appformatter_with_binary_name(std::string_view name, const Application &app);
+std::string appformatter_with_base_binary_name(std::string_view name, const Application &app);
 
 #endif
