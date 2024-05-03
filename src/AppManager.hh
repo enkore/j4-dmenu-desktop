@@ -51,7 +51,7 @@ struct Managed_application
     int rank;
 
     template <typename... Args>
-    Managed_application(int rank, Args&&... forwarded)
+    Managed_application(int rank, Args &&...forwarded)
         : app(std::forward<Args>(forwarded)...), rank(rank) {}
 };
 

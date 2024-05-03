@@ -18,23 +18,23 @@
 // See CONTRIBUTING.md for explanation of loglevels.
 #include <loguru.hpp>
 
+#include <cstring>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <map>
+#include <optional>
 #include <poll.h>
+#include <set>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <cstring>
-#include <map>
-#include <optional>
-#include <set>
 #include <string>
 #include <string_view>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <type_traits>
+#include <unistd.h>
 #include <unordered_set>
 #include <utility>
 #include <variant>

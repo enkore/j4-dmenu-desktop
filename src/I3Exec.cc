@@ -20,7 +20,10 @@
 #include <loguru.hpp>
 
 #include <errno.h>
+#include <exception>
 #include <inttypes.h>
+#include <limits>
+#include <memory>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,9 +31,6 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <exception>
-#include <limits>
-#include <memory>
 
 #include "Utilities.hh"
 
@@ -232,16 +232,18 @@ void exec(const std::string &command, const std::string &socket_path) {
             try {
                 string error = read_JSON_string(response.cbegin() + where + 8,
                                                 response.cend());
-                LOG_F(ERROR,
-                      "An error occurred while communicating with i3 (executing "
-                      "command '%s'): %s",
-                      command.c_str(), error.c_str());
+                LOG_F(
+                    ERROR,
+                    "An error occurred while communicating with i3 (executing "
+                    "command '%s'): %s",
+                    command.c_str(), error.c_str());
             } catch (const JSONError &) {
-                LOG_F(ERROR,
-                      "An error occurred while communicating with i3 (executing "
-                      "command '%s'): j4-dmenu-desktop has received invalid "
-                      "response.",
-                      command.c_str());
+                LOG_F(
+                    ERROR,
+                    "An error occurred while communicating with i3 (executing "
+                    "command '%s'): j4-dmenu-desktop has received invalid "
+                    "response.",
+                    command.c_str());
             }
         } else
             LOG_F(ERROR,
@@ -252,8 +254,9 @@ void exec(const std::string &command, const std::string &socket_path) {
     } else {
         LOG_F(ERROR,
               "A parsing error occurred while reading i3's response (executing "
-              "command '%s')!", command.c_str());
+              "command '%s')!",
+              command.c_str());
         abort();
     }
 }
-};
+}; // namespace I3Interface

@@ -15,8 +15,8 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <unistd.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <stack>
 

@@ -19,8 +19,8 @@
 
 #include "Application.hh"
 
-using std::string_view;
 using std::string;
+using std::string_view;
 
 string appformatter_default(string_view name, const Application &) {
     return (string)name;
@@ -31,7 +31,8 @@ string appformatter_with_binary_name(string_view name, const Application &app) {
     return (string)name + " (" + app.exec.substr(0, app.exec.find(' ')) + ")";
 }
 
-string appformatter_with_base_binary_name(string_view name, const Application &app) {
+string appformatter_with_base_binary_name(string_view name,
+                                          const Application &app) {
     auto command_end = app.exec.find(' ');
     auto last_slash = app.exec.rfind('/', command_end);
 

@@ -34,7 +34,7 @@ public:
     void operator=(const LineReader &) = delete;
 
     LineReader(LineReader &&);
-    LineReader& operator=(LineReader &&);
+    LineReader &operator=(LineReader &&);
 
     ~LineReader();
 
@@ -42,10 +42,10 @@ public:
     // procedures (errno).
     ssize_t getline(FILE *f);
 
-    char * get_lineptr();
+    char *get_lineptr();
 
 private:
-    char * lineptr = NULL;
+    char *lineptr = NULL;
     size_t linesz;
 };
 

@@ -18,11 +18,11 @@
 #include "Dmenu.hh"
 
 #include <loguru.hpp>
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <stdexcept>
 #include <utility>
 
 #include "Utilities.hh"

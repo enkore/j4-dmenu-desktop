@@ -18,11 +18,11 @@
 #ifndef HISTORY_DEF
 #define HISTORY_DEF
 
-#include <stdio.h>
 #include <functional>
 #include <map>
 #include <memory>
 #include <stdexcept>
+#include <stdio.h>
 #include <string>
 #include <type_traits>
 

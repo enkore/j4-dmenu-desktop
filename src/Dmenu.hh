@@ -32,7 +32,7 @@ public:
     void operator=(const Dmenu &dmenu) = delete;
 
     Dmenu(Dmenu &&) = default;
-    Dmenu & operator=(Dmenu &&) = default;
+    Dmenu &operator=(Dmenu &&) = default;
 
     // The caller may wish to handle SIGPIPE to detect dmenu failure when
     // calling write().

@@ -20,16 +20,16 @@
 
 #include <loguru.hpp>
 
-#include <stdio.h>
-#include <sys/types.h>
 #include <cstdlib>
+#include <stdio.h>
 #include <string>
+#include <sys/types.h>
 #include <utility>
 #include <vector>
 
 #define PFATALE(msg)                                                           \
     {                                                                          \
-        LOG_F(ERROR, "Failure occurred while calling " msg "(): %s",            \
+        LOG_F(ERROR, "Failure occurred while calling " msg "(): %s",           \
               loguru::errno_as_text().c_str());                                \
         exit(EXIT_FAILURE);                                                    \
     }

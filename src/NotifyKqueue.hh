@@ -20,11 +20,11 @@
 
 #include "NotifyBase.hh"
 #include <mutex>
+#include <set>
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <thread>
-#include <set>
 
 using stringlist_t = std::vector<std::string>;
 

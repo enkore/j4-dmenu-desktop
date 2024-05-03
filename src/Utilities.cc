@@ -18,10 +18,10 @@
 #include "Utilities.hh"
 
 #include <errno.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <iterator>
 #include <sstream>
+#include <sys/stat.h>
+#include <unistd.h>
 
 stringlist_t split(const std::string &str, char delimiter) {
     std::stringstream ss(str);
