@@ -17,13 +17,20 @@
 
 #include "I3Exec.hh"
 
+#include <loguru.hpp>
+
+#include <errno.h>
 #include <inttypes.h>
-#include <limits>
-#include <memory>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <exception>
+#include <limits>
+#include <memory>
 
 #include "Utilities.hh"
 

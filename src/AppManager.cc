@@ -17,6 +17,11 @@
 
 #include "AppManager.hh"
 
+#include <loguru.hpp>
+
+#include <stdlib.h>
+#include <algorithm>
+
 std::string get_desktop_id(std::string filename) {
     std::string result(std::move(filename));
     replace(result.begin(), result.end(), '/', '-');

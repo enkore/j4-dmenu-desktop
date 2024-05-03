@@ -15,14 +15,20 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <string>
+#include <catch2/catch_test_macros.hpp>
+
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <string>
 
 #include "Application.hh"
 #include "ApplicationRunner.hh"
-#include "Formatters.hh"
+#include "LineReader.hh"
 #include "LocaleSuffixes.hh"
-#include <catch2/catch_test_macros.hpp>
+#include "Utilities.hh"
 
 // This function will pass the string to the shell, the shell will unquote and
 // expand it and it will return the split arguments.

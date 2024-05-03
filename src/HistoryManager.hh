@@ -18,8 +18,18 @@
 #ifndef HISTORY_DEF
 #define HISTORY_DEF
 
-#include "AppManager.hh"
-#include "Application.hh"
+#include <stdio.h>
+#include <functional>
+#include <map>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+
+#include "Utilities.hh"
+
+class AppManager;
+class LineReader;
 
 using std::string;
 

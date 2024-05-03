@@ -18,11 +18,8 @@
 #ifndef LOCALE_DEF
 #define LOCALE_DEF
 
-#include <set>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 class LocaleSuffixes

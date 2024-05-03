@@ -15,24 +15,30 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <algorithm>
-#include <cstring>
-#include <fstream>
-#include <getopt.h>
-#include <iostream>
-#include <unistd.h>
-#include <variant>
-#include <vector>
-
-#include <fcntl.h>
-#include <poll.h>
-#include <signal.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
 // See CONTRIBUTING.md for explanation of loglevels.
 #include <loguru.hpp>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <cstring>
+#include <map>
+#include <optional>
+#include <set>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <unordered_set>
+#include <utility>
+#include <variant>
+#include <vector>
 
 #include "AppManager.hh"
 #include "Application.hh"
@@ -43,6 +49,8 @@
 #include "Formatters.hh"
 #include "HistoryManager.hh"
 #include "I3Exec.hh"
+#include "LocaleSuffixes.hh"
+#include "NotifyBase.hh"
 #include "SearchPath.hh"
 #include "Utilities.hh"
 

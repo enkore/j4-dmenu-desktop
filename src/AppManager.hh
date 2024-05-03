@@ -18,17 +18,21 @@
 #ifndef APPMANAGER_DEF
 #define APPMANAGER_DEF
 
-#include <cctype>
-#include <forward_list>
-#include <limits>
-#include <optional>
-#include <string_view>
-#include <unordered_set>
-
 #include <loguru.hpp>
 
+#include <forward_list>
+#include <functional>
+#include <limits>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "Application.hh"
-#include "Formatters.hh"
+#include "LineReader.hh"
+#include "LocaleSuffixes.hh"
 #include "Utilities.hh"
 
 using std::string;

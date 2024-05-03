@@ -19,8 +19,9 @@
 #define DESKTOP_DEF
 
 #include <string>
+#include <string_view>
 
-#include "Application.hh"
+class Application;
 
 using application_formatter = std::string (*)(std::string_view, const Application &);
 

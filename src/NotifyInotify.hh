@@ -18,10 +18,10 @@
 #ifndef NOTIFYINOTIFY_DEV
 #define NOTIFYINOTIFY_DEV
 
-#include <sys/inotify.h>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
-#include "FileFinder.hh"
 #include "NotifyBase.hh"
 #include "Utilities.hh"
 

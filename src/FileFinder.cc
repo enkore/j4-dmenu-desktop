@@ -17,6 +17,12 @@
 
 #include "FileFinder.hh"
 
+#include <algorithm>
+#include <cstddef>
+#include <stdexcept>
+
+#include "Utilities.hh"
+
 FileFinder::FileFinder(const std::string &path) : done(false), dir(NULL) {
     dirstack.push(path);
 }

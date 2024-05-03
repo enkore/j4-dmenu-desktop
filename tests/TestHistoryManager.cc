@@ -16,9 +16,20 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+#include <exception>
+#include <functional>
+#include <map>
+#include <optional>
+#include <stdexcept>
 
+#include "AppManager.hh"
 #include "FSUtils.hh"
 #include "HistoryManager.hh"
+#include "LocaleSuffixes.hh"
 
 // This function checks that a and b have the same value pairs. If values of the
 // same key are in a different order, this function still marks them equal.

@@ -22,7 +22,6 @@
 #ifndef LINEREADER_DEF
 #define LINEREADER_DEF
 
-#include <sys/types.h>
 #include <stdio.h>
 
 class LineReader

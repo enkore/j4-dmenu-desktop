@@ -18,13 +18,10 @@
 #ifndef DMENU_DEF
 #define DMENU_DEF
 
-#include <stdexcept>
 #include <array>
 #include <string>
-#include <unistd.h>
-
-#include <sys/stat.h>
-#include <sys/wait.h>
+#include <string_view>
+#include <type_traits>
 
 class Dmenu
 {

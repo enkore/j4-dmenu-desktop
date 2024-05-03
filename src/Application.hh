@@ -18,17 +18,13 @@
 #ifndef APPLICATION_DEF
 #define APPLICATION_DEF
 
-#include <algorithm>
-#include <cstdint>
-#include <cstring>
-#include <limits.h>
-#include <memory>
 #include <stdexcept>
-#include <unistd.h>
+#include <string>
 
 #include "LocaleSuffixes.hh"
 #include "Utilities.hh"
-#include "LineReader.hh"
+
+class LineReader;
 
 // Desktop file is disabled, further parsing is unnecessary
 struct disabled_error : public std::runtime_error

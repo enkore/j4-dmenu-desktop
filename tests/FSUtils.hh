@@ -18,14 +18,8 @@
 #ifndef FSUTILS_DEF
 #define FSUTILS_DEF
 
-#include "Utilities.hh"
-
-#include <stdexcept>
 #include <string>
-
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
+#include <string_view>
 
 // These helper functions are currently used only in unit tests to set up the
 // testing environment.

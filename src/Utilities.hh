@@ -18,23 +18,14 @@
 #ifndef UTIL_DEF
 #define UTIL_DEF
 
-#include <algorithm>
-#include <cstdlib>
-#include <dirent.h>
-#include <functional>
-#include <istream>
-#include <map>
-#include <set>
-#include <sstream>
+#include <loguru.hpp>
+
 #include <stdio.h>
-#include <string.h>
-#include <string>
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <cstdlib>
+#include <string>
 #include <utility>
 #include <vector>
-
-#include <loguru.hpp>
 
 #define PFATALE(msg)                                                           \
     {                                                                          \

@@ -16,10 +16,28 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <algorithm>
+#include <exception>
+#include <functional>
+#include <optional>
+#include <stdexcept>
+#include <string>
 #include <string_view>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "AppManager.hh"
 #include "FSUtils.hh"
+#include "LocaleSuffixes.hh"
+#include "Utilities.hh"
 
 struct check_entry
 {

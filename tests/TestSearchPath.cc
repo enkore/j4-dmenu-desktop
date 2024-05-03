@@ -15,13 +15,14 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <list>
+#include <catch2/catch_test_macros.hpp>
+
 #include <stdlib.h>
 #include <string>
 #include <vector>
 
 #include "SearchPath.hh"
-#include <catch2/catch_test_macros.hpp>
+#include "Utilities.hh"
 
 TEST_CASE("Check SearchPath honors XDG_DATA_HOME", "[SearchPath]") {
     setenv("XDG_DATA_HOME", "/usr/share", 1);

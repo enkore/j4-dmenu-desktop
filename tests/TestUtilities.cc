@@ -15,11 +15,17 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <unistd.h>
+#include <catch2/catch_test_macros.hpp>
+
+#include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <iterator>
+#include <string>
 
 #include "Utilities.hh"
-#include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("Test split()", "[Utilities]") {
     stringlist_t result{"abc", "\ndef", "", "", "g", ""};

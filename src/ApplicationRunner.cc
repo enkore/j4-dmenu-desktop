@@ -16,6 +16,10 @@
 //
 
 #include "ApplicationRunner.hh"
+
+#include <stdexcept>
+
+#include "Application.hh"
 #include "Utilities.hh"
 
 static std::string quote(const std::string &s) {

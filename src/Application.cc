@@ -17,6 +17,17 @@
 
 #include "Application.hh"
 
+#include <loguru.hpp>
+
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <cstring>
+#include <memory>
+#include <utility>
+
+#include "LineReader.hh"
+
 bool Application::operator==(const Application &other) const {
     return name == other.name && generic_name == other.generic_name &&
            exec == other.exec && path == other.path &&

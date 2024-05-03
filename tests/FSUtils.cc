@@ -15,9 +15,19 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "FSUtils.hh"
-
 #include <catch2/catch_test_macros.hpp>
+
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdexcept>
+
+#include "FSUtils.hh"
+#include "Utilities.hh"
 
 namespace FSUtils
 {

@@ -15,14 +15,12 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <stddef.h>
-#include <stdlib.h>
+#include <catch2/catch_test_macros.hpp>
 #include <string>
 
 #include "Application.hh"
-#include "Formatters.hh"
+#include "LineReader.hh"
 #include "LocaleSuffixes.hh"
-#include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("Test Nonexistant file", "[Application]") {
     LocaleSuffixes ls("en_US");

@@ -17,6 +17,8 @@
 
 #include "Formatters.hh"
 
+#include "Application.hh"
+
 using std::string_view;
 using std::string;
 

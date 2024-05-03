@@ -15,10 +15,12 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <string.h>
+#include <catch2/catch_test_macros.hpp>
+
+#include <string>
+#include <vector>
 
 #include "LocaleSuffixes.hh"
-#include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("Test full encoding string", "[LocaleSuffixes]") {
     LocaleSuffixes ls("en_US.UTF-8@mod");

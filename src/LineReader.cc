@@ -15,10 +15,11 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "LineReader.hh"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
 LineReader::LineReader() {}
 

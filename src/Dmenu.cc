@@ -17,9 +17,15 @@
 
 #include "Dmenu.hh"
 
-#include "Utilities.hh"
-
 #include <loguru.hpp>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdexcept>
+#include <utility>
+
+#include "Utilities.hh"
 
 Dmenu::Dmenu(std::string dmenu_command, const char *sh)
     : dmenu_command(std::move(dmenu_command)), shell(sh) {}

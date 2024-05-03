@@ -17,15 +17,25 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "FSUtils.hh"
-#include <chrono>
-#include <future>
+#include <bits/chrono.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <unistd.h>
+#include <exception>
+#include <future>
+#include <stdexcept>
+#include <string>
 
+#include "FSUtils.hh"
 #include "I3Exec.hh"
+#include "Utilities.hh"
 
 using std::string;
 

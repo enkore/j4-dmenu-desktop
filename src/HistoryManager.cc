@@ -17,6 +17,23 @@
 
 #include "HistoryManager.hh"
 
+#include <loguru.hpp>
+
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <algorithm>
+#include <cctype>
+#include <cstdio>
+#include <optional>
+#include <tuple>
+#include <unordered_set>
+#include <utility>
+
+#include "AppManager.hh"
+#include "Application.hh"
+#include "LineReader.hh"
+
 constexpr static int compare_versions(unsigned int major, unsigned int minor) {
     auto major_diff =
         (major > J4DDHIST_MAJOR_VERSION) - (J4DDHIST_MAJOR_VERSION > major);

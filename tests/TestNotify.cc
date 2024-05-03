@@ -15,10 +15,16 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <catch2/catch_test_macros.hpp>
+
+#include <errno.h>
 #include <poll.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include "NotifyBase.hh"
+#include "Utilities.hh"
 
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"

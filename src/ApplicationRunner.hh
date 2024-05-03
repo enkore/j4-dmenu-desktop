@@ -18,11 +18,9 @@
 #ifndef APPLICATIONRUNNER_DEF
 #define APPLICATIONRUNNER_DEF
 
-#include <iostream>
-#include <string.h>
-#include <unistd.h>
+#include <string>
 
-#include "Application.hh"
+class Application;
 
 // This functions expands the field codes in Exec and prepares the arguments for
 // the shell

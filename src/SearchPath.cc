@@ -15,6 +15,8 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <string>
+
 #include "SearchPath.hh"
 
 static void add_applications_dir(std::string &str) {

@@ -18,14 +18,11 @@
 #ifndef FILEFINDER_DEF
 #define FILEFINDER_DEF
 
-#include <cstddef>
 #include <dirent.h>
 #include <iterator>
 #include <stack>
-#include <stdexcept>
+#include <string>
 #include <vector>
-
-#include "Utilities.hh"
 
 class FileFinder
 {

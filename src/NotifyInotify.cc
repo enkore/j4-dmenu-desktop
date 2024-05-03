@@ -17,7 +17,13 @@
 
 #include "NotifyInotify.hh"
 
+#include <errno.h>
+#include <stdio.h>
+#include <sys/inotify.h>
 #include <unistd.h>
+#include <utility>
+
+#include "FileFinder.hh"
 
 NotifyInotify::directory_entry::directory_entry(int r, std::string p)
     : rank(r), path(std::move(p)) {}
