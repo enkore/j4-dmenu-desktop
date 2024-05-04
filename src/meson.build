@@ -104,7 +104,9 @@ if get_option('split-source')
   executable(
     'j4-dmenu-desktop',
     'main.cc',
+    version_header,
     dependencies: loguru,
+    include_directories: version_header_inc,
     cpp_args: flags,
     link_with: source_lib,
     install: true,
@@ -114,6 +116,8 @@ else
     'j4-dmenu-desktop',
     src,
     'main.cc',
+    version_header,
+    include_directories: version_header_inc,
     cpp_args: flags,
     dependencies: loguru,
     install: true,

@@ -31,6 +31,32 @@ endif()
 SET(SOURCE AppManager.cc Application.cc ApplicationRunner.cc Dmenu.cc FileFinder.cc Formatters.cc HistoryManager.cc I3Exec.cc LocaleSuffixes.cc SearchPath.cc Utilities.cc LineReader.cc)
 list(TRANSFORM SOURCE PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
+SET(OVERRIDE_VERSION "" CACHE STRING "Override version")
+
+if(OVERRIDE_VERSION STREQUAL "")
+  # Version handling
+  file(STRINGS "version.txt" VCS_TAG)
+  set(VCS_TAG "r${VCS_TAG}")
+
+  find_package(Git)
+
+  if(GIT_EXECUTABLE)
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} describe --dirty --broken
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      OUTPUT_VARIABLE GIT_DESCRIBE_VERSION
+      RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(NOT GIT_DESCRIBE_ERROR_CODE)
+      set(VCS_TAG ${GIT_DESCRIBE_VERSION})
+    endif()
+  endif()
+else()
+  set(VCS_TAG ${OVERRIDE_VERSION})
+endif()
+
+configure_file(generated/version.hh.in generated/version.hh @ONLY)
+
 if(USE_KQUEUE)
   find_package(Threads REQUIRED)
   add_compile_definitions(USE_KQUEUE)
@@ -52,6 +78,8 @@ FetchContent_MakeAvailable(LoguruGitRepo)
 
 add_executable(j4-dmenu-desktop ${SOURCE} src/main.cc)
 target_link_libraries(j4-dmenu-desktop PRIVATE loguru::loguru)
+
+target_include_directories(j4-dmenu-desktop PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated/")
 
 if(WITH_TESTS)
   file(GLOB_RECURSE test_src_files tests/*.cc)

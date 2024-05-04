@@ -20,3 +20,9 @@ option(
     value: 'auto',
     description: 'Set the notify implementation.',
 )
+
+option(
+    'override-version',
+    type: 'string',
+    description: 'Override version. Using this option shouldn\'t be necessary as the build system will determine the correct version itself. But it can be still useful for e.g. marking patches in distribution builds.'
+)

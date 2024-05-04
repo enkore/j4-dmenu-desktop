@@ -1,7 +1,7 @@
 project(
   'j4-dmenu-desktop',
   'cpp',
-  version: '2.18',
+  version: files('version.txt'),
   default_options: [
     'warning_level=3',
     'cpp_std=c++17',
@@ -13,6 +13,7 @@ project(
 
 install_man('j4-dmenu-desktop.1')
 
+subdir('generated')
 subdir('src')
 subdir('tests')
 subdir('etc')

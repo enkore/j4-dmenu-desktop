@@ -54,6 +54,10 @@
 #include "SearchPath.hh"
 #include "Utilities.hh"
 
+// If you're getting an error about this header file not existing, try building
+// j4-dmenu-desktop. It should go away.
+#include "version.hh"
+
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"
 #else
@@ -119,6 +123,8 @@ static void print_usage(FILE *f) {
         "\t\tSpecify a log file\n"
         "\t--log-file-level=ERROR | WARNING | INFO | DEBUG\n"
         "\t\tSet file log level\n"
+        "\t--version\n"
+        "\t\tDisplay program version\n"
         "\t-h, --help\n"
         "\t\tDisplay this help message\n\n"
         "See the manpage for more detailed description of the flags.\n"
@@ -901,6 +907,7 @@ int main(int argc, char **argv) {
             {"log-level",                   required_argument, 0, 'o'},
             {"log-file",                    required_argument, 0, 'O'},
             {"log-file-level",              required_argument, 0, 'V'},
+            {"version",                     no_argument,       0, 'E'},
             {0,                             0,                 0, 0  }
         };
 
@@ -990,6 +997,9 @@ int main(int argc, char **argv) {
         case 'S':
             skip_i3_check = true;
             break;
+        case 'E':
+            puts(version);
+            exit(EXIT_SUCCESS);
         default:
             exit(1);
         }
