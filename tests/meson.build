@@ -1,13 +1,5 @@
 # This build file depends on several variables defined in src/meson.build
-if get_variable('cpp_debugstl', false)
-  # System library can't be used because of
-  # https://github.com/catchorg/Catch2/issues/2811
-  warning('System installed Catch2 can\'t be used!')
-  catch2_sub = subproject('catch2', default_options: 'tests=false')
-  catch2 = catch2_sub.get_variable('catch2_dep')
-else
-  catch2 = dependency('catch2', default_options: 'tests=false')
-endif
+catch2 = dependency('catch2', default_options: 'tests=false')
 
 test_files = [
   'FSUtils.cc',
