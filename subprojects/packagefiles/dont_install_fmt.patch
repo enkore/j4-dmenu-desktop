@@ -1,0 +1,25 @@
+--- a/meson.build
++++ b/meson.build
+@@ -13,12 +13,6 @@
+   'src/os.cc',
+   cpp_args: fmt_private_cpp_args,
+   include_directories: 'include',
+-  install: true,
+-)
+-
+-install_subdir('include',
+-  strip_directory: true,
+-  install_dir: get_option('includedir'),
+ )
+ 
+ fmt_dep = declare_dependency(
+@@ -35,9 +29,3 @@
+   include_directories: 'include',
+   compile_args: '-DFMT_HEADER_ONLY',
+ )
+-
+-pkg_mod = import('pkgconfig')
+-pkg_mod.generate(fmt_lib,
+-  name: 'fmt',
+-  filebase: 'fmt',
+-)
