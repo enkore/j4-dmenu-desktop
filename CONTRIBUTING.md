@@ -29,32 +29,23 @@ J4-dmenu-desktop makes use of `clang-format`.
 
 ## Implementation
 ### IO
-Although j4-dmenu-desktop is written in C++, `iostream` isn't used for IO. C's
-`stdio` is used instead.
-
-This is done by choice of the creator of j4-dmenu-desktop,
-[enkore](https://github.com/enkore). He used it because of performance and
-compiler compatibility concerns. None of there concerns are really justified,
-j4-dmenu-desktop also isn't a very IO heavy program, so even if there would be a
-performance penalty, it wouldn't really matter.
-
-Because of this, j4-dmenu-destkop's IO model might be subject to change in the
-future, but `printf()` and other functions should be used for now.
+[{fmt}](https://fmt.dev/latest/index.html) is used where possible. If that isn't
+possible, C style IO is used. C++ style IO (iostream) isn't used in j4-dmenu-desktop.
 
 ### Logging
-Logging is done by [loguru](https://github.com/emilk/loguru). At the time of
-writing, j4-dmenu-desktop makes use of four loglevels: `ERROR`, `WARNING`,
-`INFO` and `9` (nicknamed `DEBUG` in some places).
+Logging is done by [spdlog](https://github.com/gabime/spdlog). At the time of
+writing, j4-dmenu-desktop makes use of four loglevels: `ERROR`, `WARNING` (called `WARN` in some places),
+`INFO` and `DEBUG`.
 
 ```c++
 // There are printed by default.
-LOG_F(ERROR, "Something really bad happened!");
-LOG_F(WARNING, "j4-dmenu-desktop won't terminate because of this, but the "
-               "user should be aware of this nonetheless.");
+SPDLOG_ERROR("Something really bad happened!");
+SPDLOG_WARN("j4-dmenu-desktop won't terminate because of this, but the "
+            "user should be aware of this nonetheless.");
 // These have to be enabled with a flag to be shown.
-LOG_F(INFO, "Describe the runtime of j4-dmenu-desktop and print some useful "
+SPDLOG_INFO("Describe the runtime of j4-dmenu-desktop and print some useful "
             "things.");
-LOG_F(9, "Print debugging info.");
+SPDLOG_DEBUG("Print debugging info.");
 ```
 
 ### Commandline arguments
