@@ -54,7 +54,7 @@ TEST_CASE("Test detection of file creation and deletion of a subdirectory of "
     FILE *file = fopen(TEST_FILENAME, "w");
     if (!file)
         FAIL("Couldn't create " TEST_FILENAME ": " << strerror(errno));
-    fprintf(file, "DATA");
+    fmt::print(file, "DATA");
     fclose(file);
 
     // Timeout of 65 seconds is set because NotifyKqueue polls events in one

@@ -20,6 +20,7 @@
 // v- This is set by the build system globally. -v
 // #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 
+#include <fmt/core.h>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/ansicolor_sink.h>
@@ -80,7 +81,7 @@ static void sigchld(int) {
 }
 
 static void print_usage(FILE *f) {
-    fprintf(
+    fmt::print(
         f,
         "j4-dmenu-desktop\n"
         "A faster replacement for i3-dmenu-desktop\n"
@@ -417,7 +418,7 @@ do_dmenu(Dmenu &dmenu, const name_map &mapping, const stringlist_t &history) {
     string choice = dmenu.read_choice(); // This blocks
     if (choice.empty())
         return {};
-    fprintf(stderr, "User input is: %s\n", choice.c_str());
+    fmt::print(stderr, "User input is: {}\n", choice);
     SPDLOG_INFO("User input is: {}", choice);
     return choice;
 }
@@ -606,7 +607,7 @@ public:
         }
 
         if (this->no_exec) {
-            fprintf(stderr, "%s\n", raw_command.c_str());
+            fmt::print(stderr, "{}\n", raw_command);
             return {};
         } else
             return CommandInfo{std::move(raw_command), is_custom, terminal,
@@ -988,7 +989,8 @@ int main(int argc, char **argv) {
             } else if (strcmp(optarg, "ERROR") == 0) {
                 custom_logger->set_level(spdlog::level::err);
             } else {
-                fprintf(stderr, "Invalid loglevel supplied to --log-level!\n");
+                fmt::print(stderr,
+                           "Invalid loglevel supplied to --log-level!\n");
                 exit(EXIT_FAILURE);
             }
             loglevel_overriden = true;
@@ -1006,8 +1008,8 @@ int main(int argc, char **argv) {
             } else if (strcmp(optarg, "ERROR") == 0) {
                 log_file_verbosity = spdlog::level::err;
             } else {
-                fprintf(stderr,
-                        "Invalid loglevel supplied to --log-file-level!\n");
+                fmt::print(stderr,
+                           "Invalid loglevel supplied to --log-file-level!\n");
                 exit(1);
             }
             break;
@@ -1154,8 +1156,8 @@ int main(int argc, char **argv) {
     // would be added, which adds unnecessary clutter.
     int desktop_file_count =
         SetupPhase::count_collected_desktop_files(desktop_file_list);
-    fprintf(stderr, "Read %d .desktop files, found %u apps.\n",
-            desktop_file_count, (unsigned int)appm.count());
+    fmt::print(stderr, "Read {} .desktop files, found {} apps.\n",
+               desktop_file_count, appm.count());
     SPDLOG_INFO("Read {} .desktop files, found {} apps.", desktop_file_count,
                 appm.count());
 

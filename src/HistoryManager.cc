@@ -17,6 +17,7 @@
 
 #include "HistoryManager.hh"
 
+#include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
@@ -153,7 +154,7 @@ void HistoryManager::write() {
                    J4DDHIST_MINOR_VERSION) "\n",
                f);
     for (const auto &[hist, name] : this->history)
-        std::fprintf(f, "%u,%s\n", hist, name.c_str());
+        fmt::print(f, "{},{}\n", hist, name);
     std::fflush(f);
 }
 

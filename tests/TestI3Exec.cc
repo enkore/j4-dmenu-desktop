@@ -16,6 +16,7 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
+#include <fmt/core.h>
 
 #include <errno.h>
 #include <exception>
@@ -114,7 +115,7 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
     struct sockaddr_un addr;
     memset(&addr, 0, sizeof(struct sockaddr_un));
     addr.sun_family = AF_UNIX;
-    sprintf(addr.sun_path, "%s/socket", tmpdirname);
+    fmt::format_to(addr.sun_path, "{}/socket", tmpdirname);
 
     if (bind(sfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
         SKIP("bind: " << strerror(errno));
@@ -133,6 +134,6 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
     }
     std::string query = result.get();
     char check[14];
-    sprintf(check, "i3-ipc%" PRId32 "%" PRId32 "true", (int32_t)0, (int32_t)4);
+    fmt::format_to(check, "i3-ipc{}{}true", (int32_t)0, (int32_t)4);
     REQUIRE(query.compare(0, sizeof check, check));
 }

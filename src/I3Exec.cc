@@ -17,11 +17,11 @@
 
 #include "I3Exec.hh"
 
+#include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
 #include <errno.h>
 #include <exception>
-#include <inttypes.h>
 #include <limits>
 #include <memory>
 #include <stdio.h>
@@ -195,8 +195,8 @@ void exec(const std::string &command, const std::string &socket_path) {
     auto payload_size = 16 + command.size();
     auto payload = std::make_unique<char[]>(payload_size);
 
-    sprintf(payload.get(), "i3-ipc%" PRId32 "%" PRId32 "%.*s", (int32_t)0,
-            (int32_t)command.size(), (int)command.size(), command.data());
+    fmt::format_to(payload.get(), "i3-ipc{}{}{}", (int32_t)0,
+                   (int32_t)command.size(), command);
 
     if (writen(sfd, payload.get(), payload_size) <= 0)
         PFATALE("write");

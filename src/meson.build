@@ -59,7 +59,8 @@ endif
 
 # Actual build definitions begin here.
 
-spdlog = dependency('spdlog', default_options: 'tests=false')
+fmt = dependency('fmt', default_options: ['default_library=static'])
+spdlog = dependency('spdlog', default_options: ['tests=false', 'external_fmt=always', 'compile_library=true', 'default_library=static'])
 
 if get_option('set-debug') == 'auto'
   if get_option('debug')
@@ -98,14 +99,14 @@ if get_option('split-source')
     'source_lib',
     src,
     cpp_args: flags,
-    dependencies: spdlog,
+    dependencies: [spdlog, fmt],
   )
 
   executable(
     'j4-dmenu-desktop',
     'main.cc',
     version_header,
-    dependencies: spdlog,
+    dependencies: [spdlog, fmt],
     include_directories: version_header_inc,
     cpp_args: flags,
     link_with: source_lib,
@@ -119,7 +120,7 @@ else
     version_header,
     include_directories: version_header_inc,
     cpp_args: flags,
-    dependencies: spdlog,
+    dependencies: [spdlog, fmt],
     install: true,
   )
 endif

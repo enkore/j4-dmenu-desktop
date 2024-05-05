@@ -5,6 +5,7 @@ project(j4-dmenu CXX)
 option(WITH_TESTS "Build and run tests" ON)
 option(WITH_GIT_CATCH "Use a Git checkout of Catch to build the tests" ON)
 option(WITH_GIT_SPDLOG "Use a Git checkout of spdlog to build" ON)
+option(WITH_GIT_FMT "Use a Git checkout of fmt to build" ON)
 
 
 set(CMAKE_CXX_STANDARD 17)
@@ -82,8 +83,20 @@ else()
   find_package(spdlog REQUIRED)
 endif(WITH_GIT_SPDLOG)
 
+if(WITH_GIT_FMT)
+  include(FetchContent)
+  FetchContent_Declare(fmt
+    GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
+    GIT_TAG        "10.2.0"
+    GIT_SHALLOW    true
+  )
+  FetchContent_MakeAvailable(fmt)
+else()
+  find_package(fmt REQUIRED)
+endif(WITH_GIT_FMT)
+
 add_executable(j4-dmenu-desktop ${SOURCE} src/main.cc)
-target_link_libraries(j4-dmenu-desktop PRIVATE spdlog::spdlog)
+target_link_libraries(j4-dmenu-desktop PRIVATE spdlog::spdlog PRIVATE fmt::fmt)
 
 target_include_directories(j4-dmenu-desktop PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated/")
 
@@ -94,7 +107,7 @@ if(WITH_TESTS)
   target_compile_definitions(
     j4-dmenu-tests PRIVATE TEST_FILES="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_files/")
   target_include_directories(j4-dmenu-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/")
-  target_link_libraries(j4-dmenu-tests PRIVATE spdlog::spdlog)
+  target_link_libraries(j4-dmenu-tests PRIVATE spdlog::spdlog PRIVATE fmt::fmt)
 
   if(WITH_GIT_CATCH)
     include(FetchContent)

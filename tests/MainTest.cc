@@ -16,6 +16,7 @@
 //
 
 #include <catch2/catch_session.hpp>
+#include <fmt/core.h>
 #include <spdlog/common.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
@@ -61,8 +62,7 @@ int main(int argc, char *argv[]) {
         else if (verbosity == "DEBUG")
             my_logger->set_level(spdlog::level::debug);
         else {
-            fprintf(stderr, "Invalid loglevel '%s' passed!\n",
-                    verbosity.c_str());
+            fmt::print(stderr, "Invalid loglevel '{}' passed!\n", verbosity);
             exit(EXIT_FAILURE);
         }
 
