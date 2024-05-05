@@ -18,6 +18,9 @@
 #ifndef APPMANAGER_DEF
 #define APPMANAGER_DEF
 
+#include <spdlog/spdlog.h>
+
+#include <stdlib.h>
 #include <forward_list>
 #include <functional>
 #include <limits>
@@ -27,6 +30,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "Application.hh"
 #include "LineReader.hh"

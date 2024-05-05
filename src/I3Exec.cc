@@ -18,13 +18,9 @@
 #include "I3Exec.hh"
 
 #include <spdlog/spdlog.h>
-#include <spdlog/common.h>
 
 #include <errno.h>
-#include <exception>
 #include <inttypes.h>
-#include <limits>
-#include <memory>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +28,9 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <exception>
+#include <limits>
+#include <memory>
 
 #include "Utilities.hh"
 

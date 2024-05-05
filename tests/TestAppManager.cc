@@ -17,19 +17,19 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <algorithm>
 #include <errno.h>
-#include <exception>
 #include <fcntl.h>
-#include <functional>
-#include <optional>
-#include <stdexcept>
 #include <string.h>
-#include <string>
-#include <string_view>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <algorithm>
+#include <exception>
+#include <functional>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -38,6 +38,7 @@
 #include "FSUtils.hh"
 #include "LocaleSuffixes.hh"
 #include "Utilities.hh"
+#include "Application.hh"
 
 struct check_entry
 {

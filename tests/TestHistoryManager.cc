@@ -16,15 +16,16 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
+
 #include <errno.h>
-#include <exception>
 #include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+#include <exception>
 #include <functional>
 #include <map>
 #include <optional>
 #include <stdexcept>
-#include <string.h>
-#include <unistd.h>
 
 #include "AppManager.hh"
 #include "FSUtils.hh"

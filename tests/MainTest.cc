@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <memory>
+#include <utility>
 
 // See
 // https://github.com/catchorg/Catch2/blob/devel/docs/own-main.md#adding-your-own-command-line-options

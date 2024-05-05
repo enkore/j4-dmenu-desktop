@@ -20,34 +20,36 @@
 // v- This is set by the build system globally. -v
 // #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 
-#include <memory>
 #include <spdlog/common.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/logger.h>
+#include <spdlog/sinks/ansicolor_sink.h>
 
-#include <cstring>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <map>
-#include <optional>
 #include <poll.h>
-#include <set>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
-#include <string_view>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <type_traits>
 #include <unistd.h>
+#include <memory>
+#include <cstring>
+#include <map>
+#include <optional>
+#include <set>
+#include <string>
+#include <string_view>
+#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
+#include <algorithm>
 
 #include "AppManager.hh"
 #include "Application.hh"
@@ -62,7 +64,6 @@
 #include "NotifyBase.hh"
 #include "SearchPath.hh"
 #include "Utilities.hh"
-
 // If you're getting an error about this header file not existing, try building
 // j4-dmenu-desktop. It should go away.
 #include "version.hh"

@@ -19,14 +19,14 @@
 
 #include <spdlog/spdlog.h>
 
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
-#include <errno.h>
 #include <optional>
-#include <string.h>
 #include <tuple>
-#include <unistd.h>
 #include <unordered_set>
 #include <utility>
 
