@@ -15,6 +15,16 @@ All members of class must be accessed with `this->member` inside member
 functions. This helps disambiguate which variables are local variables and which
 are member variables.
 
+Header file includes come in this order:
+
+1. "" include to appropriate header if it's in an implementation file (`#include
+   "Dmenu.hh"` in `Dmenu.cc`)
+2. <> includes to external dependencies (Catch2, spdlog...)
+3. <> system includes
+4. "" local includes
+
+They should ideally be separated by a blank line.
+
 J4-dmenu-desktop makes use of `clang-format`.
 
 ## Implementation
