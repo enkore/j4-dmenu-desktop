@@ -19,10 +19,10 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
 #include <iterator>
+#include <string.h>
 #include <string>
+#include <unistd.h>
 
 #include "Utilities.hh"
 

@@ -20,9 +20,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <string>
 
 #include "Application.hh"
 #include "ApplicationRunner.hh"

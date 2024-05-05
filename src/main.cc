@@ -21,35 +21,35 @@
 // #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 
 #include <spdlog/common.h>
+#include <spdlog/logger.h>
+#include <spdlog/sinks/ansicolor_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
-#include <spdlog/logger.h>
-#include <spdlog/sinks/ansicolor_sink.h>
 
+#include <algorithm>
+#include <cstring>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <map>
+#include <memory>
+#include <optional>
 #include <poll.h>
+#include <set>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <memory>
-#include <cstring>
-#include <map>
-#include <optional>
-#include <set>
 #include <string>
 #include <string_view>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <type_traits>
+#include <unistd.h>
 #include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <algorithm>
 
 #include "AppManager.hh"
 #include "Application.hh"

@@ -20,17 +20,17 @@
 
 #include <spdlog/spdlog.h>
 
-#include <stdio.h>
-#include <sys/types.h>
 #include <cstdlib>
+#include <stdio.h>
 #include <string>
+#include <sys/types.h>
 #include <utility>
 #include <vector>
 
 #define PFATALE(msg)                                                           \
     {                                                                          \
         SPDLOG_ERROR("Failure occurred while calling " msg "(): {}",           \
-              strerror(errno));                                                \
+                     strerror(errno));                                         \
         exit(EXIT_FAILURE);                                                    \
     }
 

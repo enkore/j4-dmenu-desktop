@@ -20,10 +20,10 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <memory>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include <memory>
 #include <utility>
 
 // See

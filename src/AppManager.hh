@@ -20,17 +20,17 @@
 
 #include <spdlog/spdlog.h>
 
-#include <stdlib.h>
+#include <algorithm>
 #include <forward_list>
 #include <functional>
 #include <limits>
 #include <optional>
+#include <stdlib.h>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <algorithm>
 
 #include "Application.hh"
 #include "LineReader.hh"

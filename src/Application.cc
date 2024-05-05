@@ -19,10 +19,10 @@
 
 #include <spdlog/spdlog.h>
 
-#include <errno.h>
-#include <stdio.h>
 #include <cstring>
+#include <errno.h>
 #include <memory>
+#include <stdio.h>
 #include <utility>
 
 #include "LineReader.hh"
