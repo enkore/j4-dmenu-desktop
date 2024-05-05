@@ -133,7 +133,15 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
         FAIL("I3 dummy server is taking too long to respond!");
     }
     std::string query = result.get();
-    char check[14];
-    fmt::format_to(check, "i3-ipc{}{}true", (int32_t)0, (int32_t)4);
-    REQUIRE(query.compare(0, sizeof check, check));
+    char check[18];
+    std::memcpy(check, "i3-ipc", 6);
+    // Set lenght of message.
+    uint32_t length = 4;
+    std::memcpy(check + 6, &length, 4);
+    // Set type of message
+    std::memset(check + 10, 0, 4);
+    // Contents of the message.
+    std::memcpy(check + 14, "true", 4);
+    REQUIRE(query.length() == sizeof check);
+    REQUIRE(std::memcmp(query.data(), check, sizeof check) == 0);
 }

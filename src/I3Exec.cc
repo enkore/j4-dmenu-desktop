@@ -163,7 +163,8 @@ static string read_JSON_string(string::const_iterator iter,
 }
 
 void exec(const std::string &command, const std::string &socket_path) {
-    if (command.size() > std::numeric_limits<unsigned int>::max()) {
+    // The i3 IPC message length (excluding the command length) is 14 bytes.
+    if (command.size() > (std::numeric_limits<uint32_t>::max() - 14)) {
         SPDLOG_ERROR("Command '{}' is too long! (expected <= {}, got {})",
                      command, std::numeric_limits<int32_t>::max(),
                      command.size());
@@ -192,11 +193,22 @@ void exec(const std::string &command, const std::string &socket_path) {
     if (connect(sfd, (struct sockaddr *)&addr, sizeof(sockaddr_un)) == -1)
         PFATALE("connect");
 
-    auto payload_size = 16 + command.size();
+    uint32_t command_size = command.size();
+
+    auto payload_size = 14 + command_size;
     auto payload = std::make_unique<char[]>(payload_size);
 
-    fmt::format_to(payload.get(), "i3-ipc{}{}{}", (int32_t)0,
-                   (int32_t)command.size(), command);
+    auto *message = payload.get();
+    std::memcpy(message, "i3-ipc", sizeof "i3-ipc" - 1);
+    message += sizeof "i3-ipc" - 1;
+
+    std::memcpy(message, &command_size, sizeof(uint32_t));
+    message += sizeof(uint32_t);
+
+    std::memset(message, 0, 4); // message type 0 (RUN_COMMAND)
+    message += 4;
+
+    std::memcpy(message, command.data(), command_size);
 
     if (writen(sfd, payload.get(), payload_size) <= 0)
         PFATALE("write");
