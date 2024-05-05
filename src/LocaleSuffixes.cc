@@ -19,7 +19,7 @@
 
 #include <algorithm>
 #include <locale.h>
-#include <loguru.hpp>
+#include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -92,11 +92,11 @@ LocaleSuffixes::list_suffixes_for_logging_only() const {
 std::string LocaleSuffixes::set_locale() {
     char *user_locale = setlocale(LC_MESSAGES, "");
     if (!user_locale) {
-        LOG_F(WARNING, "Locale configuration invalid, check locale(1).\n"
-                       "No translated menu entries will be available.\n");
+        SPDLOG_WARN("Locale configuration invalid, check locale(1).\n"
+                    "No translated menu entries will be available.\n");
         user_locale = setlocale(LC_MESSAGES, "C");
         if (!user_locale) {
-            LOG_F(ERROR, "POSIX/C locale is not available, setlocale(3) "
+            SPDLOG_ERROR("POSIX/C locale is not available, setlocale(3) "
                          "failed. Bailing.\n");
             exit(EXIT_FAILURE);
         }

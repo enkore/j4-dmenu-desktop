@@ -18,19 +18,20 @@
 #ifndef UTIL_DEF
 #define UTIL_DEF
 
-#include <loguru.hpp>
+#include <spdlog/spdlog.h>
 
 #include <cstdlib>
 #include <stdio.h>
 #include <string>
+#include <string.h>
 #include <sys/types.h>
 #include <utility>
 #include <vector>
 
 #define PFATALE(msg)                                                           \
     {                                                                          \
-        LOG_F(ERROR, "Failure occurred while calling " msg "(): %s",           \
-              loguru::errno_as_text().c_str());                                \
+        SPDLOG_ERROR("Failure occurred while calling " msg "(): {}",           \
+              strerror(errno));                                                \
         exit(EXIT_FAILURE);                                                    \
     }
 

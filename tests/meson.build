@@ -22,7 +22,7 @@ if get_option('split-source')
   test_exe = executable(
     'j4-dmenu-tests',
     test_files,
-    dependencies: [catch2, loguru],
+    dependencies: [catch2, spdlog],
     link_with: source_lib,
     include_directories: inc,
     cpp_args: ['-DTEST_FILES="' + meson.project_source_root() / 'tests/test_files/"', flags],
@@ -32,7 +32,7 @@ else
     'j4-dmenu-tests',
     test_files,
     src,
-    dependencies: [catch2, loguru],
+    dependencies: [catch2, spdlog],
     include_directories: inc,
     cpp_args: ['-DTEST_FILES="' + meson.project_source_root() / 'tests/test_files/"', flags],
   )

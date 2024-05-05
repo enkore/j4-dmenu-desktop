@@ -17,7 +17,8 @@
 
 #include "I3Exec.hh"
 
-#include <loguru.hpp>
+#include <spdlog/spdlog.h>
+#include <spdlog/common.h>
 
 #include <errno.h>
 #include <exception>
@@ -55,7 +56,7 @@ string get_ipc_socket_path() {
             PFATALE("dup2");
 
         execlp("i3", "i3", "--get-socketpath", (char *)NULL);
-        LOG_F(ERROR, "Couldn't execute 'i3 --get-socketpath'");
+        SPDLOG_ERROR("Couldn't execute 'i3 --get-socketpath'");
         _exit(EXIT_FAILURE);
     }
     // This is the parent process.
@@ -65,15 +66,14 @@ string get_ipc_socket_path() {
     if (waitpid(pid, &status, 0) == -1)
         PFATALE("waitpid");
     if (!WIFEXITED(status)) {
-        LOG_F(ERROR, "'i3 --get-socketpath' has exited abnormally! Are you "
+        SPDLOG_ERROR("'i3 --get-socketpath' has exited abnormally! Are you "
                      "sure that i3 is running?");
         exit(EXIT_FAILURE);
     }
     if (WEXITSTATUS(status) != 0) {
-        LOG_F(ERROR,
-              "'i3 --get-socketpath' has exited with exit status %d! "
-              "Are you sure that i3 is running?",
-              WEXITSTATUS(status));
+        SPDLOG_ERROR("'i3 --get-socketpath' has exited with exit status {}! "
+                     "Are you sure that i3 is running?",
+                     WEXITSTATUS(status));
         exit(EXIT_FAILURE);
     }
 
@@ -86,11 +86,11 @@ string get_ipc_socket_path() {
         PFATALE("read");
 
     if (result.empty()) {
-        LOG_F(ERROR, "Got no output from 'i3 --get-socketpath'!");
+        SPDLOG_ERROR("Got no output from 'i3 --get-socketpath'!");
         exit(EXIT_FAILURE);
     }
     if (result.back() != '\n') {
-        LOG_F(ERROR, "'i3 --get-socketpath': Expected a newline!");
+        SPDLOG_ERROR("'i3 --get-socketpath': Expected a newline!");
         exit(EXIT_FAILURE);
     }
     result.pop_back();
@@ -165,19 +165,17 @@ static string read_JSON_string(string::const_iterator iter,
 
 void exec(const std::string &command, const std::string &socket_path) {
     if (command.size() > std::numeric_limits<unsigned int>::max()) {
-        LOG_F(ERROR, "Command '%s' is too long! (expected <= %lu, got %u)",
-              command.c_str(),
-              (unsigned long)std::numeric_limits<int32_t>::max(),
-              (unsigned int)command.size());
+        SPDLOG_ERROR("Command '{}' is too long! (expected <= {}, got {})",
+                     command, std::numeric_limits<int32_t>::max(),
+                     command.size());
         exit(EXIT_FAILURE);
     }
 
     if (socket_path.size() >= sizeof(sockaddr_un::sun_path)) {
-        LOG_F(ERROR,
-              "Socket address '%s' returned by 'i3 --get-socketpath' is too "
-              "long! (expected <= %lu, got %lu)",
-              socket_path.c_str(), sizeof(sockaddr_un::sun_path),
-              socket_path.size());
+        SPDLOG_ERROR(
+            "Socket address '{}' returned by 'i3 --get-socketpath' is too "
+            "long! (expected <= {}, got {})",
+            socket_path, sizeof(sockaddr_un::sun_path), socket_path.size());
         exit(EXIT_FAILURE);
     }
 
@@ -219,7 +217,7 @@ void exec(const std::string &command, const std::string &socket_path) {
             response.append(buf, ret);
     }
 
-    LOG_F(9, "I3 IPC response: %s", response.c_str());
+    SPDLOG_DEBUG("I3 IPC response: {}", response);
 
     // Ideally a JSON parser should be employed here. But I don't want to add
     // additional dependencies. If any breakage through this custom parsing
@@ -232,30 +230,28 @@ void exec(const std::string &command, const std::string &socket_path) {
             try {
                 string error = read_JSON_string(response.cbegin() + where + 8,
                                                 response.cend());
-                LOG_F(
-                    ERROR,
+                SPDLOG_ERROR(
                     "An error occurred while communicating with i3 (executing "
-                    "command '%s'): %s",
-                    command.c_str(), error.c_str());
+                    "command '{}'): {}",
+                    command, error);
             } catch (const JSONError &) {
-                LOG_F(
-                    ERROR,
+                SPDLOG_ERROR(
                     "An error occurred while communicating with i3 (executing "
-                    "command '%s'): j4-dmenu-desktop has received invalid "
+                    "command '{}'): j4-dmenu-desktop has received invalid "
                     "response.",
-                    command.c_str());
+                    command);
             }
         } else
-            LOG_F(ERROR,
-                  "An error occurred while communicating with i3 (executing "
-                  "command '%s')!",
-                  command.c_str());
+            SPDLOG_ERROR(
+                "An error occurred while communicating with i3 (executing "
+                "command '{}')!",
+                command);
         exit(EXIT_FAILURE);
     } else {
-        LOG_F(ERROR,
-              "A parsing error occurred while reading i3's response (executing "
-              "command '%s')!",
-              command.c_str());
+        SPDLOG_ERROR(
+            "A parsing error occurred while reading i3's response (executing "
+            "command '{}')!",
+            command);
         abort();
     }
 }

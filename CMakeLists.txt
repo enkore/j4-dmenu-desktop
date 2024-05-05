@@ -4,6 +4,8 @@ project(j4-dmenu CXX)
 
 option(WITH_TESTS "Build and run tests" ON)
 option(WITH_GIT_CATCH "Use a Git checkout of Catch to build the tests" ON)
+option(WITH_GIT_SPDLOG "Use a Git checkout of spdlog to build" ON)
+
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -67,17 +69,21 @@ endif()
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-include(FetchContent)
-FetchContent_Declare(LoguruGitRepo
-	GIT_REPOSITORY "https://github.com/emilk/loguru"
-  # Version v2.1.0 unfortunatelly doesn't work. Use Meson if you want versioned dependencies.
-	GIT_TAG        "master"
-  GIT_SHALLOW    true
-)
-FetchContent_MakeAvailable(LoguruGitRepo)
+if(WITH_GIT_SPDLOG)
+  include(FetchContent)
+  FetchContent_Declare(spdlog
+    GIT_REPOSITORY "https://github.com/gabime/spdlog.git"
+    GIT_TAG        "v1.14.0"
+    GIT_SHALLOW    true
+  )
+  FetchContent_MakeAvailable(spdlog)
+else()
+  # Use system-installed version of Catch
+  find_package(spdlog REQUIRED)
+endif(WITH_GIT_SPDLOG)
 
 add_executable(j4-dmenu-desktop ${SOURCE} src/main.cc)
-target_link_libraries(j4-dmenu-desktop PRIVATE loguru::loguru)
+target_link_libraries(j4-dmenu-desktop PRIVATE spdlog::spdlog)
 
 target_include_directories(j4-dmenu-desktop PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated/")
 
@@ -88,7 +94,7 @@ if(WITH_TESTS)
   target_compile_definitions(
     j4-dmenu-tests PRIVATE TEST_FILES="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_files/")
   target_include_directories(j4-dmenu-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/")
-  target_link_libraries(j4-dmenu-tests PRIVATE loguru::loguru)
+  target_link_libraries(j4-dmenu-tests PRIVATE spdlog::spdlog)
 
   if(WITH_GIT_CATCH)
     include(FetchContent)

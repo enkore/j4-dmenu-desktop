@@ -17,7 +17,7 @@
 
 #include "HistoryManager.hh"
 
-#include <loguru.hpp>
+#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
@@ -199,27 +199,26 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
                                std::forward_as_tuple(hist_count),
                                std::forward_as_tuple(app.name));
             else
-                LOG_F(INFO,
-                      "History conversion v0 -> v1: Prevented duplicate Name "
-                      "'%s' from appearing in history",
-                      app.name.c_str());
+                SPDLOG_INFO(
+                    "History conversion v0 -> v1: Prevented duplicate Name "
+                    "'{}' from appearing in history",
+                    app.name);
             if (!app.generic_name.empty()) {
                 if (ensure_uniqueness.emplace(app.generic_name).second)
                     result.emplace(std::piecewise_construct,
                                    std::forward_as_tuple(hist_count),
                                    std::forward_as_tuple(app.generic_name));
                 else
-                    LOG_F(INFO,
-                          "History conversion v0 -> v1: Prevented duplicate "
-                          "GenericName '%s' from appearing in history",
-                          app.name.c_str());
+                    SPDLOG_INFO(
+                        "History conversion v0 -> v1: Prevented duplicate "
+                        "GenericName '{}' from appearing in history",
+                        app.name);
             }
         } catch (std::bad_optional_access &) {
-            LOG_F(WARNING,
-                  "While converting history file '%s' to format "
-                  "1.0, desktop file ID '%s' couldn't be resolved. This "
-                  "desktop file will be omitted from the history.\n",
-                  path.c_str(), line);
+            SPDLOG_WARN("While converting history file '{}' to format "
+                        "1.0, desktop file ID '{}' couldn't be resolved. This "
+                        "desktop file will be omitted from the history.\n",
+                        path, line);
         }
     }
 

@@ -16,7 +16,9 @@
 //
 
 #include <catch2/catch_session.hpp>
-#include <loguru.hpp>
+#include <spdlog/common.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,18 +45,26 @@ int main(int argc, char *argv[]) {
         return returnCode;
 
     if (verbosity == "DISABLED")
-        loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
-    else if (verbosity == "ERROR")
-        loguru::g_stderr_verbosity = loguru::Verbosity_ERROR;
-    else if (verbosity == "WARNING")
-        loguru::g_stderr_verbosity = loguru::Verbosity_WARNING;
-    else if (verbosity == "INFO")
-        loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
-    else if (verbosity == "DEBUG")
-        loguru::g_stderr_verbosity = loguru::Verbosity_9;
+        spdlog::set_level(spdlog::level::off);
     else {
-        fprintf(stderr, "Invalid loglevel '%s' passed!\n", verbosity.c_str());
-        exit(EXIT_FAILURE);
+        auto sink = std::make_shared<spdlog::sinks::stderr_color_sink_st>();
+        auto my_logger = std::make_shared<spdlog::logger>("", std::move(sink));
+
+        if (verbosity == "ERROR")
+            my_logger->set_level(spdlog::level::err);
+        else if (verbosity == "WARNING")
+            my_logger->set_level(spdlog::level::warn);
+        else if (verbosity == "INFO")
+            my_logger->set_level(spdlog::level::info);
+        else if (verbosity == "DEBUG")
+            my_logger->set_level(spdlog::level::debug);
+        else {
+            fprintf(stderr, "Invalid loglevel '%s' passed!\n",
+                    verbosity.c_str());
+            exit(EXIT_FAILURE);
+        }
+
+        spdlog::set_default_logger(std::move(my_logger));
     }
 
     return session.run();

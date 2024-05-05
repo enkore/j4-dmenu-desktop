@@ -17,7 +17,7 @@
 
 #include "Application.hh"
 
-#include <loguru.hpp>
+#include <spdlog/spdlog.h>
 
 #include <cstring>
 #include <errno.h>
@@ -124,7 +124,7 @@ Application::Application(const char *path, LineReader &liner,
                     this->terminal = strcmp(value, "true") == 0;
                 }
             } catch (const escape_error &e) {
-                LOG_F(ERROR, "%s: %s\n", location.c_str(), e.what());
+                SPDLOG_ERROR("{}: {}\n", location, e.what());
                 throw;
             }
         } else if (!strcmp(line, "[Desktop Entry]"))

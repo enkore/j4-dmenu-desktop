@@ -51,7 +51,7 @@ elif get_option('notify-implementation') == 'kqueue'
   inotify = false
 endif
 
-flags = []
+flags = ['-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG']
 
 if not inotify
   flags += '-DUSE_KQUEUE'
@@ -59,7 +59,7 @@ endif
 
 # Actual build definitions begin here.
 
-loguru = dependency('loguru', static: true)
+spdlog = dependency('spdlog', default_options: 'tests=false')
 
 if get_option('set-debug') == 'auto'
   if get_option('debug')
@@ -98,14 +98,14 @@ if get_option('split-source')
     'source_lib',
     src,
     cpp_args: flags,
-    dependencies: loguru,
+    dependencies: spdlog,
   )
 
   executable(
     'j4-dmenu-desktop',
     'main.cc',
     version_header,
-    dependencies: loguru,
+    dependencies: spdlog,
     include_directories: version_header_inc,
     cpp_args: flags,
     link_with: source_lib,
@@ -119,7 +119,7 @@ else
     version_header,
     include_directories: version_header_inc,
     cpp_args: flags,
-    dependencies: loguru,
+    dependencies: spdlog,
     install: true,
   )
 endif

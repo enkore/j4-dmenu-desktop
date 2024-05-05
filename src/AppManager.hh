@@ -18,8 +18,6 @@
 #ifndef APPMANAGER_DEF
 #define APPMANAGER_DEF
 
-#include <loguru.hpp>
-
 #include <forward_list>
 #include <functional>
 #include <limits>
@@ -123,9 +121,11 @@ private:
 
         auto name_lookup_iter = name_app_mapping.find(name);
         if (name_lookup_iter == name_app_mapping.end()) {
-            ABORT_F("AppManager has reached a inconsistent state. Tried to "
-                    "remove application name '%s' which isn't saved!",
-                    name.c_str());
+            SPDLOG_ERROR(
+                "AppManager has reached a inconsistent state. Tried to "
+                "remove application name '{}' which isn't saved!",
+                name);
+            abort();
         }
 
         // The order of insertions and removals is crucial here. The keys of
@@ -204,9 +204,11 @@ private:
                              return &val.second.app == colliding_app_ptr;
                          });
         if (colliding_iter == this->applications.end()) {
-            ABORT_F("AppManager has reached a inconsistent state. Couldn't "
-                    "find Application* for name '%s' when there should be one.",
-                    name.c_str());
+            SPDLOG_ERROR(
+                "AppManager has reached a inconsistent state. Couldn't "
+                "find Application* for name '{}' when there should be one.",
+                name);
+            abort();
         }
         Managed_application &colliding_managed_app = colliding_iter->second;
 

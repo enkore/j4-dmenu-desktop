@@ -16,7 +16,16 @@
 //
 
 // See CONTRIBUTING.md for explanation of loglevels.
-#include <loguru.hpp>
+
+// v- This is set by the build system globally. -v
+// #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
+
+#include <memory>
+#include <spdlog/common.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include <cstring>
 #include <errno.h>
@@ -172,16 +181,16 @@ static void validate_search_path(stringlist_t &search_path) {
     for (auto iter = search_path.begin(); iter != search_path.end(); ++iter) {
         const std::string &path = *iter;
         if (path.empty())
-            LOG_F(WARNING, "Empty path in $XDG_DATA_DIRS!");
+            SPDLOG_WARN("Empty path in $XDG_DATA_DIRS!");
         else if (path.front() != '/') {
-            LOG_F(WARNING,
-                  "Relative path '%s' found in $XDG_DATA_DIRS, ignoring...",
-                  path.c_str());
+            SPDLOG_WARN(
+                "Relative path '{}' found in $XDG_DATA_DIRS, ignoring...",
+                path);
             search_path.erase(iter);
         }
         if (!is_unique.emplace(path).second)
-            LOG_F(WARNING, "$XDG_DATA_DIRS contains duplicate element '%s'!",
-                  path.c_str());
+            SPDLOG_WARN("$XDG_DATA_DIRS contains duplicate element '{}'!",
+                        path);
     }
 }
 
@@ -208,7 +217,7 @@ public:
           exclude_generic(exclude_generic) {}
 
     void load(const AppManager &appm) {
-        LOG_F(INFO, "Received request to load NameToAppMapping, formatting all "
+        SPDLOG_INFO("Received request to load NameToAppMapping, formatting all "
                     "names...");
         this->raw_mapping = appm.view_name_app_mapping();
 
@@ -219,11 +228,13 @@ public:
             if (this->exclude_generic && is_generic)
                 continue;
             std::string formatted = this->app_format(key, *ptr);
-            LOG_F(9, "Formatted '%s' -> '%s'", key.data(), formatted.c_str());
+            SPDLOG_DEBUG("Formatted '{}' -> '{}'", key, formatted);
             auto safety_check = this->mapping.try_emplace(std::move(formatted),
                                                           ptr, is_generic);
-            if (!safety_check.second)
-                ABORT_F("Formatter has created a collision!");
+            if (!safety_check.second) {
+                SPDLOG_ERROR("Formatter has created a collision!");
+                abort();
+            }
         }
     }
 
@@ -268,18 +279,17 @@ public:
             auto lookup_result = raw_name_lookup.find(raw_name);
             if (lookup_result == raw_name_lookup.end()) {
                 if (this->remove_obsolete_entries) {
-                    LOG_F(
-                        WARNING,
-                        "Removing history entry '%s', which doesn't correspond "
+                    SPDLOG_WARN(
+                        "Removing history entry '{}', which doesn't correspond "
                         "to any known desktop app name.",
-                        raw_name.c_str());
+                        raw_name);
                     this->hist.remove_obsolete_entry(iter);
                 } else {
-                    LOG_F(WARNING,
-                          "Couldn't find history entry '%s'. Has the program "
-                          "been uninstalled? Use --prune-bad-usage-log-entries "
-                          "to remove these entries.",
-                          raw_name.c_str());
+                    SPDLOG_WARN(
+                        "Couldn't find history entry '{}'. Has the program "
+                        "been uninstalled? Use --prune-bad-usage-log-entries "
+                        "to remove these entries.",
+                        raw_name);
                 }
                 continue;
             }
@@ -304,11 +314,10 @@ public:
         std::unordered_set<string_view> ensure_uniqueness;
         for (const std::string &hist_entry : this->formatted_history) {
             if (!ensure_uniqueness.emplace(hist_entry).second) {
-                LOG_F(
-                    ERROR,
-                    "Error while processing history file '%s': History doesn't "
-                    "contain unique entries! Duplicate entry '%s' is present!",
-                    this->hist.get_filename().c_str(), hist_entry.c_str());
+                SPDLOG_ERROR(
+                    "Error while processing history file '{}': History doesn't "
+                    "contain unique entries! Duplicate entry '{}' is present!",
+                    this->hist.get_filename(), hist_entry);
                 exit(EXIT_FAILURE);
             }
         }
@@ -346,9 +355,9 @@ private:
     struct sigaction oldact, act;
 
     static void sigpipe_handler(int) {
-        LOG_F(ERROR,
-              "A SIGPIPE occurred while communicating with dmenu. Is dmenu "
-              "installed?");
+        SPDLOG_ERROR(
+            "A SIGPIPE occurred while communicating with dmenu. Is dmenu "
+            "installed?");
         exit(EXIT_FAILURE);
     }
 
@@ -387,10 +396,13 @@ do_dmenu(Dmenu &dmenu, const name_map &mapping, const stringlist_t &history) {
             // history entry shouldn't be shown if that is the case.
             if (desktop_file_names.erase(name))
                 dmenu.write(name);
-            else
+            else {
                 // This shouldn't happen thanks to FormattedHistoryManager
-                ABORT_F("A name in history isn't in name list when it should "
-                        "be there!");
+                SPDLOG_ERROR(
+                    "A name in history isn't in name list when it should "
+                    "be there!");
+                abort();
+            }
         }
         for (const auto &name : desktop_file_names)
             dmenu.write(name);
@@ -405,7 +417,7 @@ do_dmenu(Dmenu &dmenu, const name_map &mapping, const stringlist_t &history) {
     if (choice.empty())
         return {};
     fprintf(stderr, "User input is: %s\n", choice.c_str());
-    LOG_F(INFO, "User input is: %s", choice.c_str());
+    SPDLOG_INFO("User input is: {}", choice);
     return choice;
 }
 
@@ -565,7 +577,7 @@ public:
                                (this->hist_manager ? this->hist_manager->view()
                                                    : stringlist_t{})); // blocks
         if (!query) {
-            LOG_F(INFO, "No application has been selected, exiting...");
+            SPDLOG_INFO("No application has been selected, exiting...");
             return {};
         }
 
@@ -619,7 +631,7 @@ namespace ExecutePhase
 [[noreturn]] void
 execute_app(const RunPhase::CommandAssembly::Executable &exec) {
     std::string cmdline_string = exec.cmdline_string();
-    LOG_F(INFO, "Executing command: %s", cmdline_string.c_str());
+    SPDLOG_INFO("Executing command: {}", cmdline_string);
 
     using namespace RunPhase::CommandAssembly;
 
@@ -628,7 +640,7 @@ execute_app(const RunPhase::CommandAssembly::Executable &exec) {
         execv(argv.front(), (char *const *)argv.data());
     else
         execvp(argv.front(), (char *const *)argv.data());
-    LOG_F(ERROR, "Couldn't execute command: %s", cmdline_string.c_str());
+    SPDLOG_ERROR("Couldn't execute command: {}", cmdline_string);
     // this function can be called either directly, or in a fork used in
     // do_wait_on(). Theoretically exit() should be called instead of _exit() in
     // the first case, but it isn't that important.
@@ -662,9 +674,8 @@ public:
         using namespace RunPhase::CommandAssembly;
         if (!command_info.path.empty()) {
             if (chdir(command_info.path.c_str()) == -1)
-                LOG_F(WARNING, "Couldn't chdir to '%s': %s",
-                      command_info.path.c_str(),
-                      loguru::errno_as_text().c_str());
+                SPDLOG_WARN("Couldn't chdir to '{}': {}", command_info.path,
+                            strerror(errno));
         }
         if (this->wrapper.empty()) {
             auto command =
@@ -858,12 +869,14 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
  */
 // clang-format on
 int main(int argc, char **argv) {
-    /// Initialize logging
-    loguru::g_stderr_verbosity = loguru::Verbosity_WARNING;
+    /// Initialize logging with warning level by default
+    auto stderr_sink = std::make_shared<spdlog::sinks::stderr_color_sink_st>();
+    auto custom_logger = std::make_shared<spdlog::logger>("", stderr_sink);
+    custom_logger->set_level(spdlog::level::warn);
+    spdlog::set_default_logger(custom_logger);
 
     const char *log_file_path = nullptr;
-    decltype(loguru::Verbosity_ERROR) log_file_verbosity =
-        loguru::Verbosity_INFO;
+    spdlog::level::level_enum log_file_verbosity = spdlog::level::info;
 
     /// Handle arguments
     std::string dmenu_command = "dmenu -i";
@@ -881,6 +894,8 @@ int main(int argc, char **argv) {
     bool skip_i3_check = false;
     bool prune_bad_usage_log_entries = false;
     int verbose_flag = 0;
+
+    bool loglevel_overriden = false;
 
     application_formatter appformatter = appformatter_default;
 
@@ -964,30 +979,31 @@ int main(int argc, char **argv) {
             break;
         case 'o':
             if (strcmp(optarg, "DEBUG") == 0) {
-                loguru::g_stderr_verbosity = loguru::Verbosity_9;
+                custom_logger->set_level(spdlog::level::debug);
             } else if (strcmp(optarg, "INFO") == 0) {
-                loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
+                custom_logger->set_level(spdlog::level::info);
             } else if (strcmp(optarg, "WARNING") == 0) {
-                loguru::g_stderr_verbosity = loguru::Verbosity_WARNING;
+                custom_logger->set_level(spdlog::level::warn);
             } else if (strcmp(optarg, "ERROR") == 0) {
-                loguru::g_stderr_verbosity = loguru::Verbosity_ERROR;
+                custom_logger->set_level(spdlog::level::err);
             } else {
                 fprintf(stderr, "Invalid loglevel supplied to --log-level!\n");
                 exit(EXIT_FAILURE);
             }
+            loglevel_overriden = true;
             break;
         case 'O':
             log_file_path = optarg;
             break;
         case 'V':
             if (strcmp(optarg, "DEBUG") == 0) {
-                log_file_verbosity = loguru::Verbosity_9;
+                log_file_verbosity = spdlog::level::debug;
             } else if (strcmp(optarg, "INFO") == 0) {
-                log_file_verbosity = loguru::Verbosity_INFO;
+                log_file_verbosity = spdlog::level::info;
             } else if (strcmp(optarg, "WARNING") == 0) {
-                log_file_verbosity = loguru::Verbosity_WARNING;
+                log_file_verbosity = spdlog::level::warn;
             } else if (strcmp(optarg, "ERROR") == 0) {
-                log_file_verbosity = loguru::Verbosity_ERROR;
+                log_file_verbosity = spdlog::level::err;
             } else {
                 fprintf(stderr,
                         "Invalid loglevel supplied to --log-file-level!\n");
@@ -1007,37 +1023,46 @@ int main(int argc, char **argv) {
 
     /// Handle logging
     // Handle -v or -vv flag if --log-level wasn't specified.
-    if (loguru::g_stderr_verbosity == loguru::Verbosity_WARNING) {
+    if (!loglevel_overriden) {
         switch (verbose_flag) {
         case 0:
             break;
         case 1:
-            loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
+            custom_logger->set_level(spdlog::level::info);
             break;
         default:
-            loguru::g_stderr_verbosity = loguru::Verbosity_9;
+            custom_logger->set_level(spdlog::level::debug);
             break;
         }
     }
 
-    // We process arguments before logging is enabled.
-    loguru::Options logopt;
-    logopt.verbosity_flag = nullptr;
-    loguru::init(argc, argv, logopt);
-
     if (log_file_path) {
-        if (!loguru::add_file(log_file_path, loguru::Truncate,
-                              log_file_verbosity))
-            exit(1);
+        // spdlog has three loglevel levels limiting logs: global one, logger
+        // specific one and a sink specific one. When a logfile isn't involved,
+        // j4-dmenu-desktop just sets the default logger's loglevel. When a
+        // logfile **is** involved, a file sink is added to the logger. The
+        // specific loglevels for stderr and for file are set by sink and the
+        // logger loglevel is set to the minimum of the two sink loglevels to
+        // allow everything to pass through correctly.
+        stderr_sink->set_level(custom_logger->level());
+        spdlog::level::level_enum common_log_level =
+            std::min(custom_logger->level(), log_file_verbosity);
+
+        custom_logger->set_level(common_log_level);
+
+        auto sink =
+            std::make_shared<spdlog::sinks::basic_file_sink_st>(log_file_path);
+        sink->set_level(log_file_verbosity);
+        custom_logger->sinks().push_back(std::move(sink));
     }
 
     /// i3 ipc
-    LOG_F(9, "I3 IPC interface is %s.", (use_i3_ipc ? "on" : "off"));
+    SPDLOG_DEBUG("I3 IPC interface is {}.", (use_i3_ipc ? "on" : "off"));
 
     std::string i3_ipc_path;
     if (use_i3_ipc) {
         if (!wrapper.empty()) {
-            LOG_F(ERROR, "You can't enable both i3 IPC and a wrapper!");
+            SPDLOG_ERROR("You can't enable both i3 IPC and a wrapper!");
             exit(EXIT_FAILURE);
         }
         // This may abort()/exit()
@@ -1046,32 +1071,32 @@ int main(int argc, char **argv) {
 
     if (!skip_i3_check) {
         if (wrapper.find("i3") != std::string::npos) {
-            LOG_F(ERROR, "Usage of an i3 wrapper has been detected! Please "
+            SPDLOG_ERROR("Usage of an i3 wrapper has been detected! Please "
                          "use the -I flag instead.");
-            LOG_F(ERROR,
-                  "(You can use --skip-i3-exec-check to disable this check. "
-                  "Usage of --skip-i3-exec-check is discouraged.)");
+            SPDLOG_ERROR(
+                "(You can use --skip-i3-exec-check to disable this check. "
+                "Usage of --skip-i3-exec-check is discouraged.)");
             exit(EXIT_FAILURE);
         }
     }
 
     if (no_exec && use_i3_ipc)
-        LOG_F(WARNING,
-              "I3 and noexec mode have been specified. I3 mode will be "
-              "ignored.");
+        SPDLOG_WARN("I3 and noexec mode have been specified. I3 mode will be "
+                    "ignored.");
 
     /// Get desktop envs for OnlyShowIn/NotShowIn if enabled
     stringlist_t desktopenvs;
     if (use_xdg_de) {
         desktopenvs = split(get_variable("XDG_CURRENT_DESKTOP"), ':');
-        LOG_F(INFO, "Found %d desktop environments in $XDG_CURRENT_DESKTOP:",
-              (int)desktopenvs.size());
+        SPDLOG_INFO("Found {} desktop environments in $XDG_CURRENT_DESKTOP:",
+                    desktopenvs.size());
         for (auto s : desktopenvs)
-            LOG_F(INFO, "  %s", s.c_str());
+            SPDLOG_INFO("  {}", s);
+        ;
     } else {
-        LOG_F(INFO,
-              "Desktop environment detection is turned off (-x hasn't been "
-              "specified).");
+        SPDLOG_INFO(
+            "Desktop environment detection is turned off (-x hasn't been "
+            "specified).");
     }
 
     const char *shell = getenv("SHELL");
@@ -1087,28 +1112,27 @@ int main(int argc, char **argv) {
     /// Get search path
     stringlist_t search_path = get_search_path();
 
-    LOG_F(INFO,
-          "Found %d directories in search path:", (int)search_path.size());
+    SPDLOG_INFO("Found {} directories in search path:", search_path.size());
     for (const std::string &path : search_path) {
-        LOG_F(INFO, " %s", path.c_str());
+        SPDLOG_INFO(" {}", path);
     }
 
     SetupPhase::validate_search_path(search_path);
 
     /// Collect desktop files
     auto desktop_file_list = SetupPhase::collect_files(search_path);
-    LOG_F(9, "The following desktop files have been found:");
+    SPDLOG_DEBUG("The following desktop files have been found:");
     for (const auto &item : desktop_file_list) {
-        LOG_F(9, " %s", item.base_path.c_str());
+        SPDLOG_DEBUG(" {}", item.base_path);
         for (const std::string &file : item.files)
-            LOG_F(9, "   %s", file.c_str());
+            SPDLOG_DEBUG("   {}", file);
     }
     LocaleSuffixes locales;
     {
         auto suffixes = locales.list_suffixes_for_logging_only();
-        LOG_F(9, "Found %d locale suffixes:", (int)suffixes.size());
+        SPDLOG_DEBUG("Found {} locale suffixes:", suffixes.size());
         for (const auto &ptr : suffixes)
-            LOG_F(9, " %s", ptr->c_str());
+            SPDLOG_DEBUG(" {}", *ptr);
     }
     /// Construct AppManager
     AppManager appm(desktop_file_list, desktopenvs, std::move(locales));
@@ -1131,8 +1155,8 @@ int main(int argc, char **argv) {
         SetupPhase::count_collected_desktop_files(desktop_file_list);
     fprintf(stderr, "Read %d .desktop files, found %u apps.\n",
             desktop_file_count, (unsigned int)appm.count());
-    LOG_F(INFO, "Read %d .desktop files, found %u apps.", desktop_file_count,
-          (unsigned int)appm.count());
+    SPDLOG_INFO("Read {} .desktop files, found {} apps.", desktop_file_count,
+                appm.count());
 
     /// Format names
     SetupPhase::NameToAppMapping mapping(appformatter, case_insensitive,
@@ -1147,8 +1171,8 @@ int main(int argc, char **argv) {
             hist_manager.emplace(HistoryManager(usage_log), mapping,
                                  prune_bad_usage_log_entries, exclude_generic);
         } catch (const v0_version_error &) {
-            LOG_F(WARNING, "History file is using old format. Automatically "
-                           "converting to new one.");
+            SPDLOG_WARN("History file is using old format. Automatically "
+                        "converting to new one.");
             hist_manager.emplace(
                 HistoryManager::convert_history_from_v0(usage_log, appm),
                 mapping, prune_bad_usage_log_entries, exclude_generic);
