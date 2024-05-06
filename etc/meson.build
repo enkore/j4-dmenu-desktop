@@ -3,21 +3,7 @@ install_data(
     'j4-dmenu-desktop.fish',
     install_dir: get_option('datadir') / 'fish/vendor_completions.d',
 )
-
-complgen_exe = find_program(
-    'complgen',
-    native: true,
-    disabler: true,
-    required: false
+install_data(
+  'j4-dmenu-desktop',
+  install_dir: get_option('datadir') / 'bash-completion/completions',
 )
-
-custom_target(
-    'generate_bash_compl',
-    command: [complgen_exe, 'aot', '--bash-script', '@OUTPUT@', '@INPUT@'],
-    input: 'complgen',
-    output: 'j4-dmenu-desktop',
-    install: true,
-    install_dir: get_option('datadir') / 'bash-completion/completions',
-)
-
-summary({'complgen Bash completion': complgen_exe.found()}, bool_yn: true, section: 'Generation')

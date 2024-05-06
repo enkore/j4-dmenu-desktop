@@ -1,0 +1,43 @@
+_j4-dmenu-desktop()
+{
+	local cur prev OPTS
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+	case $prev in
+		-d|--dmenu|-t|--term|--usage-log|--wait-on|--wrapper|--log-file)
+			readarray -t COMPREPLY < <(compgen -f -- "$cur")
+			return 0
+			;;
+		--log-level|--log-file-level)
+			COMPREPLY=( $(compgen -o filenames -W "ERROR WARNING INFO DEBUG" -- "$cur" ) )
+			return 0
+			;;
+		-h|--help|--version)
+			return 0
+			;;
+	esac
+	OPTS=(-b --display-binary
+		-f --display-binary-base
+		-d --dmenu
+		--no-exec
+		--no-generic
+		-t --term
+		--usage-log
+		--prune-bad-usage-log-entries
+		-x --use-xdg-de
+		--wait-on
+		--wrapper
+		-I --i3-ipc
+		--skip-i3-exec-check
+		-i --case-insensitive
+		-v
+		--log-level
+		--log-file
+		--log-file-level
+		--version
+		-h --help)
+	COMPREPLY=( $(compgen -W "${OPTS[*]}" -- "$cur") )
+	return 0
+}
+complete -F _j4-dmenu-desktop j4-dmenu-desktop

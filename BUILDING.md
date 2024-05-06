@@ -8,9 +8,7 @@ Both build systems are configured with **unity builds** by default (see
 is done to speed up release builds, but developers may wish to turn this off.
 
 Although both systems will be supported for compatibility, **Meson should be
-preferred**. Some extra features like [generating Bash
-completion](#generating-bash-completion) work only on Meson. Meson also provides
-overall better development experience.
+preferred**. Meson provides overall better development and packaging experience.
 
 ## Building with CMake
 Out-of-source builds are fully supported.
@@ -40,12 +38,5 @@ Unity builds can't be set by default without disrupting developer workflow. The
 `meson-setup.sh` script uses unity builds for release build style (which is the
 default). This is also the recommended setup in
 [`README.md`](README.md#build-requirements).
-
-### Generating Bash completion
-Bash completion must be generated (see [`README`](etc/README.md) for reasoning).
-[`complgen`](https://github.com/adaszko/complgen) must be installed on host for
-it to be generated and installed.
-
-Bach completion is also provided in GitHub release.
 
 [^1]: `ccache` can be used instead
