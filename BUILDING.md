@@ -13,13 +13,10 @@ preferred**. Meson provides overall better development and packaging experience.
 ## Building with CMake
 Out-of-source builds are fully supported.
 
-CMake will automatically download Catch2 and loguru dependencies. You can
-override Catch2 behaviour with `WITH_TESTS` and `WITH_GIT_CATCH` options. This
-is useful if you want to use system installed Catch2.
-
-Bash completion is **not** provided by CMake. Meson has to be used instead. If
-that isn't desirable, a pregenerated bash completion is provided in the
-j4-dmenu-desktop GitHub release as a release artifact.
+CMake will automatically download Catch2, spdlog and fmt dependencies. You can
+override Catch2 behaviour with `WITH_TESTS` to turn off tests and
+`WITH_GIT_CATCH`, `WITH_GIT_SPDLOG` and `WITH_GIT_FMT` to manage fetching of
+dependencies. This is useful if you want to use system installed dependencies.
 
 ## Building with Meson
 J4-dmenu-desktop provides a simple setup helper
