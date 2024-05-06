@@ -249,7 +249,7 @@ bool HistoryManager::is_v0(LineReader &liner) {
     enum { COUNT, FILENAME } state = COUNT;
 
     // The file format is: [number],[filename which ends in .desktop]\n
-    char c;
+    int c;
     while ((c = std::fgetc(f)) != EOF) {
         if (state == COUNT) {
             if (std::isdigit(c))
