@@ -140,7 +140,7 @@ void AppManager::add(const string &filename, const string &base_path,
     string ID = get_desktop_id(filename, base_path);
 
     SPDLOG_INFO(
-        "AppManager: Adding file '[]' (ID: {}, base path: {}, rank: {})",
+        "AppManager: Adding file '{}' (ID: {}, base path: {}, rank: {})",
         filename, ID, base_path, rank);
 
     // If Application ctor throws, AppManager's state must remain
