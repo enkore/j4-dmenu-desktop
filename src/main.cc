@@ -1024,6 +1024,11 @@ int main(int argc, char **argv) {
         }
     }
 
+    if (optind != argc) {
+        SPDLOG_WARN("Positional arguments '{}' are unused!",
+                    fmt::join(argv + optind, argv + argc, " "));
+    }
+
     /// Handle logging
     // Handle -v or -vv flag if --log-level wasn't specified.
     if (!loglevel_overriden) {
