@@ -149,7 +149,9 @@ void HistoryManager::write() {
     FILE *f = this->file.get();
 
     std::rewind(f);
-    ftruncate(fileno(f), 0);
+    if (ftruncate(fileno(f), 0) == -1)
+        throw std::runtime_error("Couldn't ftruncate '" + this->filename +
+                                 "': " + strerror(errno));
     std::fputs(J4DDHIST_HEADER TOSTRING(J4DDHIST_MAJOR_VERSION) "." TOSTRING(
                    J4DDHIST_MINOR_VERSION) "\n",
                f);
