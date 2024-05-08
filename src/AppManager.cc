@@ -120,11 +120,10 @@ void AppManager::remove(const string &filename, const string &base_path) {
                 filename, ID, base_path);
     auto app_iter = this->applications.find(ID);
     if (app_iter == this->applications.end()) {
-        SPDLOG_ERROR("AppManager has reached a inconsistent state. "
-                     "Removal of desktop file '{}' has been requested (desktop "
-                     "id: {}). Desktop id couldn't be found.",
-                     filename, ID);
-        abort();
+        SPDLOG_INFO("Removal of desktop file '{}' has been requested (desktop "
+                    "id: {}). Desktop id couldn't be found, ignoring...",
+                    filename, ID);
+        return;
     }
 
     Managed_application &app = app_iter->second;

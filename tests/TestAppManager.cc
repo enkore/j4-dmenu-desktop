@@ -931,3 +931,19 @@ TEST_CASE("Test reading a nonreadable file.", "[AppManager]") {
     // things.
     REQUIRE_NOTHROW(apps.add(unreadable2.get_name(), "/tmp/", 1));
 }
+
+TEST_CASE("Test removing an unknown desktop file", "[AppManager]") {
+    AppManager apps(
+        {
+            {TEST_FILES "applications/",
+             {TEST_FILES "applications/eagle.desktop",
+              TEST_FILES "applications/gimp.desktop",
+              TEST_FILES "applications/hidden.desktop"}}
+    },
+        {}, LocaleSuffixes());
+
+    apps.check_inner_state();
+
+    REQUIRE_NOTHROW(apps.remove(TEST_FILES "applications/hidden.desktop",
+                                TEST_FILES "applications/"));
+}
