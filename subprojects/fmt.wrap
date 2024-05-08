@@ -8,6 +8,7 @@ patch_url = https://wrapdb.mesonbuild.com/v2/fmt_10.2.0-2/get_patch
 patch_hash = 2428c3a386a8390c76378f81ef804a297f4edc3b789499dd56629b7902b8ddb7
 source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/fmt_10.2.0-2/fmt-10.2.0.tar.gz
 wrapdb_version = 10.2.0-2
+diff_files = dont_install_fmt.patch
 
 [provide]
 fmt = fmt_dep
