@@ -15,6 +15,8 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+// See https://i3wm.org/docs/ipc.html
+
 #ifndef I3EXEC_DEF
 #define I3EXEC_DEF
 

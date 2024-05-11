@@ -15,8 +15,11 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+// See https://i3wm.org/docs/ipc.html
+
 #include "I3Exec.hh"
 
+#include <cstdint>
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
@@ -162,12 +165,40 @@ static string read_JSON_string(string::const_iterator iter,
     }
 }
 
-void exec(const std::string &command, const std::string &socket_path) {
-    // The i3 IPC message length (excluding the command length) is 14 bytes.
-    if (command.size() > (std::numeric_limits<uint32_t>::max() - 14)) {
+// See https://i3wm.org/docs/userguide.html#exec_quoting for more info.
+// The escaping rules differ slightly from those described there.
+static string escape_command(const string &command) {
+    string result;
+    result.reserve(command.length());
+
+    for (const auto &ch : command) {
+        switch (ch) {
+        case '"':
+        case '\\':
+            result += R"(\)";
+            break;
+        }
+        result.push_back(ch);
+    }
+    return result;
+}
+
+void exec(const string &raw_command, const string &socket_path) {
+    // These are the base lengths (sum of message_base_header_length,
+    // message_base_command_length and command.length() should result in the
+    // payload length).
+    constexpr int message_base_header_length =
+        sizeof "i3-ipc" - 1 + sizeof(uint32_t) * 2;
+    constexpr int message_base_command_length = sizeof "exec \"\"" - 1;
+
+    // This is the escaped command.
+    string command = escape_command(raw_command);
+
+    constexpr auto max_message_length =
+        std::numeric_limits<uint32_t>::max() - message_base_command_length;
+    if (command.size() > max_message_length) {
         SPDLOG_ERROR("Command '{}' is too long! (expected <= {}, got {})",
-                     command, std::numeric_limits<int32_t>::max(),
-                     command.size());
+                     command, max_message_length, command.size());
         exit(EXIT_FAILURE);
     }
 
@@ -193,9 +224,9 @@ void exec(const std::string &command, const std::string &socket_path) {
     if (connect(sfd, (struct sockaddr *)&addr, sizeof(sockaddr_un)) == -1)
         PFATALE("connect");
 
-    uint32_t command_size = command.size();
+    uint32_t command_size = command.size() + message_base_command_length;
 
-    auto payload_size = 14 + command_size;
+    auto payload_size = message_base_header_length + command_size;
     auto payload = std::make_unique<char[]>(payload_size);
 
     auto *message = payload.get();
@@ -208,38 +239,50 @@ void exec(const std::string &command, const std::string &socket_path) {
     std::memset(message, 0, 4); // message type 0 (RUN_COMMAND)
     message += 4;
 
-    std::memcpy(message, command.data(), command_size);
+    std::memcpy(message, "exec \"", sizeof "exec \"" - 1);
+    message += sizeof "exec \"" - 1;
+
+    std::memcpy(message, command.data(), command.size());
+    message[command.size()] = '"';
+
+#ifdef DEBUG
+    // Print the payload in hex, because some parts of it can't be printed
+    // directly.
+    // This output can be directed to `echo` to output the raw output:
+    // echo -en "<here>"
+    SPDLOG_DEBUG("<DEBUG ONLY> I3 IPC payload contents: \\x{:02x}",
+                 fmt::join(payload.get(), payload.get() + payload_size, "\\x"));
+#endif
 
     if (writen(sfd, payload.get(), payload_size) <= 0)
         PFATALE("write");
 
-    string response;
-    char buf[512];
-    while (true) {
-        auto ret = read(sfd, buf, sizeof buf);
-        if (ret == -1) {
-            if (errno == EINTR)
-                continue;
-            else
-                PFATALE("read");
-        } else if (ret == 0)
-            break;
-        else
-            response.append(buf, ret);
-    }
+    char unused_buf[6]; // This will contain the "i3-ipc" magic string
+    if (readn(sfd, unused_buf, sizeof unused_buf) < 0)
+        PFATALE("readn");
+
+    uint32_t message_length;
+    if (readn(sfd, &message_length, sizeof message_length) < 0)
+        PFATALE("readn");
+
+    uint32_t unused_message_type;
+    if (readn(sfd, &unused_message_type, sizeof unused_message_type) < 0)
+        PFATALE("readn");
+
+    string response(message_length, '\0');
+    if (readn(sfd, response.data(), message_length) < 0)
+        PFATALE("readn");
 
     SPDLOG_DEBUG("I3 IPC response: {}", response);
 
     // Ideally a JSON parser should be employed here. But I don't want to add
     // additional dependencies. If any breakage through this custom parsing
     // should arise, please file a GitHub issue.
-    if (response.find(R"("success":true)") != string::npos)
-        return;
-    else if (response.find(R"("success":false)") != string::npos) {
+    if (response.find(R"("success":false)") != string::npos) {
         auto where = response.find(R"("error":)");
         if (where != string::npos) {
             try {
-                string error = read_JSON_string(response.cbegin() + where + 8,
+                string error = read_JSON_string(response.cbegin() + where + 9,
                                                 response.cend());
                 SPDLOG_ERROR(
                     "An error occurred while communicating with i3 (executing "
@@ -258,7 +301,9 @@ void exec(const std::string &command, const std::string &socket_path) {
                 "command '{}')!",
                 command);
         exit(EXIT_FAILURE);
-    } else {
+    } else if (response.find(R"("success":true)") != string::npos)
+        return;
+    else {
         SPDLOG_ERROR(
             "A parsing error occurred while reading i3's response (executing "
             "command '{}')!",
