@@ -101,7 +101,31 @@ void fclose_deleter::operator()(FILE *f) const noexcept {
     fclose(f);
 }
 
-// This function is taken from The Linux Programming Interface
+// These functions are taken from The Linux Programming Interface
+ssize_t readn(int fd, void *buffer, size_t n) {
+    ssize_t numRead; /* # of bytes fetched by last read() */
+    size_t totRead;  /* Total # of bytes read so far */
+
+    /* No pointer arithmetic on "void *" */
+    char *buf = static_cast<char *>(buffer);
+    for (totRead = 0; totRead < n;) {
+        numRead = read(fd, buf, n - totRead);
+
+        if (numRead == 0) /* EOF */
+            return totRead;
+        if (numRead == -1) {
+            if (errno == EINTR)
+                continue;
+            else
+                return -1;
+        }
+        totRead += numRead;
+        buf += numRead;
+    }
+    /* Must be 'n' bytes if we get here */
+    return totRead;
+}
+
 ssize_t writen(int fd, const void *buffer, size_t n) {
     ssize_t numWritten; /* # of bytes written by last write() */
     size_t totWritten;  /* Total # of bytes written so far */
