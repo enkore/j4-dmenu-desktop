@@ -1,0 +1,6 @@
+# This desktop file isn't currently used in any unit tests, but it's useful for manual testing
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Escaped\sApp
+Exec=prog "))(())\\`\\`#\\\\\\")(" "))(())\\`\\`#\\\\\\")(" "))(())\\`\\`#\\\\\\")("
