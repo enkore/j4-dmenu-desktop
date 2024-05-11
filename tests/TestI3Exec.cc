@@ -41,6 +41,19 @@ using std::string;
 
 #define SUCCESS_MESSAGE "[{\"success\":true}]"
 
+// This is a simplified version that doesn't handle escaping.
+static string construct_i3_message(const string &message) {
+    string result(14 + message.size(), '\0');
+    char *ptr = result.data();
+    std::memcpy(ptr, "i3-ipc", 6);
+    uint32_t length = message.size();
+    std::memcpy(ptr + 6, &length, 4);
+    std::memset(ptr + 10, 0, 4);
+    std::memcpy(ptr + 14, message.c_str(), message.size());
+
+    return result;
+}
+
 static string handle_request(int sfd) {
     int cfd = accept(sfd, NULL, NULL);
     if (cfd == -1)
@@ -59,7 +72,11 @@ static string handle_request(int sfd) {
         if (errno != EAGAIN && errno != EWOULDBLOCK)
             throw std::runtime_error((string) "read: " + strerror(errno));
     }
-    if (writen(cfd, SUCCESS_MESSAGE, sizeof SUCCESS_MESSAGE) == -1)
+
+    string success_message = construct_i3_message(
+        string(SUCCESS_MESSAGE, sizeof SUCCESS_MESSAGE - 1));
+
+    if (writen(cfd, success_message.c_str(), success_message.size()) == -1)
         throw std::runtime_error((string) "writen: " + strerror(errno));
     return result;
 }
@@ -133,15 +150,9 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
         FAIL("I3 dummy server is taking too long to respond!");
     }
     std::string query = result.get();
-    char check[18];
-    std::memcpy(check, "i3-ipc", 6);
-    // Set lenght of message.
-    uint32_t length = 4;
-    std::memcpy(check + 6, &length, 4);
-    // Set type of message
-    std::memset(check + 10, 0, 4);
-    // Contents of the message.
-    std::memcpy(check + 14, "true", 4);
-    REQUIRE(query.length() == sizeof check);
-    REQUIRE(std::memcmp(query.data(), check, sizeof check) == 0);
+
+    string check1 = construct_i3_message("exec true");
+    string check2 = construct_i3_message("exec \"true\"");
+
+    REQUIRE( (query == check1 || query == check2 ) );
 }
