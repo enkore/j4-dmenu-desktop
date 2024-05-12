@@ -60,13 +60,14 @@ static string handle_request(int sfd) {
         throw std::runtime_error((string) "accept: " + strerror(errno));
     OnExit cfd_close = [cfd]() { close(cfd); };
 
-    if (fcntl(cfd, F_SETFL, O_NONBLOCK) == -1)
-        throw std::runtime_error((string) "fcntl: " + strerror(errno));
-
-    string result;
-    ssize_t size;
     char buf[512];
-    while ((size = read(cfd, buf, sizeof buf)) > 0)
+
+    ssize_t size = read(cfd, buf, sizeof buf);
+    if (size == -1)
+        throw std::runtime_error((string) "read: " + strerror(errno));
+    string result = string(buf, size);
+
+    while ((size = recv(cfd, buf, sizeof buf, MSG_DONTWAIT)) > 0)
         result.append(buf, size);
     if (size == -1) {
         if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -153,6 +154,8 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
 
     string check1 = construct_i3_message("exec true");
     string check2 = construct_i3_message("exec \"true\"");
+
+    REQUIRE(!query.empty());
 
     REQUIRE((query == check1 || query == check2));
 }
