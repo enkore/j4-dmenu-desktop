@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/bin_to_hex.h>
 
 #include <errno.h>
 #include <exception>
@@ -250,8 +251,8 @@ void exec(const string &raw_command, const string &socket_path) {
     // directly.
     // This output can be directed to `echo` to output the raw output:
     // echo -en "<here>"
-    SPDLOG_DEBUG("<DEBUG ONLY> I3 IPC payload contents: \\x{:02x}",
-                 fmt::join(payload.get(), payload.get() + payload_size, "\\x"));
+    SPDLOG_DEBUG("<DEBUG ONLY> I3 IPC payload contents: {:a}",
+                 spdlog::to_hex(payload.get(), payload.get() + payload_size));
 #endif
 
     if (writen(sfd, payload.get(), payload_size) <= 0)
