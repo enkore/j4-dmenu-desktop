@@ -6,6 +6,7 @@
 # shellcheck disable=SC2016
 _arguments -s \
     '(- *)'{-h,--help}'[Print help message]' `#- and * mean that no flags shall follow --help` \
+    '(- *)--version[Display program version]' \
     '(-b --display-binary)'{-b,--display-binary}'[Display binary name after each entry]' \
     '(-f --display-binary-base)'{-f,--display-binary-base}'[Display basename of binary name after each entry]' \
     '(-d --dmenu)'{-d,--dmenu}'=[Command used to invoke dmenu]:command:_files -g \*\(\*\)' \

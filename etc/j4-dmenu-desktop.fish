@@ -18,3 +18,5 @@ complete -c j4-dmenu-desktop     -s v                       -d "Be more verbose,
 complete -c j4-dmenu-desktop -x       -l log-level -a "ERROR WARNING INFO DEBUG" -d "Set loglevel"
 complete -c j4-dmenu-desktop -Fr      -l log-file           -d "Specify a log file"
 complete -c j4-dmenu-desktop -x       -l log-file-level -a "ERROR WARNING INFO DEBUG" -d "Set file loglevel"
+complete -c j4-dmenu-desktop     -s h -l help               -d "Display help message"
+complete -c j4-dmenu-desktop          -l version            -d "Display program version"
