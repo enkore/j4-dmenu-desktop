@@ -73,7 +73,8 @@ public:
     void operator=(const HistoryManager &) = delete;
 
     void increment(const string &name);
-    void remove_obsolete_entry(history_mmap_type::const_iterator iter);
+    history_mmap_type::iterator
+    remove_obsolete_entry(history_mmap_type::const_iterator iter);
     const history_mmap_type &view() const;
     static HistoryManager convert_history_from_v0(const string &path,
                                                   const AppManager &appm);

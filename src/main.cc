@@ -286,7 +286,9 @@ public:
                         "Removing history entry '{}', which doesn't correspond "
                         "to any known desktop app name.",
                         raw_name);
-                    this->hist.remove_obsolete_entry(iter);
+                    iter = this->hist.remove_obsolete_entry(iter);
+                    if (iter == hist_view.end())
+                        break;
                 } else {
                     SPDLOG_WARN(
                         "Couldn't find history entry '{}'. Has the program "

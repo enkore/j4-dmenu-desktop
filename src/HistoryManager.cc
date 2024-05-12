@@ -140,9 +140,9 @@ void HistoryManager::increment(const string &name) {
     write();
 }
 
-void HistoryManager::remove_obsolete_entry(
-    history_mmap_type::const_iterator iter) {
-    this->history.erase(iter);
+HistoryManager::history_mmap_type::iterator
+HistoryManager::remove_obsolete_entry(history_mmap_type::const_iterator iter) {
+    return this->history.erase(iter);
 }
 
 void HistoryManager::write() {
