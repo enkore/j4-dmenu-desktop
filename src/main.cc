@@ -292,7 +292,9 @@ public:
                 } else {
                     SPDLOG_WARN(
                         "Couldn't find history entry '{}'. Has the program "
-                        "been uninstalled? Use --prune-bad-usage-log-entries "
+                        "been uninstalled? Has j4-dmenu-desktop been executed "
+                        "with different $XDG_DATA_HOME or $XDG_DATA_DIRS? Use "
+                        "--prune-bad-usage-log-entries "
                         "to remove these entries.",
                         raw_name);
                 }
@@ -1082,8 +1084,9 @@ int main(int argc, char **argv) {
 
     if (!skip_i3_check) {
         if (wrapper.find("i3") != std::string::npos) {
-            SPDLOG_ERROR("Usage of an i3 wrapper has been detected! Please "
-                         "use the -I flag instead.");
+            SPDLOG_ERROR(
+                "Usage of an i3 wrapper has been detected! Please "
+                "use the new -I flag to enable i3 IPC integration instead.");
             SPDLOG_ERROR(
                 "(You can use --skip-i3-exec-check to disable this check. "
                 "Usage of --skip-i3-exec-check is discouraged.)");
