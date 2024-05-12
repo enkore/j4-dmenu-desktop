@@ -1,1 +1,4 @@
-build/*
+subprojects/packagecache
+subprojects/Catch2-*
+subprojects/fmt-*
+subprojects/spdlog-*
