@@ -38,7 +38,7 @@ NotifyInotify::NotifyInotify(const stringlist_t &search_path) {
               // narrowing when adding i to directories
     {
         int wd = inotify_add_watch(inotifyfd, search_path[i].c_str(),
-                                   IN_DELETE | IN_MODIFY);
+                                   IN_DELETE | IN_MODIFY | IN_MOVE);
         if (wd == -1)
             PFATALE("inotify_add_watch");
         directories.insert({
@@ -74,10 +74,10 @@ std::vector<NotifyInotify::FileChange> NotifyInotify::getchanges() {
 
             const auto &dir = directories.at(event->wd);
 
-            if (event->mask & IN_MODIFY)
+            if (event->mask & IN_MODIFY || event->mask & IN_MOVED_TO)
                 result.push_back(
                     {dir.rank, dir.path + event->name, changetype::modified});
-            else
+            else // IN_DELETE or IN_MOVED_FROM
                 result.push_back(
                     {dir.rank, dir.path + event->name, changetype::deleted});
         }
