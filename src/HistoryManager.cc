@@ -220,7 +220,7 @@ HistoryManager HistoryManager::convert_history_from_v0(const string &path,
         } catch (std::bad_optional_access &) {
             SPDLOG_WARN("While converting history file '{}' to format "
                         "1.0, desktop file ID '{}' couldn't be resolved. This "
-                        "desktop file will be omitted from the history.\n",
+                        "desktop file will be omitted from the history.",
                         path, line);
         }
     }
