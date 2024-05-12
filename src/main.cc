@@ -475,17 +475,28 @@ namespace CommandAssembly
 {
 static std::string i3_assemble_command(const std::string &raw_command,
                                        const std::string &terminal,
-                                       bool is_custom) {
-    if (terminal.empty())
-        return raw_command;
-    else {
+                                       bool is_custom,
+                                       const std::string &path) {
+    if (terminal.empty()) {
+        if (path.empty())
+            return raw_command;
+        else
+            return "cd '" + path + "'; " + raw_command;
+    } else {
         // See comment in RunPhase::CommandAssembly::assemble_command() for
         // explanation of "exec "
         std::string command;
-        if (is_custom)
-            command = "exec " + raw_command;
-        else
-            command = raw_command;
+        if (!is_custom) {
+            if (path.empty())
+                command = "exec " + raw_command;
+            else
+                command = "cd '" + path + "'; exec " + raw_command;
+        } else {
+            if (path.empty())
+                command = raw_command;
+            else
+                command = "cd '" + path + "'; " + raw_command;
+        }
         // XXX test this!
         return terminal + " -e " + "/bin/sh -c '" + command + "'";
     }
@@ -725,7 +736,7 @@ public:
         std::string command = RunPhase::CommandAssembly::i3_assemble_command(
             command_info.raw_command,
             command_info.is_terminal ? this->terminal : "",
-            command_info.is_custom);
+            command_info.is_custom, command_info.path);
         I3Interface::exec(command, this->i3_ipc_path);
     }
 
