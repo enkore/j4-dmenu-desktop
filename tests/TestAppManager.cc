@@ -242,17 +242,17 @@ TEST_CASE("Test collisions and remove()", "[AppManager]") {
     REQUIRE(apps.count() == 3);
 
     {
+        // clang-format off
         ctype check{
             {"Chromium",             "chromium"},
             {"Chrome based browser", "chromium"},
- /*
-  {"Firefox",              "firefox" },
-  {"Web browser",          "firefox" },
-  */
+          //{"Firefox",              "firefox" },
+          //{"Web browser",          "firefox" },
             {"Chrome",               "chrome"  },
             {"Safari",               "safari"  },
             {"Web browser",          "safari"  },
         };
+        // clang-format on
         REQUIRE(checkmap(apps, check));
     }
 
@@ -263,17 +263,17 @@ TEST_CASE("Test collisions and remove()", "[AppManager]") {
     REQUIRE(apps.count() == 2);
 
     {
+        // clang-format off
         ctype check{
             {"Chromium",             "chromium"},
             {"Chrome based browser", "chromium"},
- /*
-  {"Firefox",              "firefox" },
-  {"Web browser",          "firefox" },
-  {"Chrome",               "chrome"  },
-  */
+          //{"Firefox",              "firefox" },
+          //{"Web browser",          "firefox" },
+          //{"Chrome",               "chrome"  },
             {"Safari",               "safari"  },
             {"Web browser",          "safari"  },
         };
+        // clang-format on
         REQUIRE(checkmap(apps, check));
     }
 
@@ -284,17 +284,17 @@ TEST_CASE("Test collisions and remove()", "[AppManager]") {
     REQUIRE(apps.count() == 1);
 
     {
+        // clang-format off
         ctype check{
-  /*
-  {"Chromium",             "chromium"},
-  {"Chrome based browser", "chromium"},
-  {"Firefox",              "firefox" },
-  {"Web browser",          "firefox" },
-  {"Chrome",               "chrome"  },
-  */
+          //{"Chromium",             "chromium"},
+          //{"Chrome based browser", "chromium"},
+          //{"Firefox",              "firefox" },
+          //{"Web browser",          "firefox" },
+          //{"Chrome",               "chrome"  },
             {"Safari",      "safari"},
             {"Web browser", "safari"},
         };
+        // clang-format on
         REQUIRE(checkmap(apps, check));
     }
 
