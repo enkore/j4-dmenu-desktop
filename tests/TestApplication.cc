@@ -176,3 +176,20 @@ TEST_CASE("Test whether delimiter for string(s) works", "[Application]") {
                                   liner, ls, {"Kde"}),
                       disabled_error);
 }
+
+TEST_CASE("Test opening invalid desktop file", "[Application]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+
+    REQUIRE_THROWS(
+        Application(TEST_FILES "applications/invalid.desktop", liner, ls, {}));
+}
+
+TEST_CASE("Test opening desktop file with missing required keys",
+          "[Application]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+
+    REQUIRE_THROWS(Application(
+        TEST_FILES "applications/missing-entries.desktop", liner, ls, {}));
+}

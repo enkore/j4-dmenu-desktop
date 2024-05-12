@@ -51,7 +51,7 @@ Application::Application(const char *path, LineReader &liner,
     ssize_t line_length;
     std::unique_ptr<FILE, fclose_deleter> file(fopen(path, "r"));
     if (!file)
-        throw open_error(strerror(errno));
+        throw invalid_error(strerror(errno));
 
     while ((line_length = liner.getline(file.get())) != -1) {
         char *line = liner.get_lineptr();
@@ -129,6 +129,12 @@ Application::Application(const char *path, LineReader &liner,
         } else if (!strcmp(line, "[Desktop Entry]"))
             parse_key_values = true;
     }
+    if (!parse_key_values)
+        throw invalid_error("Invalid desktop file! Desktop file doesn't "
+                            "contain '[Desktop Entry]'.");
+    if (this->name.empty())
+        throw invalid_error(
+            "Invalid desktop file! 'Name' key is missing or empty.");
 }
 
 char Application::convert(char escape) {

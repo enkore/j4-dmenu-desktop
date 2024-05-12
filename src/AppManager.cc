@@ -103,7 +103,7 @@ AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
                              e.what());
                 // Skip disabled files.
                 continue;
-            } catch (open_error &e) {
+            } catch (invalid_error &e) {
                 SPDLOG_WARN("Couldn't open file '{}': {}", filename, e.what());
                 continue;
             }
@@ -170,7 +170,7 @@ void AppManager::add(const string &filename, const string &base_path,
             SPDLOG_DEBUG("AppManager:     App is disabled: {}", e.what());
             // Skip disabled files.
             return;
-        } catch (open_error &e) {
+        } catch (invalid_error &e) {
             SPDLOG_WARN("Couldn't open newly added file '{}': {}", filename,
                         e.what());
             return;
@@ -198,7 +198,7 @@ void AppManager::add(const string &filename, const string &base_path,
             SPDLOG_DEBUG("AppManager:     App is disabled: {}", e.what());
             // Skip disabled files.
             return;
-        } catch (open_error &e) {
+        } catch (invalid_error &e) {
             SPDLOG_WARN("Couldn't open newly added file '{}': {}", filename,
                         e.what());
             return;
