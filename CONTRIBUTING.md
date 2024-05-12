@@ -54,8 +54,8 @@ There are six places where arguments have to be specified:
 2. in `--help`
 3. in [`j4-dmenu-destkop.1`](j4-dmenu-destkop.1) manpage
 4. in ZSH completion script [`etc/_j4-dmenu-desktop`](etc/_j4-dmenu-desktop)
-5. in FISH completion script [`etc/j4-dmenu-desktop.fish`](etc/j4-dmenu-desktop.fish)
-6. in complgen completion description [`etc/complgen`](etc/complgen)
+5. in Fish completion script [`etc/j4-dmenu-desktop.fish`](etc/j4-dmenu-desktop.fish)
+6. in Bash completion script [`etc/j4-dmenu-desktop`](etc/j4-dmenu-desktop)
 
 When modifying or adding arguments, all six of these have to be updated. This
 system isn't ideal and might be subject to change in the future.
