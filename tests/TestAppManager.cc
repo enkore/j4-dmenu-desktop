@@ -863,7 +863,7 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
     }
 }
 
-TEST_CASE("Test reading a nonreadable file.", "[AppManager]") {
+TEST_CASE("Test reading a unreadable file.", "[AppManager]") {
     std::optional<FSUtils::TempFile> unreadable1_container;
     try {
         unreadable1_container.emplace("j4dd-appmanager-unit-test");
