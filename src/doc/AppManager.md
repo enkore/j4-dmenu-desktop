@@ -55,7 +55,7 @@ The standard specifies the following handling of desktop file ID collisions:
 
 This means that the "parent" directory of the desktop file is important for determining precedence.
 
-J4dd uses a "rank" to store this precedence information. If the desktop file is found in the first (zeroth) directory in `$XDG_DATA_DIRS`, it's rank is 0. If it's in the second directory in `$XDG_DATA_DIRS`, it's rank is 1.
+J4dd uses a "rank" to store this precedence information. If the desktop file is found in the first (zeroth) directory in `$XDG_DATA_HOME:$XDG_DATA_DIRS`, it's rank is 0. If it's in the second directory in `$XDG_DATA_HOME:$XDG_DATA_DIRS`, it's rank is 1.
 
 The lowest rank is 0. Lower ranks take precedence. The zeroth rank has the highest priority.
 
