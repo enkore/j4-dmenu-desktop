@@ -866,14 +866,37 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
 TEST_CASE("Test reading a nonreadable file.", "[AppManager]") {
     std::optional<FSUtils::TempFile> unreadable1_container;
     try {
-        // Make it unreadable.
-        auto old_mask = umask(0400);
-        OnExit remask = [old_mask]() { umask(old_mask); };
         unreadable1_container.emplace("j4dd-appmanager-unit-test");
     } catch (std::runtime_error &e) {
         SKIP(e.what());
     }
     FSUtils::TempFile &unreadable1 = *unreadable1_container;
+
+    int htopfd = open(TEST_FILES "applications/htop.desktop", O_RDONLY);
+    if (htopfd == -1) {
+        FAIL("Couldn't open desktop file '" TEST_FILES
+             "applications/htop.desktop': "
+             << strerror(errno));
+    }
+
+    try {
+        unreadable1.copy_from_fd(htopfd);
+    } catch (const std::exception &e) {
+        close(htopfd);
+        SKIP("Couldn't copy file '" TEST_FILES "applications/htop.desktop' to '"
+             << unreadable1.get_name() << ": " << e.what());
+    }
+
+    if (fchmod(unreadable1.get_internal_fd(), 0200) == -1)
+        SKIP("Couldn't chmod() '" << unreadable1.get_name()
+                                  << "': " << strerror(errno));
+
+    FILE *test_readable = fopen(unreadable1.get_name().c_str(), "r");
+    if (test_readable != NULL) {
+        fclose(test_readable);
+        SKIP("Couldn't create an unreadable file! Are you running unit tests "
+             "as root?");
+    }
 
     std::optional<AppManager> container;
     REQUIRE_NOTHROW(container.emplace(
@@ -887,6 +910,13 @@ TEST_CASE("Test reading a nonreadable file.", "[AppManager]") {
     AppManager &apps = *container;
 
     apps.check_inner_state();
+
+    {
+        ctype check{
+            {"Eagle", "eagle -style plastique"},
+        };
+        REQUIRE(checkmap(apps, check));
+    }
 
     // Make a normal (readable) file in /tmp
     std::optional<FSUtils::TempFile> gimp_container;
@@ -915,21 +945,59 @@ TEST_CASE("Test reading a nonreadable file.", "[AppManager]") {
 
     REQUIRE_NOTHROW(apps.add(gimp.get_name(), "/tmp/", 1));
 
+    apps.check_inner_state();
+
+    {
+        ctype check{
+            {"Eagle",                          "eagle -style plastique"},
+            {"GNU Image Manipulation Program", "gimp-2.8 %U"           },
+            {"Image Editor",                   "gimp-2.8 %U"           }
+        };
+        REQUIRE(checkmap(apps, check));
+    }
+
     std::optional<FSUtils::TempFile> unreadable2_container;
     try {
         // Make it unreadable.
-        auto old_mask = umask(0400);
-        OnExit remask = [old_mask]() { umask(old_mask); };
         unreadable2_container.emplace("j4dd-appmanager-unit-test");
     } catch (std::runtime_error &e) {
         SKIP(e.what());
     }
     FSUtils::TempFile &unreadable2 = *unreadable2_container;
 
+    if (lseek(htopfd, 0, SEEK_SET) == (off_t)-1)
+        SKIP("Couldn't lseek() on '" TEST_FILES "applications/htop.desktop': "
+             << strerror(errno));
+
+    try {
+        unreadable2.copy_from_fd(htopfd);
+    } catch (const std::exception &e) {
+        close(htopfd);
+        SKIP("Couldn't copy file '" TEST_FILES "applications/htop.desktop' to '"
+             << unreadable1.get_name() << ": " << e.what());
+    }
+
+    close(htopfd);
+
+    if (fchmod(unreadable2.get_internal_fd(), 0200) == -1)
+        SKIP("Couldn't chmod() '" << unreadable2.get_name()
+                                  << "': " << strerror(errno));
+
     // This time add an unreadable file. This tests that unreadable files work
     // not only in the ctor, but also in add(), which can also be used to add
     // things.
     REQUIRE_NOTHROW(apps.add(unreadable2.get_name(), "/tmp/", 1));
+
+    apps.check_inner_state();
+
+    {
+        ctype check{
+            {"Eagle",                          "eagle -style plastique"},
+            {"GNU Image Manipulation Program", "gimp-2.8 %U"           },
+            {"Image Editor",                   "gimp-2.8 %U"           }
+        };
+        REQUIRE(checkmap(apps, check));
+    }
 }
 
 TEST_CASE("Test removing an unknown desktop file", "[AppManager]") {
