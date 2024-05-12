@@ -79,3 +79,26 @@ r2.18 released 2020-10-02
 	+ added --no-exec option
 	+ added --wrapper option (e.g. for i3 exec)
 	+ removed last usage of C/C++ locales
+
+r3.0 to be released
+	+ BREAKING CHANGE: --i3-ipc should be preferred over --wrapper "i3-msg exec"
+	  j4-dmenu-desktop will fail to start with --wrapper containing i3 unless
+	  --skip-i3-exec-check is passes
+	+ added PACKAGING.md, BUILDING.md and CONTRIBUTING.md to improve documentation
+	+ added Meson build system
+	+ added two new dependencies: spdlog and fmt
+	+ updated unit tests to make them compatible with the latest Catch2 v3
+	+ added Inotify and kqueue support for --wait-on mode allowing runtime
+	  detection of desktop file additions and deletions on program (un)install
+	+ added logging
+	+ added i3 IPC support
+	+ improved compliance with Desktop Entry Specification
+	+ fixed missing header includes
+	+ many bugfixes + refactoring of codebase
+	+ added new history format, which tracks selected entries more accurately
+	+ added .clang-format file
+	+ added case-insensitive sort
+	+ programs with same name will not be displayed several times in dmenu (dmenu
+	  can't differentiate identical entries, so they all launch the same desktop
+	  app)
+	+ added completions for Bash, Fish and ZSH
