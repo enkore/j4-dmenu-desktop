@@ -19,19 +19,27 @@
 
 #include <errno.h>
 #include <iterator>
-#include <sstream>
 #include <sys/stat.h>
 #include <unistd.h>
 
 stringlist_t split(const std::string &str, char delimiter) {
-    std::stringstream ss(str);
-    std::string item;
     stringlist_t result;
+    std::string::size_type begin = 0;
 
-    while (std::getline(ss, item, delimiter))
-        result.push_back(item);
+    auto last_character_pos = str.size() - 1;
 
-    return result;
+    while (true)
+    {
+        auto curr = str.find(delimiter, begin);
+        if (curr == std::string::npos) {
+            result.push_back(str.substr(begin));
+            return result;
+        }
+        result.push_back(str.substr(begin, curr - begin));
+        if (curr == last_character_pos)
+            return result;
+        begin = curr + 1;
+    }
 }
 
 std::string join(const stringlist_t &vec, char delimiter) {
