@@ -28,8 +28,7 @@ stringlist_t split(const std::string &str, char delimiter) {
 
     auto last_character_pos = str.size() - 1;
 
-    while (true)
-    {
+    while (true) {
         auto curr = str.find(delimiter, begin);
         if (curr == std::string::npos) {
             result.push_back(str.substr(begin));

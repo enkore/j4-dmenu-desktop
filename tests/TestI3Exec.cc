@@ -154,5 +154,5 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
     string check1 = construct_i3_message("exec true");
     string check2 = construct_i3_message("exec \"true\"");
 
-    REQUIRE( (query == check1 || query == check2 ) );
+    REQUIRE((query == check1 || query == check2));
 }

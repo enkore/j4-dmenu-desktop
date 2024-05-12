@@ -21,8 +21,8 @@
 
 #include <cstdint>
 #include <fmt/core.h>
-#include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
+#include <spdlog/spdlog.h>
 
 #include <errno.h>
 #include <exception>
