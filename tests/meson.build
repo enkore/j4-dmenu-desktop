@@ -1,5 +1,9 @@
 # This build file depends on several variables defined in src/meson.build
-catch2 = dependency('catch2', default_options: 'tests=false')
+if get_option('enable-tests')
+  catch2 = dependency('catch2', default_options: 'tests=false')
+else
+  catch2 = disabler()
+endif
 
 test_files = [
   'FSUtils.cc',

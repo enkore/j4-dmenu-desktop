@@ -26,3 +26,10 @@ option(
     type: 'string',
     description: 'Override version. Using this option shouldn\'t be necessary as the build system will determine the correct version itself. But it can be still useful for e.g. marking patches in distribution builds.'
 )
+
+option(
+    'enable-tests',
+    type: 'boolean',
+    value: true,
+    description: 'Enable unit tests. If disabled, j4-dmenu-desktop will not depend on Catch2.'
+)
