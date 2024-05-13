@@ -102,3 +102,4 @@ r3.0 to be released
 	  can't differentiate identical entries, so they all launch the same desktop
 	  app)
 	+ added completions for Bash, Fish and ZSH
+	+ added --version flag
