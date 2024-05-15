@@ -75,9 +75,43 @@
 #include "NotifyInotify.hh"
 #endif
 
+static volatile int sigchld_fd;
+
+// This handler is established only in --wait-on mode when executing desktop
+// apps directly (not through i3 IPC).
 static void sigchld(int) {
-    while (waitpid(-1, NULL, WNOHANG) > 0)
-        ;
+    // Zombie reaping is implemented in do_wait_on()
+    auto saved_errno = errno;
+    if (write(sigchld_fd, "", 1) == -1) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+            abort();
+    }
+    errno = saved_errno;
+}
+
+static int setup_sigchld_signal() {
+    int pipefd[2];
+    if (pipe(pipefd) == -1)
+        PFATALE("pipe");
+
+    if (fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) == -1)
+        PFATALE("fcntl");
+    if (fcntl(pipefd[0], F_SETFL, O_NONBLOCK) == -1)
+        PFATALE("fcntl");
+    if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1)
+        PFATALE("fcntl");
+    if (fcntl(pipefd[1], F_SETFL, O_NONBLOCK) == -1)
+        PFATALE("fcntl");
+
+    sigchld_fd = pipefd[1];
+
+    struct sigaction act;
+    memset(&act, 0, sizeof act);
+    act.sa_handler = sigchld;
+    if (sigaction(SIGCHLD, &act, NULL) == -1)
+        PFATALE("sigaction");
+
+    return pipefd[0];
 }
 
 static void print_usage(FILE *f) {
@@ -756,12 +790,13 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
     bool is_i3 =
         dynamic_cast<ExecutePhase::NormalExecutable *>(executor) == nullptr;
 
+    int local_sigchld_fd = -1;
+
     // Avoid zombie processes.
-    struct sigaction act;
-    memset(&act, 0, sizeof act);
-    act.sa_handler = sigchld;
-    if (sigaction(SIGCHLD, &act, NULL) == -1)
-        PFATALE("sigaction");
+    if (!is_i3)
+        local_sigchld_fd = setup_sigchld_signal();
+
+    std::vector<pid_t> processes_to_wait_for;
 
     int fd;
     if (mkfifo(wait_on, 0600) && errno != EEXIST)
@@ -770,13 +805,20 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
     if (fd == -1)
         PFATALE("open");
     pollfd watch[] = {
-        {fd,             POLLIN, 0},
-        {notify.getfd(), POLLIN, 0},
+        {fd,               POLLIN, 0},
+        {notify.getfd(),   POLLIN, 0},
+        {local_sigchld_fd, POLLIN, 0}
     };
+    // Do not process the third entry when in i3 mode
+    // i3 mode doesn't exec nor fork, so the entire SIGCHLD handling mechanism
+    // is turned off for it. The signal handler is not established and poll
+    // disregards it because of nfds (local_sigchld_fd is also set to -1, so
+    // poll() would have ignored it anyway).
+    int nfds = is_i3 ? 2 : 3;
     while (1) {
-        watch[0].revents = watch[1].revents = 0;
+        watch[0].revents = watch[1].revents = watch[2].revents = 0;
         int ret;
-        while ((ret = poll(watch, 2, -1)) == -1 && errno == EINTR)
+        while ((ret = poll(watch, nfds, -1)) == -1 && errno == EINTR)
             ;
         if (ret == -1)
             PFATALE("poll");
@@ -840,7 +882,40 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                     executor->execute(*user_response);
                     abort();
                 }
+                processes_to_wait_for.push_back(pid);
             }
+        }
+        if (!is_i3 && watch[2].revents & POLLIN) {
+            // Empty the pipe.
+            while (true) {
+                char data;
+                if (read(local_sigchld_fd, &data, 1) == -1) {
+                    if (errno == EAGAIN)
+                        break;
+                    else
+                        PFATALE("read");
+                }
+            }
+
+            if (processes_to_wait_for.empty())
+                continue;
+
+            std::vector<pid_t> new_processes_to_wait_for;
+            new_processes_to_wait_for.reserve(processes_to_wait_for.size() - 1);
+
+            for (const pid_t &pid : processes_to_wait_for)
+                switch (waitpid(pid, NULL, WNOHANG)) {
+                case -1:
+                    PFATALE("waitpid");
+                case 0:
+                    new_processes_to_wait_for.push_back(pid);
+                    break;
+                default:
+                    SPDLOG_DEBUG("Waited on zombie with PID {}", pid);
+                    break;
+                }
+
+            processes_to_wait_for = std::move(new_processes_to_wait_for);
         }
         if (watch[0].revents & POLLHUP) {
             // The writing client has closed. We won't be able to poll()
