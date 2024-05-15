@@ -16,6 +16,7 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_message.hpp>
 
 #include <algorithm>
 #include <errno.h>
@@ -24,6 +25,7 @@
 #include <functional>
 #include <optional>
 #include <stdexcept>
+#include <stdio.h>
 #include <string.h>
 #include <string>
 #include <string_view>

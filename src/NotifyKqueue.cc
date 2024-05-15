@@ -15,12 +15,23 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <stack>
-
 #include "NotifyKqueue.hh"
+
+#include <algorithm>
+#include <chrono>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <functional>
+#include <iterator>
+#include <stack>
+#include <string.h>
+#include <sys/event.h>
+#include <thread>
+#include <time.h>
+#include <unistd.h>
+#include <utility>
+
 #include "Utilities.hh"
 
 NotifyKqueue::directory_entry::directory_entry(int q, int r, std::string p)

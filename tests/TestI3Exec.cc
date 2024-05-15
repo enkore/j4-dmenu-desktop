@@ -15,21 +15,21 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/core.h>
 
+#include <cstring>
 #include <errno.h>
 #include <exception>
-#include <fcntl.h>
 #include <future>
-#include <inttypes.h>
 #include <signal.h>
 #include <stdexcept>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <string>
+#include <sys/signal.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -114,7 +114,7 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
         abort();
     });
     struct sigaction act;
-    memset(&act, 0, sizeof(struct sigaction));
+    std::memset(&act, 0, sizeof(struct sigaction));
     act.sa_handler = sighandler;
     if (sigaction(SIGINT, &act, &old) == -1) {
         WARN("sigaction: " << strerror(errno));
@@ -131,7 +131,7 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
     OnExit sfd_close = [sfd]() { close(sfd); };
 
     struct sockaddr_un addr;
-    memset(&addr, 0, sizeof(struct sockaddr_un));
+    std::memset(&addr, 0, sizeof(struct sockaddr_un));
     addr.sun_family = AF_UNIX;
     fmt::format_to(addr.sun_path, "{}/socket", tmpdirname);
 

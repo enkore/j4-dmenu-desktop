@@ -21,6 +21,7 @@
 #include <spdlog/spdlog.h>
 
 #include <cstdlib>
+#include <errno.h>
 #include <stdio.h>
 #include <string>
 #include <sys/types.h>

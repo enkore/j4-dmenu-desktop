@@ -18,13 +18,12 @@
 #ifndef NOTIFYKQUEUE_DEF
 #define NOTIFYKQUEUE_DEF
 
-#include "NotifyBase.hh"
 #include <mutex>
 #include <set>
-#include <sys/event.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <thread>
+#include <string>
+#include <vector>
+
+#include "NotifyBase.hh"
 
 using stringlist_t = std::vector<std::string>;
 

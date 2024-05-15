@@ -15,8 +15,9 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "DynamicCompare.hh"
 #include <catch2/catch_test_macros.hpp>
+
+#include "DynamicCompare.hh"
 
 TEST_CASE("Test DynamicCompare", "[DynamicCompare]") {
     DynamicCompare cmp(false);

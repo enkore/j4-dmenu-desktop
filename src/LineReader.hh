@@ -23,6 +23,7 @@
 #define LINEREADER_DEF
 
 #include <stdio.h>
+#include <sys/types.h>
 
 class LineReader
 {

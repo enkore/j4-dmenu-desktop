@@ -19,19 +19,17 @@
 
 #include "I3Exec.hh"
 
-#include <cstdint>
-#include <fmt/core.h>
 #include <spdlog/fmt/bin_to_hex.h>
 #include <spdlog/spdlog.h>
 
-#include <errno.h>
+#include <cstdint>
+#include <cstring>
 #include <exception>
 #include <limits>
 #include <memory>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -218,9 +216,9 @@ void exec(const string &raw_command, const string &socket_path) {
     OnExit close_sfd = [sfd]() { close(sfd); };
 
     struct sockaddr_un addr;
-    memset(&addr, 0, sizeof(sockaddr_un));
+    std::memset(&addr, 0, sizeof(sockaddr_un));
     addr.sun_family = AF_UNIX;
-    memcpy(addr.sun_path, socket_path.data(), socket_path.size());
+    std::memcpy(addr.sun_path, socket_path.data(), socket_path.size());
 
     if (connect(sfd, (struct sockaddr *)&addr, sizeof(sockaddr_un)) == -1)
         PFATALE("connect");

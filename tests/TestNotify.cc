@@ -16,6 +16,7 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
+#include <fmt/core.h>
 
 #include <errno.h>
 #include <poll.h>
@@ -24,7 +25,6 @@
 #include <unistd.h>
 
 #include "NotifyBase.hh"
-#include "Utilities.hh"
 
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"

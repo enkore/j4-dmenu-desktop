@@ -19,6 +19,7 @@
 #define FILEFINDER_DEF
 
 #include <dirent.h>
+#include <sys/types.h>
 #include <iterator>
 #include <stack>
 #include <string>

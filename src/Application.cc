@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <memory>
 #include <stdio.h>
+#include <sys/types.h>
 #include <utility>
 
 #include "LineReader.hh"
