@@ -845,6 +845,19 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
 #endif
             }
         }
+        if (watch[0].revents & POLLHUP) {
+            // The writing client has closed. We won't be able to poll()
+            // properly until POLLHUP is cleared. This happens when a) someone
+            // opens the FIFO for writing again b) reopen it. a) is useless
+            // here, we have to reopen. See poll(3p) (not poll(2), it isn't
+            // documented there).
+            close(fd);
+            fd = open(wait_on, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+            if (fd == -1)
+                PFATALE("open");
+            watch[0].fd = fd;
+            continue;
+        }
         if (watch[0].revents & POLLIN) {
             // It can happen that the user tries to execute j4dd several times
             // but has forgot to start j4dd. They then run it in wait on mode
@@ -865,24 +878,23 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
             command_retrieve.run_dmenu();
 
             auto user_response = command_retrieve.prompt_user_for_choice();
-            if (!user_response)
-                continue;
-
-            if (is_i3)
-                executor->execute(*user_response);
-            else {
-                pid_t pid = fork();
-                switch (pid) {
-                case -1:
-                    perror("fork");
-                    exit(EXIT_FAILURE);
-                case 0:
-                    close(fd);
-                    setsid();
+            if (user_response) {
+                if (is_i3)
                     executor->execute(*user_response);
-                    abort();
+                else {
+                    pid_t pid = fork();
+                    switch (pid) {
+                    case -1:
+                        perror("fork");
+                        exit(EXIT_FAILURE);
+                    case 0:
+                        close(fd);
+                        setsid();
+                        executor->execute(*user_response);
+                        abort();
+                    }
+                    processes_to_wait_for.push_back(pid);
                 }
-                processes_to_wait_for.push_back(pid);
             }
         }
         if (!is_i3 && watch[2].revents & POLLIN) {
@@ -916,18 +928,6 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                 }
 
             processes_to_wait_for = std::move(new_processes_to_wait_for);
-        }
-        if (watch[0].revents & POLLHUP) {
-            // The writing client has closed. We won't be able to poll()
-            // properly until POLLHUP is cleared. This happens when a) someone
-            // opens the FIFO for writing again b) reopen it. a) is useless
-            // here, we have to reopen. See poll(3p) (not poll(2), it isn't
-            // documented there).
-            close(fd);
-            fd = open(wait_on, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-            if (fd == -1)
-                PFATALE("open");
-            watch[0].fd = fd;
         }
     }
     // Make reaaly sure [[noreturn]] is upheld.
