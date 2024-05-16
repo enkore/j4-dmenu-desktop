@@ -1,11 +1,29 @@
 # j4-dmenu-desktop
 
-j4-dmenu-desktop is a replacement for i3-dmenu-desktop. It's purpose
-is to find .desktop files and offer you a menu to start an application
-using dmenu. Since r2.7 j4-dmenu-desktop doesn't require i3wm anymore
-and should work just fine on about any desktop environment.
+j4-dmenu-desktop is a fast desktop menu using `dmenu` (or compatible programs).
+It scans .desktop files in $XDG_DATA_HOME and $XDG_DATA_DIRS, providing a menu
+for launching applications.
+
+It is inspired by i3-dmenu-desktop. Like i3-dmenu-desktop, j4-dmenu-desktop
+offers optional integration with i3wm (but j4-dmenu-desktop should work just
+fine on about any desktop environment).
 
 You can also execute shell commands using it.
+
+## Features
+
+- speed
+- conformance to the [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry-spec/1.5/)
+- daemon mode with `--wait-on` which parses desktop files ahead of time
+- support for history sorted by usage frequency using `--usage-log`
+- automatic desktop file loading/removal in daemon mode using inotify/kqueue
+- support for any dmenu-like program (j4-dmenu-desktop is independent of any
+  desktop environment + it works with both Xorg and [Wayland](#examples))
+- (optional) i3 IPC integration
+- multiple formatters available (program name, program name with executable
+  path...)
+- completions for all major shells + a manpage
+- and more!
 
 ## Build requirements
 
@@ -32,7 +50,6 @@ See [`BUILDING`](BUILDING.md) for more info.
 ## Distribution packages
 
 ### Archlinux <a href="https://repology.org/project/j4-dmenu-desktop/versions"><img src="https://repology.org/badge/vertical-allrepos/j4-dmenu-desktop.svg" alt="Packaging status" align="right"></a>
-
 
 The package is provided in the Arch Linux extra repository. You can install it via
 
