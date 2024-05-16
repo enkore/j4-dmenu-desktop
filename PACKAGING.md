@@ -4,9 +4,10 @@ version r3.0. If your package is using the CMake build system, you should
 consider switching to Meson as it is the preferred build system (but CMake isn't
 going anywhere, it is still supported).
 
-NOTE: Meson build system requires Meson >=1.2.0 (as marked in the
-`meson_version` field in `meson.build`). If that isn't available in your build
-environment, CMake must be used.
+> [!WARNING]
+> Meson build system requires Meson >=1.2.0 (as marked in the `meson_version`
+field in `meson.build`). If that isn't available in your build environment,
+CMake can be used instead.
 
 ## Dependencies
 j4-dmenu-desktop has three dependencies:
