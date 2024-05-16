@@ -1,4 +1,8 @@
 # Building j4-dmenu-desktop
+
+> [!NOTE]
+> Trying to package j4-dmenu-desktop? Take a look at [PACKAGING](PACKAGING.md).
+
 Since version r3.0, j4-dmenu-desktop provides two independent build systems:
 CMake and Meson. CMake is the original build system, Meson has been added in
 version r3.0.
