@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <memory>
 #include <stdio.h>
+#include <string_view>
 #include <sys/types.h>
 #include <utility>
 
@@ -225,8 +226,8 @@ void Application::parse_localestring(const char *key, int key_length,
                                      std::string &field,
                                      const LocaleSuffixes &locale_suffixes) {
     if (key[key_length] == '[') {
-        std::string locale(key + key_length + 1,
-                           strlen(key + key_length + 1) - 1);
+        std::string_view locale(key + key_length + 1,
+                                strlen(key + key_length + 1) - 1);
 
         int new_match = locale_suffixes.match(locale);
         if (new_match == -1)

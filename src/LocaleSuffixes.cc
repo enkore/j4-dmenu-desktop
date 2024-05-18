@@ -67,7 +67,7 @@ LocaleSuffixes::LocaleSuffixes(std::string locale) {
     }
 }
 
-int LocaleSuffixes::match(const std::string &str) const {
+int LocaleSuffixes::match(std::string_view str) const {
     for (int i = 0; i < this->length; i++) {
         if (suffixes[i] == str)
             return i;

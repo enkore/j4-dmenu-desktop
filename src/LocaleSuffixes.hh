@@ -19,6 +19,7 @@
 #define LOCALE_DEF
 
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -31,7 +32,7 @@ public:
     // it returns an int that signifies how well it matches so that Application
     // can skip localized keys with locales which have lower priority than a
     // previously matched one
-    int match(const std::string &str) const;
+    int match(std::string_view str) const;
     bool operator==(const LocaleSuffixes &other) const;
 
     // This function is currently used for logging only, it shouldn't be used as
