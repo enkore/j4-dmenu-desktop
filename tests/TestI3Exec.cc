@@ -27,7 +27,6 @@
 #include <stdexcept>
 #include <stdlib.h>
 #include <string>
-#include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
