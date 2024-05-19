@@ -1,8 +1,5 @@
 # Building j4-dmenu-desktop
 
-> [!NOTE]
-> Trying to package j4-dmenu-desktop? Take a look at [PACKAGING](PACKAGING.md).
-
 Since version r3.0, j4-dmenu-desktop provides two independent build systems:
 CMake and Meson. CMake is the original build system, Meson has been added in
 version r3.0.
@@ -14,13 +11,36 @@ is done to speed up release builds, but developers may wish to turn this off.
 Although both systems will be supported for compatibility, **Meson should be
 preferred**. Meson provides overall better development and packaging experience.
 
+> [!WARNING]
+> Meson build system requires Meson >=1.2.0 (as marked in the `meson_version`
+field in `meson.build`). If that isn't available in your build environment,
+CMake can be used instead.
+
+## Dependencies
+j4-dmenu-desktop has three dependencies:
+[Catch2](https://github.com/catchorg/Catch2),
+[spdlog](https://github.com/gabime/spdlog) and
+[fmt](https://github.com/fmtlib/fmt). fmt is both a dependency of spdlog and of
+j4-dmenu-desktop. All of these are internal dependencies and are linked
+statically (unless the build system is overridden or dependencies are provided
+externally).
+
+J4-dmenu-desktop won't depend on Catch2 if unit tests are disabled.
+
 ## Building with CMake
 Out-of-source builds are fully supported.
 
-CMake will automatically download Catch2, spdlog and fmt dependencies. You can
-override Catch2 behaviour with `WITH_TESTS` to turn off tests and
-`WITH_GIT_CATCH`, `WITH_GIT_SPDLOG` and `WITH_GIT_FMT` to manage fetching of
-dependencies. This is useful if you want to use system installed dependencies.
+CMake will automatically download Catch2, spdlog and fmt dependencies. If you
+want to use system installed dependencies instead, can override the mechanism
+using the following flags:
+
+| dependency | CMake flag              |
+| ---------- | ----------------------- |
+| Catch2     | `-DWITH_GIT_CATCH=OFF`  |
+| spdlog     | `-DWITH_GIT_SPDLOG=OFF` |
+| fmt        | `-DWITH_GIT_FMT=OFF`    |
+
+Unit tests can be disabled using the `-DWITH_TESTS=OFF` flag.
 
 ## Building with Meson
 J4-dmenu-desktop provides a simple setup helper
@@ -34,10 +54,22 @@ developers may want to set `split-source` to reduce unnecessary recompilation
 when building `j4-dmenu-desktop` and `j4-dmenu-tests` at the same time[^1]
 (`meson-setup.sh` sets this in its debugging build styles).
 
+Unit tests can be disabled using the `-Denable-tests=false` flag.
+
+Although it is recommended to use `meson-setup.sh`, you can completely ignore
+its flags and invoke meson manually.
+
 ### Unity builds in Meson
 Unity builds can't be set by default without disrupting developer workflow. The
 `meson-setup.sh` script uses unity builds for release build style (which is the
 default). This is also the recommended setup in
-[`README.md`](README.md#build-requirements).
+[README.md](README.md#build-requirements).
+
+## Support
+J4-dmenu-desktop has been tested on glibc and musl, cross compilation has been
+tested, both `g++` and `clang++` are able to compile j4-dmenu-desktop without
+warnings and errors and everything has been tested on FreeBSD.
+J4-dmenu-desktop should be buildable pretty much everywhere. If not, please
+[submit a new issue](https://github.com/enkore/j4-dmenu-desktop/issues/new).
 
 [^1]: `ccache` can be used instead

@@ -84,7 +84,7 @@ r3.0 to be released
 	+ BREAKING CHANGE: --i3-ipc should be preferred over --wrapper "i3-msg exec"
 	  j4-dmenu-desktop will fail to start with --wrapper containing i3 unless
 	  --skip-i3-exec-check is passed
-	+ added PACKAGING.md, BUILDING.md and CONTRIBUTING.md to improve documentation
+	+ added BUILDING.md and CONTRIBUTING.md to improve documentation
 	+ added Meson build system
 	+ added two new dependencies: spdlog and fmt
 	+ updated unit tests to make them compatible with the latest Catch2 v3
