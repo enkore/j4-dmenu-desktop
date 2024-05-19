@@ -39,7 +39,6 @@ SET(OVERRIDE_VERSION "" CACHE STRING "Override version")
 if(OVERRIDE_VERSION STREQUAL "")
   # Version handling
   file(STRINGS "version.txt" VCS_TAG)
-  set(VCS_TAG "r${VCS_TAG}")
 
   find_package(Git)
 
