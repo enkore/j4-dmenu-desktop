@@ -845,19 +845,6 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
 #endif
             }
         }
-        if (watch[0].revents & POLLHUP) {
-            // The writing client has closed. We won't be able to poll()
-            // properly until POLLHUP is cleared. This happens when a) someone
-            // opens the FIFO for writing again b) reopen it. a) is useless
-            // here, we have to reopen. See poll(3p) (not poll(2), it isn't
-            // documented there).
-            close(fd);
-            fd = open(wait_on, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-            if (fd == -1)
-                PFATALE("open");
-            watch[0].fd = fd;
-            continue;
-        }
         if (watch[0].revents & POLLIN) {
             // It can happen that the user tries to execute j4dd several times
             // but has forgot to start j4dd. They then run it in wait on mode
@@ -896,6 +883,18 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                     processes_to_wait_for.push_back(pid);
                 }
             }
+        }
+        if (watch[0].revents & POLLHUP) {
+            // The writing client has closed. We won't be able to poll()
+            // properly until POLLHUP is cleared. This happens when a) someone
+            // opens the FIFO for writing again b) reopen it. a) is useless
+            // here, we have to reopen. See poll(3p) (not poll(2), it isn't
+            // documented there).
+            close(fd);
+            fd = open(wait_on, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+            if (fd == -1)
+                PFATALE("open");
+            watch[0].fd = fd;
         }
         if (!is_i3 && watch[2].revents & POLLIN) {
             // Empty the pipe.
