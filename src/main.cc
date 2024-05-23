@@ -1154,6 +1154,9 @@ int main(int argc, char **argv) {
         custom_logger->sinks().push_back(std::move(sink));
     }
 
+    stderr_sink.reset();
+    custom_logger.reset();
+
     /// i3 ipc
     SPDLOG_DEBUG("I3 IPC interface is {}.", (use_i3_ipc ? "on" : "off"));
 
