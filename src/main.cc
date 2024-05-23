@@ -618,7 +618,7 @@ public:
     // it is executed in wait-on mode. When executed normally, dmenu.run()
     // should be executed as soon as possible. It is executed in main() as part
     // of setup. In wait-on mode, it must be executed after each pipe
-    // invocation. run_dmenu() is used ony in wait-on mode in do_wait_on().
+    // invocation. run_dmenu() is used only in wait-on mode in do_wait_on().
     void run_dmenu() {
         this->dmenu.run();
     }
@@ -987,7 +987,7 @@ int main(int argc, char **argv) {
     bool prune_bad_usage_log_entries = false;
     int verbose_flag = 0;
 
-    bool loglevel_overriden = false;
+    bool loglevel_overridden = false;
 
     application_formatter appformatter = appformatter_default;
 
@@ -1083,7 +1083,7 @@ int main(int argc, char **argv) {
                            "Invalid loglevel supplied to --log-level!\n");
                 exit(EXIT_FAILURE);
             }
-            loglevel_overriden = true;
+            loglevel_overridden = true;
             break;
         case 'O':
             log_file_path = optarg;
@@ -1121,7 +1121,7 @@ int main(int argc, char **argv) {
 
     /// Handle logging
     // Handle -v or -vv flag if --log-level wasn't specified.
-    if (!loglevel_overriden) {
+    if (!loglevel_overridden) {
         switch (verbose_flag) {
         case 0:
             break;
