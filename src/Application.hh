@@ -27,19 +27,19 @@
 class LineReader;
 
 // Desktop file is disabled, further parsing is unnecessary
-struct disabled_error : public std::runtime_error
+struct disabled_error final : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
 
 // Invalid escape sequences
-struct escape_error : public std::runtime_error
+struct escape_error final : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
 
 // Error while opening a desktop file
-struct invalid_error : public std::runtime_error
+struct invalid_error final : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };

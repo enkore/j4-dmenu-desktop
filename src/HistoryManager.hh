@@ -43,7 +43,7 @@ using std::string;
 #define J4DDHIST_HEADER "j4dd history v"
 #define J4DDHIST_HEADER_LENGTH 14
 
-class v0_version_error : public std::runtime_error
+class v0_version_error final : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
