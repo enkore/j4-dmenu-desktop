@@ -13,7 +13,7 @@ You can also execute shell commands using it.
 ## Features
 
 - speed
-- conformance to the [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry-spec/1.5/)
+- conformance to the [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry-spec/1.5/)[^1]
 - daemon mode with `--wait-on` which parses desktop files ahead of time
 - support for history sorted by usage frequency using `--usage-log`
 - automatic desktop file loading/removal in daemon mode using inotify/kqueue
@@ -140,3 +140,9 @@ Exchanging the `cat` and `(stest ... sort -u)` parts will swap the two parts (j4
     ./j4-dmenu-desktop --dmenu=cat  0.01s user 0.01s system 107% cpu 0.015 total
 
 More than 25 times faster :)
+
+[^1]: Some minor features like [handling of `TryExec`
+      key](https://github.com/enkore/j4-dmenu-desktop/issues/165) are missing.
+      If there are any problems with compliance to the Desktop entry
+      specification, please [submit an
+      issue](https://github.com/enkore/j4-dmenu-desktop/issues/new).
