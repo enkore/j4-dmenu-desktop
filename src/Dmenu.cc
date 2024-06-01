@@ -74,7 +74,7 @@ std::string Dmenu::read_choice() {
         choice.append(buf, len);
     if (len == -1)
         perror("read");
-    if (choice.back() == '\n')
+    if (!choice.empty() && choice.back() == '\n')
         choice.pop_back();
     close(inpipe[0]);
     return choice;
