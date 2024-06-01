@@ -34,7 +34,7 @@ Building with Meson:
 
     ./meson-setup.sh build
     cd build
-    ninja src/j4-dmenu-desktop
+    meson compile j4-dmenu-desktop
     sudo meson install
 
 Building with CMake:
@@ -42,10 +42,10 @@ Building with CMake:
     mkdir build
     cd build
     cmake ..
-    make
+    make j4-dmenu-desktop
     sudo make install
 
-See [`BUILDING`](BUILDING.md) for more info.
+See [BUILDING](BUILDING.md) for more info.
 
 ## Distribution packages
 
