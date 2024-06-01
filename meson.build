@@ -8,7 +8,7 @@ project(
   ],
   license: 'GPL-3.0-or-later',
   license_files: 'LICENSE',
-  meson_version: '>=1.2.0',
+  meson_version: '>=1.1.0',
 )
 
 install_man('j4-dmenu-desktop.1')
