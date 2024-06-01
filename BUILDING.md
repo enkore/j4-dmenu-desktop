@@ -40,6 +40,10 @@ using the following flags:
 | spdlog     | `-DWITH_GIT_SPDLOG=OFF` |
 | fmt        | `-DWITH_GIT_FMT=OFF`    |
 
+If you want to disable dependency fetching altogether, you can use
+`-DNO_DOWNLOAD=ON`. This is more future-proof, because it prevents the download
+of potential new dependencies added to j4-dmenu-desktop.
+
 Unit tests can be disabled using the `-DWITH_TESTS=OFF` flag.
 
 ## Building with Meson

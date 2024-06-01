@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 
 project(j4-dmenu CXX)
 
-option(WITH_TESTS "Build and run tests" ON)
-option(WITH_GIT_CATCH "Use a Git checkout of Catch to build the tests" ON)
-option(WITH_GIT_SPDLOG "Use a Git checkout of spdlog to build" ON)
-option(WITH_GIT_FMT "Use a Git checkout of fmt to build" ON)
+include(CMakeDependentOption)
 
+option(WITH_TESTS "Build and run tests" ON)
+option(NO_DOWNLOAD "Do not download any dependencies (or anything else); overrides all WITH_GIT_* variables" OFF)
+cmake_dependent_option(WITH_GIT_CATCH "Use a Git checkout of Catch to build the tests" ON "NOT NO_DOWNLOAD" OFF)
+cmake_dependent_option(WITH_GIT_SPDLOG "Use a Git checkout of spdlog to build" ON "NOT NO_DOWNLOAD" OFF)
+cmake_dependent_option(WITH_GIT_FMT "Use a Git checkout of fmt to build" ON "NOT NO_DOWNLOAD" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 
