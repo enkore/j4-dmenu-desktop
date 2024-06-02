@@ -223,7 +223,9 @@ static void validate_search_path(stringlist_t &search_path) {
             SPDLOG_WARN(
                 "Relative path '{}' found in $XDG_DATA_DIRS, ignoring...",
                 path);
-            search_path.erase(iter);
+            iter = search_path.erase(iter);
+            if (iter == search_path.end())
+                return;
         }
         if (!is_unique.emplace(path).second)
             SPDLOG_WARN("$XDG_DATA_DIRS contains duplicate element '{}'!",
