@@ -104,7 +104,7 @@ if get_option('split-source')
     dependencies: [spdlog, fmt],
   )
 
-  executable(
+  j4dd_exe = executable(
     'j4-dmenu-desktop',
     'main.cc',
     version_header,
@@ -115,7 +115,7 @@ if get_option('split-source')
     install: true,
   )
 else
-  executable(
+  j4dd_exe = executable(
     'j4-dmenu-desktop',
     src,
     'main.cc',

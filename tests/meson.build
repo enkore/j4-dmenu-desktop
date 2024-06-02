@@ -29,6 +29,8 @@ test_files = [
   'MainTest.cc',
 ]
 
+test_files_location = meson.project_source_root() / 'tests/test_files/"'
+
 if get_option('split-source')
   test_exe = executable(
     'j4-dmenu-tests',
@@ -36,7 +38,7 @@ if get_option('split-source')
     dependencies: [catch2, spdlog, fmt],
     link_with: source_lib,
     include_directories: inc,
-    cpp_args: ['-DTEST_FILES="' + meson.project_source_root() / 'tests/test_files/"', flags],
+    cpp_args: ['-DTEST_FILES="' + test_files_location, flags],
   )
 else
   test_exe = executable(
@@ -45,10 +47,30 @@ else
     src,
     dependencies: [catch2, spdlog, fmt],
     include_directories: inc,
-    cpp_args: ['-DTEST_FILES="' + meson.project_source_root() / 'tests/test_files/"', flags],
+    cpp_args: ['-DTEST_FILES="' + test_files_location, flags],
   )
 endif
 
 # NotifyKqueue checks for changes every minute. This means that the default timeout
 # of 30 seconds is not sufficient on BSDs, because one of the tests uses Notify.
 test('j4-dmenu-tests', test_exe, timeout: 90)
+
+bats_exe = find_program('bats', native: true, required: false, version: '>=1.2.1')
+
+if bats_exe.found()
+  test(
+    'bats-tests',
+    files('bats_runner.sh'),
+    args: [
+      '-b',
+      bats_exe.full_path(),
+      j4dd_exe.full_path(),
+      '--pretty',
+      files('bats.bats')
+    ],
+    depends: j4dd_exe
+  )
+else
+  warning('Couldn\'t find bats executable, bats tests will be skipped.')
+  test('bats-tests', files('skipped_test.sh'))
+endif

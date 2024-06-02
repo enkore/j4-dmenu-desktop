@@ -132,6 +132,13 @@ if(WITH_TESTS)
   include(CTest)
   include(Catch)
   catch_discover_tests(j4-dmenu-tests)
+
+  execute_process(COMMAND bats --version OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE bats_error)
+  if(bats_error EQUAL 0)
+    add_test(NAME bats-test COMMAND env "J4DD_EXECUTABLE=${CMAKE_CURRENT_BINARY_DIR}/j4-dmenu-desktop" bats "${CMAKE_SOURCE_DIR}/tests/bats.bats")
+  else()
+    message(WARNING "Bats executable is not available. Skipping Bats tests...")
+  endif()
 endif(WITH_TESTS)
 
 if(USE_KQUEUE)
