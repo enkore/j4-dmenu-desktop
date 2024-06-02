@@ -1,4 +1,5 @@
 - Compile and commit CHANGELOG
+- update version.txt
 - Commit message follows the pattern "rX.Y released ISO8601DATE"
 - Tag:
   git tag -a -m '<CHANGELOG ENTRY>' rX.Y --sign
