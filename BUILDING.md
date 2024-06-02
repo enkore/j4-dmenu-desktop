@@ -64,10 +64,10 @@ Although it is recommended to use `meson-setup.sh`, you can completely ignore
 its flags and invoke meson manually.
 
 ### Unity builds in Meson
-Unity builds can't be set by default without disrupting developer workflow. The
-`meson-setup.sh` script uses unity builds for release build style (which is the
-default). This is also the recommended setup in
-[README.md](README.md#build-requirements).
+Unity builds are fully configurable in Meson. They are enabled by default.
+The `meson-setup.sh` script disables unity builds for `debug` and `sanitize`
+build styles. You can use Meson's `--unity=off` flag to turn off unity builds
+when configuring the project manually.
 
 ## Support
 J4-dmenu-desktop has been tested on glibc and musl, cross compilation has been

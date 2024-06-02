@@ -5,6 +5,8 @@ project(
   default_options: [
     'warning_level=3',
     'cpp_std=c++17',
+    'unity=on',
+    'unity_size=9999'
   ],
   license: 'GPL-3.0-or-later',
   license_files: 'LICENSE',
