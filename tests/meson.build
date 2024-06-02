@@ -46,4 +46,6 @@ else
   )
 endif
 
-test('j4-dmenu-tests', test_exe)
+# NotifyKqueue checks for changes every minute. This means that the default timeout
+# of 30 seconds is not sufficient on BSDs, because one of the tests uses Notify.
+test('j4-dmenu-tests', test_exe, timeout: 90)
