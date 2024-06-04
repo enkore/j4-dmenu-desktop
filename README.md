@@ -93,6 +93,18 @@ j4-dmenu-desktop is in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pk
     nix-env --install j4-dmenu-desktop
     # Or use pkgs attribute of the same name in NixOS configuration
 
+### Void Linux
+
+j4-dmenu-desktop is packaged in Void Linux:
+
+    sudo xbps-install -S j4-dmenu-desktop
+
+This package is maintained my me, @meator. As a collaborator of j4-dmenu-desktop
+and an active Void Linux user, I ensure a higher standard of quality for this
+package. This package is officially supported, feel free to [open
+issues](https://github.com/enkore/j4-dmenu-desktop/issues/new) or ask for
+support related to the Void Linux package here.
+
 ## Examples
 
 Run j4-dmenu-desktop:
