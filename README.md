@@ -99,9 +99,10 @@ j4-dmenu-desktop is packaged in Void Linux:
 
     sudo xbps-install -S j4-dmenu-desktop
 
-This package is maintained my me, @meator. As a collaborator of j4-dmenu-desktop
-and an active Void Linux user, I ensure a higher standard of quality for this
-package. This package is officially supported, feel free to [open
+This package is maintained my me, [meator](https://github.com/meator). As a
+collaborator of j4-dmenu-desktop and an active Void Linux user, I ensure a
+higher standard of quality for this package. This package is officially
+supported, feel free to [open
 issues](https://github.com/enkore/j4-dmenu-desktop/issues/new) or ask for
 support related to the Void Linux package here.
 
