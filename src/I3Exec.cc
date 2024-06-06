@@ -56,8 +56,10 @@ string get_ipc_socket_path() {
         if (dup2(pipefd[1], STDOUT_FILENO) == -1)
             PFATALE("dup2");
 
+        execlp("sway", "sway", "--get-socketpath", (char *)NULL);
         execlp("i3", "i3", "--get-socketpath", (char *)NULL);
-        SPDLOG_ERROR("Couldn't execute 'i3 --get-socketpath'");
+        SPDLOG_ERROR("Couldn't execute 'sway --get-socketpath' nor 'i3 "
+                     "--get-socketpath'!");
         _exit(EXIT_FAILURE);
     }
     // This is the parent process.
