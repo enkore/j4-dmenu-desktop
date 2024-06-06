@@ -659,7 +659,7 @@ public:
         }
 
         if (this->no_exec) {
-            fmt::print(stderr, "{}\n", raw_command);
+            fmt::print("{}\n", raw_command);
             return {};
         } else
             return CommandInfo{std::move(raw_command), is_custom, terminal,
