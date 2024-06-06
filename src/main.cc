@@ -1168,8 +1168,11 @@ int main(int argc, char **argv) {
             SPDLOG_ERROR("You can't enable both i3 IPC and a wrapper!");
             exit(EXIT_FAILURE);
         }
-        // This may abort()/exit()
-        i3_ipc_path = I3Interface::get_ipc_socket_path();
+        i3_ipc_path = get_variable("I3SOCK");
+        if (i3_ipc_path.empty()) {
+            // This may abort()/exit()
+            i3_ipc_path = I3Interface::get_ipc_socket_path();
+        }
     }
 
     if (!skip_i3_check) {
