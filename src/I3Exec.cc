@@ -184,6 +184,36 @@ static string escape_command(const string &command) {
     return result;
 }
 
+// This is used for the poor man's JSON parser
+static string trim_spaces(const string &orig) {
+    bool is_in_quotes = false;
+    bool is_escaped = false;
+
+    string result;
+    result.reserve(orig.size());
+    for (char ch : orig) {
+        if (is_in_quotes) {
+            if (is_escaped) {
+                result.push_back(ch);
+                is_escaped = false;
+            } else {
+                if (ch == '\\')
+                    is_escaped = true;
+                else if (ch == '"')
+                    is_in_quotes = false;
+                result.push_back(ch);
+            }
+        } else {
+            if (ch == ' ')
+                continue;
+            if (ch == '"')
+                is_in_quotes = true;
+            result.push_back(ch);
+        }
+    }
+    return result;
+}
+
 void exec(const string &raw_command, const string &socket_path) {
     // These are the base lengths (sum of message_base_header_length,
     // message_base_command_length and command.length() should result in the
@@ -276,15 +306,18 @@ void exec(const string &raw_command, const string &socket_path) {
 
     SPDLOG_DEBUG("I3 IPC response: {}", response);
 
+    string trimmed_response = trim_spaces(response);
+
     // Ideally a JSON parser should be employed here. But I don't want to add
     // additional dependencies. If any breakage through this custom parsing
     // should arise, please file a GitHub issue.
-    if (response.find(R"("success":false)") != string::npos) {
-        auto where = response.find(R"("error":)");
+    if (trimmed_response.find(R"("success":false)") != string::npos) {
+        auto where = trimmed_response.find(R"("error":)");
         if (where != string::npos) {
             try {
-                string error = read_JSON_string(response.cbegin() + where + 9,
-                                                response.cend());
+                string error =
+                    read_JSON_string(trimmed_response.cbegin() + where + 9,
+                                     trimmed_response.cend());
                 SPDLOG_ERROR(
                     "An error occurred while communicating with i3 (executing "
                     "command '{}'): {}",
@@ -302,13 +335,12 @@ void exec(const string &raw_command, const string &socket_path) {
                 "command '{}')!",
                 command);
         exit(EXIT_FAILURE);
-    } else if (response.find(R"("success":true)") != string::npos)
+    } else if (trimmed_response.find(R"("success":true)") != string::npos)
         return;
     else {
-        SPDLOG_ERROR(
-            "A parsing error occurred while reading i3's response (executing "
-            "command '{}')!",
-            command);
+        SPDLOG_ERROR("A parsing error occurred while reading i3's "
+                     "response (executing command '{}')!",
+                     command);
         abort();
     }
 }
