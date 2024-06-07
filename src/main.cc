@@ -718,7 +718,7 @@ public:
 
         if (!command_info.path.empty())
             command =
-                "cd " + CMDLineAssembly::sq_quote(command) + "; " + command;
+                "cd " + CMDLineAssembly::sq_quote(command) + " && " + command;
         stringlist_t processed_argv =
             CMDLineAssembly::wrap_exec_in_shell(command);
         if (command_info.is_terminal)
