@@ -85,6 +85,7 @@ src = files(
   'LocaleSuffixes.cc',
   'SearchPath.cc',
   'Utilities.cc',
+  'CMDLineAssembler.cc',
 )
 
 if inotify

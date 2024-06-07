@@ -55,6 +55,7 @@
 #include "AppManager.hh"
 #include "Application.hh"
 #include "ApplicationRunner.hh"
+#include "CMDLineAssembler.hh"
 #include "Dmenu.hh"
 #include "DynamicCompare.hh"
 #include "FileFinder.hh"
@@ -507,88 +508,6 @@ static lookup_res_type lookup_name(const std::string &query,
 }
 }; // namespace Lookup
 
-namespace CommandAssembly
-{
-static std::string i3_assemble_command(const std::string &raw_command,
-                                       const std::string &terminal,
-                                       bool is_custom,
-                                       const std::string &path) {
-    if (terminal.empty()) {
-        if (path.empty())
-            return raw_command;
-        else
-            return "cd '" + path + "'; " + raw_command;
-    } else {
-        // See comment in RunPhase::CommandAssembly::assemble_command() for
-        // explanation of "exec "
-        std::string command;
-        if (!is_custom) {
-            if (path.empty())
-                command = "exec " + raw_command;
-            else
-                command = "cd '" + path + "'; exec " + raw_command;
-        } else {
-            if (path.empty())
-                command = raw_command;
-            else
-                command = "cd '" + path + "'; " + raw_command;
-        }
-        // XXX test this!
-        return terminal + " -e " + "/bin/sh -c '" + command + "'";
-    }
-}
-
-struct Executable
-{
-    stringlist_t args;
-
-    enum { PATHNAME, FILE } path_type;
-
-    std::vector<const char *> create_argv() const {
-        std::vector<const char *> result(this->args.size() + 2);
-        auto iter = result.begin();
-        for (const std::string &arg : this->args) {
-            *iter = arg.data();
-            ++iter;
-        }
-        // result.back() = (char *)NULL; vector initializes all pointers to NULL
-        // by default, no need to set the last element
-        return result;
-    }
-
-    std::string cmdline_string() const {
-        return join(this->args);
-    }
-};
-
-// If terminal != "", execute raw_command through terminal emulator.
-static Executable assemble_command(std::string raw_command,
-                                   const std::string &terminal,
-                                   bool is_custom) {
-    /*
-     * Some shells automatically exec() the last command in the
-     * command_string passed in by sh -c but some do not. For
-     * example bash does this but dash doesn't. Prepending "exec " to
-     * the command ensures that the shell will get replaced. Custom
-     * commands might contain complicated expressions so exec()ing them
-     * might not be a good idea. Desktop files can contain only a single
-     * command in Exec so using the exec shell builtin is safe.
-     */
-    if (!is_custom)
-        raw_command = "exec " + raw_command;
-    if (terminal.empty())
-        return Executable{
-            {"/bin/sh", "-c", raw_command},
-            Executable::PATHNAME
-        };
-    else
-        return Executable{
-            {terminal, "-e", "/bin/sh", "-c", raw_command},
-            Executable::FILE
-        };
-}
-}; // namespace CommandAssembly
-
 class CommandRetrievalLoop
 {
 public:
@@ -658,12 +577,7 @@ public:
             path = appl.app->path;
         }
 
-        if (this->no_exec) {
-            fmt::print("{}\n", raw_command);
-            return {};
-        } else
-            return CommandInfo{std::move(raw_command), is_custom, terminal,
-                               path};
+        return CommandInfo{std::move(raw_command), is_custom, terminal, path};
     }
 
     void update_mapping(const AppManager &appm) {
@@ -682,18 +596,12 @@ private:
 
 namespace ExecutePhase
 {
-[[noreturn]] void
-execute_app(const RunPhase::CommandAssembly::Executable &exec) {
-    std::string cmdline_string = exec.cmdline_string();
+[[noreturn]] void execute_app(const stringlist_t &args) {
+    std::string cmdline_string = CMDLineAssembly::convert_argv_to_string(args);
     SPDLOG_INFO("Executing command: {}", cmdline_string);
 
-    using namespace RunPhase::CommandAssembly;
-
-    auto argv = exec.create_argv();
-    if (exec.path_type == Executable::PATHNAME)
-        execv(argv.front(), (char *const *)argv.data());
-    else
-        execvp(argv.front(), (char *const *)argv.data());
+    auto argv = CMDLineAssembly::create_argv(args);
+    execvp(argv.front(), (char *const *)argv.data());
     SPDLOG_ERROR("Couldn't execute command: {}", cmdline_string);
     // this function can be called either directly, or in a fork used in
     // do_wait_on(). Theoretically exit() should be called instead of _exit() in
@@ -723,30 +631,65 @@ public:
     void operator=(const NormalExecutable &) = delete;
     void operator=(NormalExecutable &&) = delete;
 
+    // This is used in both NormalExecutable and in FakeExecutable
+    static stringlist_t prepare_processed_argv(
+        const RunPhase::CommandRetrievalLoop::CommandInfo &command_info,
+        const std::string &wrapper, const std::string &terminal) {
+        std::string raw_command = command_info.raw_command;
+        if (command_info.is_custom)
+            raw_command = CMDLineAssembly::prepend_exec(raw_command);
+        stringlist_t processed_argv =
+            CMDLineAssembly::wrap_exec_in_shell(raw_command);
+        if (!wrapper.empty())
+            processed_argv = CMDLineAssembly::wrap_command_in_wrapper(
+                processed_argv, wrapper);
+        if (command_info.is_terminal)
+            processed_argv = CMDLineAssembly::wrap_command_in_terminal_emulator(
+                processed_argv, terminal);
+        return processed_argv;
+    }
+
     void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
                      &command_info) override {
-        using namespace RunPhase::CommandAssembly;
         if (!command_info.path.empty()) {
-            if (chdir(command_info.path.c_str()) == -1)
-                SPDLOG_WARN("Couldn't chdir to '{}': {}", command_info.path,
-                            strerror(errno));
+            if (chdir(command_info.path.c_str()) == -1) {
+                SPDLOG_ERROR("Couldn't chdir() to '{}' set in Path key: {}",
+                             command_info.path, strerror(errno));
+                exit(EXIT_FAILURE);
+            }
         }
-        if (this->wrapper.empty()) {
-            auto command =
-                assemble_command(command_info.raw_command,
-                                 command_info.is_terminal ? this->terminal : "",
-                                 command_info.is_custom);
-            execute_app(command);
-        } else {
-            std::string wrapped_command =
-                this->wrapper + " \"" + command_info.raw_command + "\"";
 
-            Executable command = assemble_command(
-                wrapped_command, command_info.is_terminal ? this->terminal : "",
-                command_info.is_custom);
-            execute_app(command);
-        }
+        execute_app(prepare_processed_argv(command_info, this->wrapper,
+                                           this->terminal));
         abort();
+    }
+
+private:
+    std::string terminal;
+    std::string wrapper; // empty when no wrapper is in use
+};
+
+// This "executable" is used to handle --no-exec
+class FakeExecutable final : public BaseExecutable
+{
+public:
+    FakeExecutable(std::string terminal, std::string wrapper)
+        : terminal(std::move(terminal)), wrapper(std::move(wrapper)) {}
+
+    // This class could be copied or moved, but it wouldn't make much sense in
+    // current implementation. This prevents accidental copy/move.
+    FakeExecutable(const FakeExecutable &) = delete;
+    FakeExecutable(FakeExecutable &&) = delete;
+    void operator=(const FakeExecutable &) = delete;
+    void operator=(FakeExecutable &&) = delete;
+
+    void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
+                     &command_info) override {
+        auto argv = NormalExecutable::prepare_processed_argv(
+            command_info, this->wrapper, this->terminal);
+        std::string command_string =
+            CMDLineAssembly::convert_argv_to_string(argv);
+        fmt::print("{}\n", command_string);
     }
 
 private:
@@ -769,11 +712,21 @@ public:
 
     void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
                      &command_info) override {
-        std::string command = RunPhase::CommandAssembly::i3_assemble_command(
-            command_info.raw_command,
-            command_info.is_terminal ? this->terminal : "",
-            command_info.is_custom, command_info.path);
-        I3Interface::exec(command, this->i3_ipc_path);
+        std::string command = command_info.raw_command;
+        if (command_info.is_custom)
+            command = CMDLineAssembly::prepend_exec(command);
+
+        if (!command_info.path.empty())
+            command =
+                "cd " + CMDLineAssembly::sq_quote(command) + "; " + command;
+        stringlist_t processed_argv =
+            CMDLineAssembly::wrap_exec_in_shell(command);
+        if (command_info.is_terminal)
+            processed_argv = CMDLineAssembly::wrap_command_in_terminal_emulator(
+                processed_argv, this->terminal);
+        I3Interface::exec(
+            CMDLineAssembly::convert_argv_to_string(processed_argv),
+            this->i3_ipc_path);
     }
 
 private:
@@ -1291,32 +1244,31 @@ int main(int argc, char **argv) {
 
     using namespace ExecutePhase;
 
+    std::unique_ptr<BaseExecutable> executor;
+    if (no_exec)
+        executor = std::make_unique<FakeExecutable>(std::move(terminal),
+                                                    std::move(wrapper));
+    else if (use_i3_ipc)
+        executor =
+            std::make_unique<I3Executable>(std::move(terminal), i3_ipc_path);
+    else
+        executor = std::make_unique<NormalExecutable>(std::move(terminal),
+                                                      std::move(wrapper));
+
     if (wait_on) {
 #ifdef USE_KQUEUE
         NotifyKqueue notify(search_path);
 #else
         NotifyInotify notify(search_path);
 #endif
-        if (use_i3_ipc) {
-            I3Executable executor(std::move(terminal), i3_ipc_path);
-            do_wait_on(notify, wait_on, appm, search_path,
-                       command_retrieval_loop, &executor);
-        } else {
-            NormalExecutable executor(std::move(terminal), std::move(wrapper));
-            do_wait_on(notify, wait_on, appm, search_path,
-                       command_retrieval_loop, &executor);
-        }
+        do_wait_on(notify, wait_on, appm, search_path, command_retrieval_loop,
+                   executor.get());
         abort();
     } else {
         std::optional<RunPhase::CommandRetrievalLoop::CommandInfo> command =
             command_retrieval_loop.prompt_user_for_choice();
         if (!command)
             return 0;
-        if (use_i3_ipc)
-            I3Executable(std::move(terminal), std::move(i3_ipc_path))
-                .execute(*command);
-        else
-            NormalExecutable(std::move(terminal), std::move(wrapper))
-                .execute(*command);
+        executor->execute(*command);
     }
 }
