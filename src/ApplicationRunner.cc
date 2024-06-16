@@ -21,29 +21,12 @@
 
 #include "Application.hh"
 #include "Utilities.hh"
-
-static std::string quote(const std::string &s) {
-    if (s.empty())
-        return {};
-    std::string result = "\"";
-    for (std::string::size_type i = 0; i < s.size(); i++) {
-        switch (s[i]) {
-        case '$':
-        case '`':
-        case '\\':
-        case '"':
-            result += '\\';
-            break;
-        }
-        result += s[i];
-    }
-    result += '"';
-
-    return result;
-}
+#include "CMDLineAssembler.hh"
 
 const std::string application_command(const Application &app,
                                       const std::string &args) {
+    using CMDLineAssembly::sq_quote;
+
     const std::string &exec = app.exec;
 
     std::string result;
@@ -66,15 +49,15 @@ const std::string application_command(const Application &app,
                         continue;
                     if (!first)
                         result += ' ';
-                    result += quote(i);
+                    result += sq_quote(i);
                     first = false;
                 }
             } break;
             case 'c':
-                result += quote(app.name);
+                result += sq_quote(app.name);
                 break;
             case 'k':
-                result += quote(app.location);
+                result += sq_quote(app.location);
                 break;
             case 'i': // icons aren't handled
             case 'd': // ignore deprecated entries
