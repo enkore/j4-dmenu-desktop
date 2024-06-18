@@ -11,6 +11,7 @@ endif
 
 test_files = [
   'FSUtils.cc',
+  'ShellUnquote.cc',
   'TestAppManager.cc',
   'TestApplication.cc',
   'TestHistoryManager.cc',
@@ -23,6 +24,7 @@ test_files = [
   'TestSearchPath.cc',
   'TestI3Exec.cc',
   'TestUtilities.cc',
+  'TestCMDLineAssembler.cc',
   'MainTest.cc',
 ]
 
