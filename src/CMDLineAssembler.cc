@@ -43,10 +43,12 @@ std::string sq_quote(std::string_view input) {
 
     while (true) {
         if (where == (input.size() - 1)) {
-            result += "'\'";
+            result += input.substr(0, input.size() - 1);
+            result += "'\\'";
             return result;
         }
         if (where == string_view::npos) {
+            result += input;
             result += '\'';
             return result;
         }
