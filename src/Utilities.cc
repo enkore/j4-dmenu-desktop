@@ -79,7 +79,7 @@ bool endswith(const std::string &str, const std::string &suffix) {
                        suffix) == 0;
 }
 
-bool startswith(const std::string &str, const std::string &prefix) {
+bool startswith(std::string_view str, std::string_view prefix) {
     if (str.length() < prefix.length())
         return false;
     return str.compare(0, prefix.length(), prefix) == 0;

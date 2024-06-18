@@ -43,7 +43,7 @@ bool have_equal_element(const stringlist_t &list1, const stringlist_t &list2);
 void replace(std::string &str, const std::string &substr,
              const std::string &substitute);
 bool endswith(const std::string &str, const std::string &suffix);
-bool startswith(const std::string &str, const std::string &prefix);
+bool startswith(std::string_view str, std::string_view prefix);
 bool is_directory(const std::string &path);
 std::string get_variable(const std::string &var);
 ssize_t readn(int fd, void *buffer, size_t n);
