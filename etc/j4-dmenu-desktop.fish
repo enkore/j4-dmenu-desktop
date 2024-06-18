@@ -6,6 +6,7 @@ complete -c j4-dmenu-desktop -Fr -s d -l dmenu              -d "Command used to 
 complete -c j4-dmenu-desktop          -l no-exec            -d "Do not execute selected command, send to stdout instead"
 complete -c j4-dmenu-desktop          -l no-generic         -d "Do not include the generic name of desktop entries"
 complete -c j4-dmenu-desktop -Fr -s t -l term               -d "Sets the terminal emulator used to start terminal apps"
+complete -c j4-dmenu-desktop -x       -l term-mode -a "default xterm alacritty kitty terminator gnome-terminal custom" -d "Set terminal emulator execution strategy"
 complete -c j4-dmenu-desktop -Fr      -l usage-log          -d "Set usage log"
 complete -c j4-dmenu-desktop          -l prune-bad-usage-log-entries -d "Remove bad history entries"
 complete -c j4-dmenu-desktop     -s x -l use-xdg-de         -d "Enables reading \$XDG_CURRENT_DESKTOP to determine the desktop environment"

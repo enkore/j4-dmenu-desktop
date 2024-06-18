@@ -79,15 +79,6 @@ std::string convert_argv_to_string(const std::vector<std::string> &command) {
     return result;
 }
 
-std::vector<std::string>
-wrap_command_in_terminal_emulator(const std::vector<std::string> &command,
-                                  std::string_view terminal_emulator) {
-    std::vector<std::string> result{std::string(terminal_emulator), "-e"};
-    result.reserve(command.size() + 2);
-    result.insert(result.end(), command.cbegin(), command.cend());
-    return result;
-}
-
 #include <stdexcept>
 
 std::vector<std::string>

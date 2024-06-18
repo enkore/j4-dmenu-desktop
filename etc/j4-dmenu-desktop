@@ -13,6 +13,10 @@ _j4-dmenu-desktop()
 			COMPREPLY=( $(compgen -o filenames -W "ERROR WARNING INFO DEBUG" -- "$cur" ) )
 			return 0
 			;;
+		--term-mode)
+			COMPREPLY=( $(compgen -o filenames -W "default xterm alacritty kitty terminator gnome-terminal custom" -- "$cur" ) )
+			return 0
+			;;
 		-h|--help|--version)
 			return 0
 			;;
@@ -23,6 +27,7 @@ _j4-dmenu-desktop()
 		--no-exec
 		--no-generic
 		-t --term
+		--term-mode
 		--usage-log
 		--prune-bad-usage-log-entries
 		-x --use-xdg-de

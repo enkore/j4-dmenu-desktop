@@ -13,6 +13,7 @@ _arguments -s \
     '--no-exec[Do not execute selected command, send to stdout instead]' \
     '--no-generic[Do not include the generic name of desktop entries]' \
     '(-t --term)'{-t,--term}'=[Sets the terminal emulator used to start terminal apps]:command:_files -g \*\(\*\)' \
+    '--term-mode=[Set terminal emulator execution strategy]:term_mode:(default xterm alacritty kitty terminator gnome-terminal custom)' \
     '--usage-log=[Set usage log]:file:_files' \
     '--prune-bad-usage-log-entries[Remove bad history entries]' \
     '(-x --use-xdg-de)'{-x,--use-xdg-de}'[Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment]' \

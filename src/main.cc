@@ -56,6 +56,7 @@
 #include "Application.hh"
 #include "ApplicationRunner.hh"
 #include "CMDLineAssembler.hh"
+#include "CMDLineTerm.hh"
 #include "Dmenu.hh"
 #include "DynamicCompare.hh"
 #include "FileFinder.hh"
@@ -139,6 +140,11 @@ static void print_usage(FILE *f) {
         "        Do not include the generic name of desktop entries\n"
         "    -t, --term=<command>\n"
         "        Sets the terminal emulator used to start terminal apps\n"
+        "    --term-mode=default | xterm | alacritty | kitty | terminator |\n"
+        "                gnome-terminal | custom\n"
+        "        Instruct j4-dmenu-desktop on how it should execute terminal\n"
+        "        emulator; this also changes the default value of --term.\n"
+        "        See the manpage for more info.\n"
         "    --usage-log=<file>\n"
         "        Use file as usage log (enables sorting by usage frequency)\n"
         "    --prune-bad-usage-log-entries\n"
@@ -529,9 +535,12 @@ public:
     {
         std::string raw_command;
         bool is_custom;
-        bool is_terminal; // Corresponds to Terminal field.
-        std::string path; // CWD of app if not empty; corresponds to Path
-                          // desktop entry key
+        bool is_terminal;     // Corresponds to Terminal field.
+        std::string path;     // CWD of app if not empty; corresponds to Path
+                              // desktop entry key
+        std::string app_name; // This element isn't that important, it is used
+                              // to set the window title when using a terminal
+                              // emulator
     };
 
     // This function is separate from prompt_user_for_choice() because it needs
@@ -563,6 +572,7 @@ public:
         std::string raw_command;
         bool terminal = false;
         std::string path;
+        std::string app_name;
         if (is_custom)
             raw_command = std::get<CommandLookup>(lookup).command;
         else {
@@ -575,9 +585,11 @@ public:
             raw_command = application_command(*appl.app, appl.args);
             terminal = appl.app->terminal;
             path = appl.app->path;
+            app_name = appl.app->name;
         }
 
-        return CommandInfo{std::move(raw_command), is_custom, terminal, path};
+        return CommandInfo{std::move(raw_command), is_custom, terminal, path,
+                           app_name};
     }
 
     void update_mapping(const AppManager &appm) {
@@ -621,8 +633,10 @@ public:
 class NormalExecutable final : public BaseExecutable
 {
 public:
-    NormalExecutable(std::string terminal, std::string wrapper)
-        : terminal(std::move(terminal)), wrapper(std::move(wrapper)) {}
+    NormalExecutable(std::string terminal, std::string wrapper,
+                     CMDLineTerm::term_assembler term_assembler)
+        : terminal(std::move(terminal)), wrapper(std::move(wrapper)),
+          term_assembler(term_assembler) {}
 
     // This class could be copied or moved, but it wouldn't make much sense in
     // current implementation. This prevents accidental copy/move.
@@ -634,7 +648,8 @@ public:
     // This is used in both NormalExecutable and in FakeExecutable
     static stringlist_t prepare_processed_argv(
         const RunPhase::CommandRetrievalLoop::CommandInfo &command_info,
-        const std::string &wrapper, const std::string &terminal) {
+        const std::string &wrapper, const std::string &terminal,
+        CMDLineTerm::term_assembler term_assembler) {
         std::string raw_command = command_info.raw_command;
         if (command_info.is_custom)
             raw_command = CMDLineAssembly::prepend_exec(raw_command);
@@ -644,8 +659,8 @@ public:
             processed_argv = CMDLineAssembly::wrap_command_in_wrapper(
                 processed_argv, wrapper);
         if (command_info.is_terminal)
-            processed_argv = CMDLineAssembly::wrap_command_in_terminal_emulator(
-                processed_argv, terminal);
+            processed_argv =
+                term_assembler(processed_argv, terminal, command_info.app_name);
         return processed_argv;
     }
 
@@ -659,22 +674,25 @@ public:
             }
         }
 
-        execute_app(prepare_processed_argv(command_info, this->wrapper,
-                                           this->terminal));
+        execute_app(prepare_processed_argv(
+            command_info, this->wrapper, this->terminal, this->term_assembler));
         abort();
     }
 
 private:
     std::string terminal;
     std::string wrapper; // empty when no wrapper is in use
+    CMDLineTerm::term_assembler term_assembler;
 };
 
 // This "executable" is used to handle --no-exec
 class FakeExecutable final : public BaseExecutable
 {
 public:
-    FakeExecutable(std::string terminal, std::string wrapper)
-        : terminal(std::move(terminal)), wrapper(std::move(wrapper)) {}
+    FakeExecutable(std::string terminal, std::string wrapper,
+                   CMDLineTerm::term_assembler term_assembler)
+        : terminal(std::move(terminal)), wrapper(std::move(wrapper)),
+          term_assembler(term_assembler) {}
 
     // This class could be copied or moved, but it wouldn't make much sense in
     // current implementation. This prevents accidental copy/move.
@@ -686,7 +704,7 @@ public:
     void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
                      &command_info) override {
         auto argv = NormalExecutable::prepare_processed_argv(
-            command_info, this->wrapper, this->terminal);
+            command_info, this->wrapper, this->terminal, this->term_assembler);
         std::string command_string =
             CMDLineAssembly::convert_argv_to_string(argv);
         fmt::print("{}\n", command_string);
@@ -695,13 +713,16 @@ public:
 private:
     std::string terminal;
     std::string wrapper; // empty when no wrapper is in use
+    CMDLineTerm::term_assembler term_assembler;
 };
 
 class I3Executable final : public BaseExecutable
 {
 public:
-    I3Executable(std::string terminal, std::string i3_ipc_path)
-        : terminal(std::move(terminal)), i3_ipc_path(std::move(i3_ipc_path)) {}
+    I3Executable(std::string terminal, std::string i3_ipc_path,
+                 CMDLineTerm::term_assembler term_assembler)
+        : terminal(std::move(terminal)), i3_ipc_path(std::move(i3_ipc_path)),
+          term_assembler(term_assembler) {}
 
     // This class could be copied or moved, but it wouldn't make much sense in
     // current implementation. This prevents accidental copy/move.
@@ -722,8 +743,8 @@ public:
         stringlist_t processed_argv =
             CMDLineAssembly::wrap_exec_in_shell(command);
         if (command_info.is_terminal)
-            processed_argv = CMDLineAssembly::wrap_command_in_terminal_emulator(
-                processed_argv, this->terminal);
+            processed_argv = this->term_assembler(
+                processed_argv, this->terminal, command_info.app_name);
         I3Interface::exec(
             CMDLineAssembly::convert_argv_to_string(processed_argv),
             this->i3_ipc_path);
@@ -732,6 +753,7 @@ public:
 private:
     std::string terminal;
     std::string i3_ipc_path;
+    CMDLineTerm::term_assembler term_assembler;
 };
 }; // namespace ExecutePhase
 
@@ -832,6 +854,8 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
                     case 0:
                         close(fd);
                         setsid();
+                        // This function can throw. It means that the child
+                        // process can jump out to main.
                         executor->execute(*user_response);
                         abort();
                     }
@@ -927,7 +951,7 @@ int main(int argc, char **argv) {
 
     /// Handle arguments
     std::string dmenu_command = "dmenu -i";
-    std::string terminal = "i3-sensible-terminal";
+    std::string terminal;
     std::string wrapper;
     const char *wait_on = nullptr;
 
@@ -946,6 +970,8 @@ int main(int argc, char **argv) {
 
     application_formatter appformatter = appformatter_default;
 
+    CMDLineTerm::term_assembler term_mode = CMDLineTerm::default_term_assembler;
+
     const char *usage_log = 0;
 
     while (true) {
@@ -954,6 +980,7 @@ int main(int argc, char **argv) {
             {"dmenu",                       required_argument, 0, 'd'},
             {"use-xdg-de",                  no_argument,       0, 'x'},
             {"term",                        required_argument, 0, 't'},
+            {"term-mode",                   required_argument, 0, 'T'},
             {"help",                        no_argument,       0, 'h'},
             {"display-binary",              no_argument,       0, 'b'},
             {"display-binary-base",         no_argument,       0, 'f'},
@@ -978,6 +1005,7 @@ int main(int argc, char **argv) {
         if (c == -1)
             break;
 
+        std::string_view arg;
         switch (c) {
         case 'd':
             dmenu_command = optarg;
@@ -987,6 +1015,28 @@ int main(int argc, char **argv) {
             break;
         case 't':
             terminal = optarg;
+            break;
+        case 'T':
+            arg = optarg;
+            if (arg == "default")
+                term_mode = CMDLineTerm::default_term_assembler;
+            else if (arg == "xterm")
+                term_mode = CMDLineTerm::xterm_term_assembler;
+            else if (arg == "alacritty")
+                term_mode = CMDLineTerm::alacritty_term_assembler;
+            else if (arg == "kitty")
+                term_mode = CMDLineTerm::kitty_term_assembler;
+            else if (arg == "terminator")
+                term_mode = CMDLineTerm::terminator_term_assembler;
+            else if (arg == "gnome-terminal")
+                term_mode = CMDLineTerm::gnome_terminal_term_assembler;
+            else if (arg == "custom")
+                term_mode = CMDLineTerm::custom_term_assembler;
+            else {
+                fmt::print(stderr,
+                           "Invalid term mode supplied to --term-mode!\n");
+                exit(EXIT_FAILURE);
+            }
             break;
         case 'h':
             print_usage(stderr);
@@ -1025,13 +1075,14 @@ int main(int argc, char **argv) {
             ++verbose_flag;
             break;
         case 'o':
-            if (strcmp(optarg, "DEBUG") == 0) {
+            arg = optarg;
+            if (arg == "DEBUG") {
                 custom_logger->set_level(spdlog::level::debug);
-            } else if (strcmp(optarg, "INFO") == 0) {
+            } else if (arg == "INFO") {
                 custom_logger->set_level(spdlog::level::info);
-            } else if (strcmp(optarg, "WARNING") == 0) {
+            } else if (arg == "WARNING") {
                 custom_logger->set_level(spdlog::level::warn);
-            } else if (strcmp(optarg, "ERROR") == 0) {
+            } else if (arg == "ERROR") {
                 custom_logger->set_level(spdlog::level::err);
             } else {
                 fmt::print(stderr,
@@ -1163,6 +1214,26 @@ int main(int argc, char **argv) {
     if (shell == NULL)
         shell = "/bin/sh";
 
+    /// Handle term modes
+    if (term_mode == CMDLineTerm::custom_term_assembler)
+        CMDLineTerm::validate_custom_term(terminal);
+
+    // Set default value of --term according to --term-mode
+    if (terminal.empty()) {
+        if (term_mode == CMDLineTerm::default_term_assembler)
+            terminal = "i3-sensible-terminal";
+        else if (term_mode == CMDLineTerm::xterm_term_assembler)
+            terminal = "xterm";
+        else if (term_mode == CMDLineTerm::alacritty_term_assembler)
+            terminal = "alacritty";
+        else if (term_mode == CMDLineTerm::kitty_term_assembler)
+            terminal = "kitty";
+        else if (term_mode == CMDLineTerm::terminator_term_assembler)
+            terminal = "terminator";
+        else if (term_mode == CMDLineTerm::gnome_terminal_term_assembler)
+            terminal = "gnome-terminal";
+    }
+
     /// Start dmenu early
     Dmenu dmenu(dmenu_command, shell);
 
@@ -1246,29 +1317,36 @@ int main(int argc, char **argv) {
 
     std::unique_ptr<BaseExecutable> executor;
     if (no_exec)
-        executor = std::make_unique<FakeExecutable>(std::move(terminal),
-                                                    std::move(wrapper));
+        executor = std::make_unique<FakeExecutable>(
+            std::move(terminal), std::move(wrapper), term_mode);
     else if (use_i3_ipc)
-        executor =
-            std::make_unique<I3Executable>(std::move(terminal), i3_ipc_path);
+        executor = std::make_unique<I3Executable>(std::move(terminal),
+                                                  i3_ipc_path, term_mode);
     else
-        executor = std::make_unique<NormalExecutable>(std::move(terminal),
-                                                      std::move(wrapper));
+        executor = std::make_unique<NormalExecutable>(
+            std::move(terminal), std::move(wrapper), term_mode);
 
-    if (wait_on) {
+    try {
+        if (wait_on) {
 #ifdef USE_KQUEUE
-        NotifyKqueue notify(search_path);
+            NotifyKqueue notify(search_path);
 #else
-        NotifyInotify notify(search_path);
+            NotifyInotify notify(search_path);
 #endif
-        do_wait_on(notify, wait_on, appm, search_path, command_retrieval_loop,
-                   executor.get());
-        abort();
-    } else {
-        std::optional<RunPhase::CommandRetrievalLoop::CommandInfo> command =
-            command_retrieval_loop.prompt_user_for_choice();
-        if (!command)
-            return 0;
-        executor->execute(*command);
+            do_wait_on(notify, wait_on, appm, search_path,
+                       command_retrieval_loop, executor.get());
+            abort();
+        } else {
+            std::optional<RunPhase::CommandRetrievalLoop::CommandInfo> command =
+                command_retrieval_loop.prompt_user_for_choice();
+            if (!command)
+                return 0;
+            executor->execute(*command);
+        }
+    } catch (const CMDLineTerm::initialization_error &e) {
+        fmt::print(stderr,
+                   "Couldn't set up temporary script for terminal emulator: {}",
+                   e.what());
+        exit(EXIT_FAILURE);
     }
 }

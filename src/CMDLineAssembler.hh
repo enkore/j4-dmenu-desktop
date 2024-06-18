@@ -52,13 +52,6 @@ std::vector<std::string> wrap_exec_in_shell(std::string_view exec_key);
 // --wrapper.
 std::string convert_argv_to_string(const std::vector<std::string> &command);
 
-// Wrap commandline in a terminal emulator
-// `{"/bin/sh", "-c", "--", "true"}` becomes
-// `{terminal_emulator, "-e", "/bin/sh", "-c", "--", "true"}`
-std::vector<std::string>
-wrap_command_in_terminal_emulator(const std::vector<std::string> &command,
-                                  std::string_view terminal_emulator);
-
 // Handle --wrapper
 std::vector<std::string>
 wrap_command_in_wrapper(const std::vector<std::string> &command,

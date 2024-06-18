@@ -86,6 +86,7 @@ src = files(
   'SearchPath.cc',
   'Utilities.cc',
   'CMDLineAssembler.cc',
+  'CMDLineTerm.cc',
 )
 
 if inotify
