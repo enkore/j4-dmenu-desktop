@@ -569,6 +569,11 @@ public:
             lookup_name(*query, this->mapping.get_formatted_map());
         bool is_custom = std::holds_alternative<CommandLookup>(lookup);
 
+        if (is_custom)
+            SPDLOG_DEBUG("Selected entry is: custom command");
+        else
+            SPDLOG_DEBUG("Selected entry is: desktop app");
+
         std::string raw_command;
         bool terminal = false;
         std::string path;
