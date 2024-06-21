@@ -59,7 +59,7 @@ else()
   set(VCS_TAG ${OVERRIDE_VERSION})
 endif()
 
-configure_file(generated/version.hh.in generated/version.hh @ONLY)
+configure_file(generated/version.cc.in generated/version.cc @ONLY)
 
 if(USE_KQUEUE)
   find_package(Threads REQUIRED)
@@ -96,10 +96,8 @@ else()
   find_package(fmt REQUIRED)
 endif(WITH_GIT_FMT)
 
-add_executable(j4-dmenu-desktop ${SOURCE} src/main.cc)
+add_executable(j4-dmenu-desktop ${SOURCE} "${CMAKE_CURRENT_BINARY_DIR}/generated/version.cc" src/main.cc)
 target_link_libraries(j4-dmenu-desktop PRIVATE spdlog::spdlog PRIVATE fmt::fmt)
-
-target_include_directories(j4-dmenu-desktop PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated/")
 
 if(WITH_TESTS)
   file(GLOB_RECURSE test_src_files tests/*.cc)

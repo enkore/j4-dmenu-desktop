@@ -61,15 +61,13 @@
 #include "DynamicCompare.hh"
 #include "FileFinder.hh"
 #include "Formatters.hh"
+#include "version.hh"
 #include "HistoryManager.hh"
 #include "I3Exec.hh"
 #include "LocaleSuffixes.hh"
 #include "NotifyBase.hh"
 #include "SearchPath.hh"
 #include "Utilities.hh"
-// If you're getting an error about this header file not existing, try building
-// j4-dmenu-desktop. It should go away.
-#include "version.hh"
 
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"
@@ -1118,7 +1116,7 @@ int main(int argc, char **argv) {
             skip_i3_check = true;
             break;
         case 'E':
-            puts(version);
+            puts(version());
             exit(EXIT_SUCCESS);
         default:
             exit(1);

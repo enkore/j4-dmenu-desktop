@@ -15,9 +15,8 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef VERSION_DEF
-#define VERSION_DEF
+#include "version.hh"
 
-const char *version = "@VCS_TAG@";
-
-#endif
+const char *version() {
+    return "@VCS_TAG@";
+}
