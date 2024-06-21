@@ -1,0 +1,7 @@
+[Desktop Entry]
+Version=1.0
+Name=selected
+Type=Application
+Comment=Unit test test program
+Terminal=true
+Exec=was_executed.sh --help -- "<><>'\\$\\$" "" "!?"
