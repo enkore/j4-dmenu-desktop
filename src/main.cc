@@ -75,6 +75,15 @@
 #include "NotifyInotify.hh"
 #endif
 
+#ifdef FIX_COVERAGE
+extern "C" void __gcov_dump();
+
+static void sigabrt(int sig) {
+    __gcov_dump();
+    raise(sig);
+}
+#endif
+
 static volatile int sigchld_fd;
 
 // This handler is established only in --wait-on mode when executing desktop
@@ -616,6 +625,9 @@ namespace ExecutePhase
     SPDLOG_INFO("Executing command: {}", cmdline_string);
 
     auto argv = CMDLineAssembly::create_argv(args);
+#ifdef FIX_COVERAGE
+    __gcov_dump();
+#endif
     execvp(argv.front(), (char *const *)argv.data());
     SPDLOG_ERROR("Couldn't execute command: {}", cmdline_string);
     // this function can be called either directly, or in a fork used in
@@ -943,6 +955,16 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
  */
 // clang-format on
 int main(int argc, char **argv) {
+    // Coverage needs special attention, because it doesn't get recorded when
+    // program exits abnormally (through abort() or execve()).
+#ifdef FIX_COVERAGE
+    struct sigaction act;
+    memset(&act, 0, sizeof act);
+    act.sa_handler = sigabrt;
+    act.sa_flags = SA_RESETHAND;
+    if (sigaction(SIGABRT, &act, NULL) == -1)
+        PFATALE("sigaction");
+#endif
     /// Initialize logging with warning level by default
     auto stderr_sink = std::make_shared<spdlog::sinks::stderr_color_sink_st>();
     auto custom_logger = std::make_shared<spdlog::logger>("", stderr_sink);

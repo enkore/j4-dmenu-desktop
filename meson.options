@@ -33,3 +33,10 @@ option(
     value: true,
     description: 'Enable unit tests. If disabled, j4-dmenu-desktop will not depend on Catch2.'
 )
+
+option(
+    'dev-fix-coverage',
+    type: 'boolean',
+    value: false,
+    description: 'FOR DEVELOPERS ONLY! Optimise j4-dmenu-desktop for good coverage reports.'
+)

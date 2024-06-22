@@ -95,6 +95,12 @@ else
   src += files('NotifyKqueue.cc')
 endif
 
+if get_option('dev-fix-coverage') == true
+  main_flags = '-DFIX_COVERAGE'
+else
+  main_flags = []
+endif
+
 # If enabled, src won't have to be compiled twice (once for j4-dmenu-desktop and once for j4-dmenu-tests).
 if get_option('split-source')
   source_lib = static_library(
@@ -109,7 +115,7 @@ if get_option('split-source')
     'main.cc',
     version_def_file,
     dependencies: [spdlog, fmt],
-    cpp_args: flags,
+    cpp_args: [flags, main_flags],
     link_with: source_lib,
     install: true,
   )
@@ -119,7 +125,7 @@ else
     src,
     'main.cc',
     version_def_file,
-    cpp_args: flags,
+    cpp_args: [flags, main_flags],
     dependencies: [spdlog, fmt],
     install: true,
   )
