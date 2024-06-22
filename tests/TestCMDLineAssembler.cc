@@ -60,6 +60,11 @@ TEST_CASE("Test quoting for POSIX shell", "[CMDLineAssembler]") {
     REQUIRE(test_quoting("testte'''sttest'"));
 }
 
-TEST_CASE("Test prepending exec to cmdline", "[CMDLineAssembler]") {
-    REQUIRE(CMDLineAssembly::prepend_exec("true") == "exec true");
+TEST_CASE("Test converting Exec key to command array") {
+    using strvec = std::vector<std::string>;
+    REQUIRE(CMDLineAssembly::convert_exec_to_command("command") == strvec{"command"});
+    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"(command "a b c\"d")") == strvec{"command", R"(a b c"d)"});
+    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"(command "a b c\"")") == strvec{"command", R"(a b c")"});
+    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"("\`")") == strvec{R"(`)"});
+    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"(command --arg "\$  \\")") == strvec{"command", "--arg", R"($  \)"});
 }
