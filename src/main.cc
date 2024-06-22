@@ -665,18 +665,20 @@ public:
         const RunPhase::CommandRetrievalLoop::CommandInfo &command_info,
         const std::string &wrapper, const std::string &terminal,
         CMDLineTerm::term_assembler term_assembler) {
-        std::string raw_command = command_info.raw_command;
+        std::vector<std::string> command_array;
         if (command_info.is_custom)
-            raw_command = CMDLineAssembly::prepend_exec(raw_command);
-        stringlist_t processed_argv =
-            CMDLineAssembly::wrap_exec_in_shell(raw_command);
+            command_array = CMDLineAssembly::wrap_cmdstring_in_shell(
+                command_info.raw_command);
+        else
+            command_array = CMDLineAssembly::convert_exec_to_command(
+                command_info.raw_command);
         if (!wrapper.empty())
-            processed_argv = CMDLineAssembly::wrap_command_in_wrapper(
-                processed_argv, wrapper);
+            command_array = CMDLineAssembly::wrap_command_in_wrapper(
+                command_array, wrapper);
         if (command_info.is_terminal)
-            processed_argv =
-                term_assembler(processed_argv, terminal, command_info.app_name);
-        return processed_argv;
+            command_array =
+                term_assembler(command_array, terminal, command_info.app_name);
+        return command_array;
     }
 
     void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
@@ -748,20 +750,38 @@ public:
 
     void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
                      &command_info) override {
-        std::string command = command_info.raw_command;
-        if (command_info.is_custom)
-            command = CMDLineAssembly::prepend_exec(command);
-
-        if (!command_info.path.empty())
-            command =
-                "cd " + CMDLineAssembly::sq_quote(command) + " && " + command;
-        stringlist_t processed_argv =
-            CMDLineAssembly::wrap_exec_in_shell(command);
+        std::vector<std::string> command_array;
+        if (command_info.is_custom) {
+            std::string command = command_info.raw_command;
+            if (!command_info.path.empty())
+                command = "cd " + CMDLineAssembly::sq_quote(command_info.path) +
+                          " && " + command;
+            command_array = CMDLineAssembly::wrap_cmdstring_in_shell(command);
+        } else {
+            command_array = CMDLineAssembly::convert_exec_to_command(
+                command_info.raw_command);
+            if (!command_info.path.empty()) {
+                // This is kinda convoluted to be honest. chdir() can't be used
+                // here, because I3 is responsible for the execution
+                // environment. I believe that the most portable way to chdir is
+                // to wrap command_array in shell and prepend the part wrapped
+                // in shell with "cd <directory> && exec <command>".
+                command_array = CMDLineAssembly::wrap_cmdstring_in_shell(
+                    "cd " + CMDLineAssembly::sq_quote(command_info.path) +
+                    " && exec " +
+                    CMDLineAssembly::convert_argv_to_string(command_array));
+            }
+        }
+        // wrapper and i3 mode are mutally exclusive, no need to handle it here.
+        /*
+        if (!this->wrapper.empty())
+            ...
+        */
         if (command_info.is_terminal)
-            processed_argv = this->term_assembler(
-                processed_argv, this->terminal, command_info.app_name);
+            command_array = this->term_assembler(command_array, this->terminal,
+                                                 command_info.app_name);
         I3Interface::exec(
-            CMDLineAssembly::convert_argv_to_string(processed_argv),
+            CMDLineAssembly::convert_argv_to_string(command_array),
             this->i3_ipc_path);
     }
 

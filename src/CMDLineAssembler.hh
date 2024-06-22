@@ -33,20 +33,14 @@ namespace CMDLineAssembly
 // of '' literally.
 std::string sq_quote(std::string_view);
 
-// Some shells automatically exec() the last command in the
-// command_string passed in by sh -c but some do not. For
-// example bash does this but dash doesn't. Prepending "exec " to
-// the command ensures that the shell will get replaced. Custom
-// commands might contain complicated expressions so exec()ing them
-// might not be a good idea. Desktop files can contain only a single
-// command in Exec so using the exec shell builtin is safe.
-// See https://github.com/enkore/j4-dmenu-desktop/issues/135
-std::string prepend_exec(std::string_view exec_key);
+// Split the Exec key of desktop files to an array of arguments (+ the primary
+// executable) according to the XDG specification.
+std::vector<std::string> convert_exec_to_command(std::string_view exec_key);
 
-// Pass the Exec key through a shell
-// `true` becomes `{"/bin/sh", "-c", "--", "true"}`. exec_key is quoted
+// Pass the command string through a shell
+// `true` becomes `{"/bin/sh", "-c", "--", "true"}`. cmdstring is quoted
 // properly.
-std::vector<std::string> wrap_exec_in_shell(std::string_view exec_key);
+std::vector<std::string> wrap_cmdstring_in_shell(std::string_view cmdstring);
 
 // Convert raw argv list to a std::string. This is used for i3 IPC mode and in
 // --wrapper.

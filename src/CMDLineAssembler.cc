@@ -60,12 +60,68 @@ std::string sq_quote(std::string_view input) {
     }
 }
 
-std::string prepend_exec(std::string_view exec_key) {
-    return "exec " + std::string(exec_key);
+std::vector<std::string> convert_exec_to_command(std::string_view exec_key) {
+    std::vector<std::string> result;
+
+    std::string curr;
+    bool in_quotes = false;
+    bool escaping = false;
+
+    for (char ch : exec_key) {
+        if (escaping) {
+            switch (ch) {
+            case '"':
+                curr += '"';
+                break;
+            case '`':
+                curr += '`';
+                break;
+            case '$':
+                curr += '$';
+                break;
+            case '\\':
+                curr += '\\';
+                break;
+            }
+            escaping = false;
+        } else {
+            if (in_quotes) {
+                switch (ch) {
+                case '"':
+                    in_quotes = false;
+                    break;
+                case '\\':
+                    escaping = true;
+                    break;
+                default:
+                    curr += ch;
+                    break;
+                }
+            } else {
+                switch (ch) {
+                case '"':
+                    in_quotes = true;
+                    break;
+                case ' ':
+                    result.push_back(std::move(curr));
+                    curr.clear();
+                    break;
+                default:
+                    curr += ch;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!curr.empty())
+        result.push_back(std::move(curr));
+
+    return result;
 }
 
-std::vector<std::string> wrap_exec_in_shell(std::string_view exec_key) {
-    return {"/bin/sh", "-c", "--", std::string(exec_key)};
+std::vector<std::string> wrap_cmdstring_in_shell(std::string_view cmdstring) {
+    return {"/bin/sh", "-c", "--", std::string(cmdstring)};
 }
 
 std::string convert_argv_to_string(const std::vector<std::string> &command) {
