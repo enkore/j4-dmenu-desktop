@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <stdlib.h>
 
+using std::in_place_t;
+
 std::string get_desktop_id(std::string filename) {
     std::string result(std::move(filename));
     replace(result.begin(), result.end(), '/', '-');
@@ -46,10 +48,36 @@ Resolved_application::Resolved_application(const Application *app,
                                            bool is_generic)
     : app(app), is_generic(is_generic) {}
 
+#ifdef DEBUG
+bool validate_desktop_file_list(const Desktop_file_list &files) {
+    for (const auto &rank : files) {
+        if (rank.base_path.empty())
+            return false;
+        // Base paths shall end in /
+        if (rank.base_path.back() != '/')
+            return false;
+        for (const std::string &file : rank.files) {
+            if (file.empty())
+                return false;
+            // File shall be prefixed by base_path
+            if (!startswith(file, rank.base_path))
+                return false;
+        }
+    }
+    return true;
+}
+#endif
+
 AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
                        LocaleSuffixes suffixes)
     : suffixes(std::move(suffixes)), desktopenvs(desktopenvs) {
     SPDLOG_DEBUG("AppManager: Entered AppManager");
+#ifdef DEBUG
+    if (!validate_desktop_file_list(files)) {
+        SPDLOG_ERROR("Received invalid desktop file list!");
+        abort();
+    }
+#endif
     if (files.size() > std::numeric_limits<int>::max()) {
         SPDLOG_ERROR("Rank overflow in AppManager ctor!");
         exit(EXIT_FAILURE);
@@ -69,8 +97,8 @@ AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
 
             try {
                 auto try_add = this->applications.try_emplace(
-                    desktop_file_ID, rank, filename.c_str(), this->liner,
-                    this->suffixes, this->desktopenvs);
+                    desktop_file_ID, rank, in_place_t{}, filename.c_str(),
+                    this->liner, this->suffixes, this->desktopenvs);
 
                 // Handle desktop file ID collision.
                 if (!try_add.second) {
@@ -83,25 +111,30 @@ AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
 
                 // Add the names.
                 auto add_result = this->name_app_mapping.try_emplace(
-                    newly_added.app.name, &newly_added.app, false);
+                    newly_added.app->name, &*newly_added.app, false);
                 if (!add_result.second)
                     SPDLOG_DEBUG(
                         "AppManager:     Name '{}' is already taken! Not "
                         "registering.",
-                        newly_added.app.name);
-                if (!newly_added.app.generic_name.empty()) {
+                        newly_added.app->name);
+                if (!newly_added.app->generic_name.empty()) {
                     auto add_result2 = this->name_app_mapping.try_emplace(
-                        newly_added.app.generic_name, &newly_added.app, true);
+                        newly_added.app->generic_name, &*newly_added.app, true);
                     if (!add_result2.second)
                         SPDLOG_DEBUG(
                             "AppManager:     GenericName '{}' is already "
                             "taken! Not registering.",
-                            newly_added.app.generic_name);
+                            newly_added.app->generic_name);
                 }
             } catch (disabled_error &e) {
-                SPDLOG_DEBUG("AppManager:     Desktop file is skipped: {}",
+                SPDLOG_DEBUG("AppManager:     Desktop file is disabled: {}",
                              e.what());
-                // Skip disabled files.
+                // Add an empty Application that only occupies desktop ID + rank
+                auto try_add =
+                    this->applications.try_emplace(desktop_file_ID, rank);
+                if (!try_add.second)
+                    SPDLOG_DEBUG(
+                        "AppManager:     Collision detected, skipping!");
                 continue;
             } catch (invalid_error &e) {
                 SPDLOG_WARN("Couldn't open file '{}': {}", filename, e.what());
@@ -127,9 +160,11 @@ void AppManager::remove(const string &filename, const string &base_path) {
     }
 
     Managed_application &app = app_iter->second;
-    remove_name_mapping<NameType::name>(app);
-    if (!app.app.generic_name.empty())
-        remove_name_mapping<NameType::generic_name>(app);
+    if (app.app) {
+        remove_name_mapping<NameType::name>(app);
+        if (!app.app->generic_name.empty())
+            remove_name_mapping<NameType::generic_name>(app);
+    }
 
     this->applications.erase(app_iter);
 }
@@ -160,6 +195,12 @@ void AppManager::add(const string &filename, const string &base_path,
             return;
         }
 
+        // If disabled_error is raised and the program got to this point (there
+        // is a collision but the new app has a lower rank), the old app must be
+        // replaced with the disabled one. The disabled app cannot provide any
+        // names to name_app_mapping, only the old app has to be removed.
+        bool is_disabled = false;
+
         // We can't overwrite the old app directly because we'll need it
         // later. We first try to construct Application in a std::optional.
         std::optional<Application> new_app;
@@ -168,35 +209,39 @@ void AppManager::add(const string &filename, const string &base_path,
                             this->desktopenvs);
         } catch (disabled_error &e) {
             SPDLOG_DEBUG("AppManager:     App is disabled: {}", e.what());
-            // Skip disabled files.
-            return;
+            is_disabled = true;
         } catch (invalid_error &e) {
             SPDLOG_WARN("Couldn't open newly added file '{}': {}", filename,
                         e.what());
             return;
         }
 
-        remove_name_mapping<NameType::name>(managed_app);
-        if (!managed_app.app.generic_name.empty())
-            remove_name_mapping<NameType::generic_name>(managed_app);
+        if (managed_app.app) {
+            remove_name_mapping<NameType::name>(managed_app);
+            if (!managed_app.app->generic_name.empty())
+                remove_name_mapping<NameType::generic_name>(managed_app);
+        }
 
         managed_app.rank = rank;
-        managed_app.app = std::move(*new_app);
+        managed_app.app = std::move(new_app);
 
-        replace_name_mapping<NameType::name>(managed_app);
-        if (!managed_app.app.generic_name.empty())
-            replace_name_mapping<NameType::generic_name>(managed_app);
+        if (!is_disabled) {
+            replace_name_mapping<NameType::name>(managed_app);
+            if (!managed_app.app->generic_name.empty())
+                replace_name_mapping<NameType::generic_name>(managed_app);
+        }
     } else {
         SPDLOG_DEBUG("AppManager:   File '{}' has no ID collision.", filename);
         Managed_application *app_ptr;
         try {
             app_ptr = &this->applications
-                           .try_emplace(ID, rank, filename.c_str(), this->liner,
+                           .try_emplace(ID, rank, in_place_t{},
+                                        filename.c_str(), this->liner,
                                         this->suffixes, this->desktopenvs)
                            .first->second;
         } catch (disabled_error &e) {
             SPDLOG_DEBUG("AppManager:     App is disabled: {}", e.what());
-            // Skip disabled files.
+            this->applications.try_emplace(ID, rank);
             return;
         } catch (invalid_error &e) {
             SPDLOG_WARN("Couldn't open newly added file '{}': {}", filename,
@@ -206,8 +251,10 @@ void AppManager::add(const string &filename, const string &base_path,
 
         Managed_application &app = *app_ptr;
 
+        // The new application must be a poppulated one, this function would
+        // have returned by now if that wasn't the case.
         replace_name_mapping<NameType::name>(app);
-        if (!app.app.generic_name.empty())
+        if (!app.app->generic_name.empty())
             replace_name_mapping<NameType::generic_name>(app);
     }
 }
@@ -260,7 +307,8 @@ void AppManager::check_inner_state() const {
                          "applications has a negative rank!");
             abort();
         }
-        if (app.app.exec.empty() || app.app.exec[app.app.exec.size()] != '\0') {
+        if (app.app && (app.app->exec.empty() ||
+                        app.app->exec[app.app->exec.size()] != '\0')) {
             SPDLOG_ERROR("AppManager check error: A managed application in "
                          "applications might not have been constructed!");
             abort();
@@ -281,12 +329,13 @@ void AppManager::check_inner_state() const {
             abort();
         }
         using value_type = decltype(this->applications)::value_type;
-        if (std::find_if(applications.cbegin(), applications.cend(),
-                         [&name = name](const value_type &val) {
-                             return val.second.app.name.data() == name.data() ||
-                                    val.second.app.generic_name.data() ==
-                                        name.data();
-                         }) == applications.cend()) {
+        if (std::find_if(
+                applications.cbegin(), applications.cend(),
+                [&name = name](const value_type &val) {
+                    return val.second.app &&
+                           (val.second.app->name.data() == name.data() ||
+                            val.second.app->generic_name.data() == name.data());
+                }) == applications.cend()) {
             SPDLOG_ERROR(
                 "AppManager check error: A name in name_app_mapping points "
                 "to an unknown location not in applications!");
@@ -294,7 +343,7 @@ void AppManager::check_inner_state() const {
         }
         if (std::find_if(applications.cbegin(), applications.cend(),
                          [&ptr = resolved.app](const value_type &val) {
-                             return &val.second.app == ptr;
+                             return val.second.app && &*val.second.app == ptr;
                          }) == applications.cend()) {
             SPDLOG_ERROR(
                 "AppManager check error: An managed application pointer in "

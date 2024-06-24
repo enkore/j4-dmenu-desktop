@@ -49,7 +49,10 @@ std::string get_desktop_id(const std::string &filename, std::string_view base);
 // This class is basically an Application with added info needed for AppManager.
 struct Managed_application
 {
-    Application app;
+    // If app is unoccupied, it means that the app is disabled (using Hidden or
+    // OnlyShowIn/NotShowIn), it doesn't provide Name nor GenericName but still
+    // participates in desktop ID shadowing mechanism
+    std::optional<Application> app;
     int rank;
 
     template <typename... Args>
@@ -105,7 +108,7 @@ public:
     void check_inner_state() const;
 
     // This function will never get called in a typical j4dd session. It is used
-    // only for converting the old history format to the new onw.
+    // only for converting the old history format to the new one.
     std::optional<std::reference_wrapper<const Application>>
     lookup_by_ID(const string &ID) const;
 
@@ -118,10 +121,18 @@ private:
     // This is why this function exists. remove_name_mapping<NameType::name>
     // removes a Name and remove_name_mapping<NameType::generic_name> removes a
     // GenericName.
+    // It is **guaranteed** that to_remove.app is populated and not empty.
     template <NameType N>
     void remove_name_mapping(Managed_application &to_remove) {
-        string &name = N == NameType::name ? to_remove.app.name
-                                           : to_remove.app.generic_name;
+#ifdef DEBUG
+        if (!to_remove.app) {
+            SPDLOG_ERROR(
+                "remove_app_mapping() has been called with an empty app!");
+            abort();
+        }
+#endif
+        string &name = N == NameType::name ? to_remove.app->name
+                                           : to_remove.app->generic_name;
 
         auto name_lookup_iter = name_app_mapping.find(name);
         if (name_lookup_iter == name_app_mapping.end()) {
@@ -137,7 +148,7 @@ private:
         // applications. The application which currently owns the name
         // (it's pointer is associated with the name in name_lookup) must also
         // own the key to maintain the lifetime of the key.
-        if (name_lookup_iter->second.app == &to_remove.app) {
+        if (name_lookup_iter->second.app == &*to_remove.app) {
             name_app_mapping.erase(name_lookup_iter);
             // We will look through all applications to find one with the same
             // (Generic)Name to replace the current one. The match with the
@@ -150,7 +161,10 @@ private:
             for (auto iter = this->applications.begin();
                  iter != this->applications.end(); ++iter) {
                 Managed_application &managed_app = iter->second;
-                Application &app = managed_app.app;
+                // Skip unpopulated apps
+                if (!managed_app.app)
+                    continue;
+                Application &app = *managed_app.app;
 
                 if (app.name == name || app.generic_name == name) {
                     if (&managed_app == &to_remove)
@@ -189,24 +203,32 @@ private:
 
     // Add a name mapping, possibly replacing a colliding one if a collision
     // exists and the new managed app has a lower rank.
+    // It is **guaranteed** that to_remove.app is populated and not empty.
     template <NameType N>
     void replace_name_mapping(Managed_application &to_add) {
+#ifdef DEBUG
+        if (!to_add.app) {
+            SPDLOG_ERROR(
+                "remove_app_mapping() has been called with an empty app!");
+            abort();
+        }
+#endif
         string &name =
-            N == NameType::name ? to_add.app.name : to_add.app.generic_name;
+            N == NameType::name ? to_add.app->name : to_add.app->generic_name;
 
         auto result = this->name_app_mapping.try_emplace(
-            name, &to_add.app, N == NameType::generic_name);
+            name, &*to_add.app, N == NameType::generic_name);
         if (result.second)
             return;
 
         auto colliding_app_ptr = result.first->second.app;
 
         using value_type = typename decltype(this->applications)::value_type;
-        auto colliding_iter =
-            std::find_if(this->applications.begin(), this->applications.end(),
-                         [&colliding_app_ptr](const value_type &val) {
-                             return &val.second.app == colliding_app_ptr;
-                         });
+        auto colliding_iter = std::find_if(
+            this->applications.begin(), this->applications.end(),
+            [&colliding_app_ptr](const value_type &val) {
+                return val.second.app && &*val.second.app == colliding_app_ptr;
+            });
         if (colliding_iter == this->applications.end()) {
             SPDLOG_ERROR(
                 "AppManager has reached a inconsistent state. Couldn't "
@@ -223,7 +245,7 @@ private:
             // the key of the element is a string_view. A replacement of the
             // pointer would mess up the lifetime of the key.
             this->name_app_mapping.erase(result.first);
-            this->name_app_mapping.try_emplace(name, &to_add.app,
+            this->name_app_mapping.try_emplace(name, &*to_add.app,
                                                N == NameType::generic_name);
         }
     }
