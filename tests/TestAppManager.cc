@@ -110,7 +110,7 @@ TEST_CASE("Test basic functionality + hidden desktop file", "[AppManager]") {
     },
         {}, LocaleSuffixes());
 
-    REQUIRE(apps.count() == 2);
+    REQUIRE(apps.count() == 3);
 
     apps.check_inner_state();
 
@@ -132,7 +132,7 @@ TEST_CASE("Test basic functionality + hidden desktop file", "[AppManager]") {
     apps.check_inner_state();
 }
 
-TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
+TEST_CASE("Test basic NotShowIn/OnlyShowIn interactions", "[AppManager]") {
     SECTION("Test OnlyShowIn enabled") {
         AppManager apps(
             {
@@ -142,7 +142,8 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
         },
             {"i3"}, LocaleSuffixes());
 
-        REQUIRE(apps.count() == 1);
+        REQUIRE(apps.count() == 2);
+        REQUIRE(apps.view_name_app_mapping().size() == 2);
     }
 
     SECTION("Test everything disabled") {
@@ -154,7 +155,8 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
         },
             {"Kde"}, LocaleSuffixes());
 
-        REQUIRE(apps.count() == 0);
+        REQUIRE(apps.count() == 2);
+        REQUIRE(apps.view_name_app_mapping().size() == 0);
     }
 
     SECTION("Test NotShowIn enables") {
@@ -166,7 +168,8 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
         },
             {"Gnome"}, LocaleSuffixes());
 
-        REQUIRE(apps.count() == 1);
+        REQUIRE(apps.count() == 2);
+        REQUIRE(apps.view_name_app_mapping().size() == 2);
     }
 }
 
@@ -392,7 +395,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     },
         {}, LocaleSuffixes());
     // clang-format on
-    REQUIRE(apps.count() == 3);
+    REQUIRE(apps.count() == 4);
 
     {
         ctype check{
@@ -411,7 +414,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     apps.add(TEST_FILES "a/applications/chromium.desktop",
              TEST_FILES "a/applications/", 0);
 
-    REQUIRE(apps.count() == 4);
+    REQUIRE(apps.count() == 5);
 
     {
         ctype check{
@@ -431,7 +434,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     apps.remove(TEST_FILES "b/applications/chrome.desktop",
                 TEST_FILES "b/applications/");
 
-    REQUIRE(apps.count() == 3);
+    REQUIRE(apps.count() == 4);
 
     {
         // clang-format off
@@ -453,7 +456,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     apps.add(TEST_FILES "b/applications/safari.desktop",
              TEST_FILES "b/applications/", 1);
 
-    REQUIRE(apps.count() == 4);
+    REQUIRE(apps.count() == 5);
 
     {
         // clang-format off
@@ -476,7 +479,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
     apps.remove(TEST_FILES "a/applications/firefox.desktop",
                 TEST_FILES "a/applications/");
 
-    REQUIRE(apps.count() == 3);
+    REQUIRE(apps.count() == 4);
 
     {
         // clang-format off
@@ -693,7 +696,7 @@ TEST_CASE("Test adding a disabled file", "[AppManager]") {
     apps.add(TEST_FILES "a/applications/hidden.desktop",
              TEST_FILES "a/applications/", 0);
 
-    REQUIRE(apps.count() == 2);
+    REQUIRE(apps.count() == 3);
     REQUIRE(checkmap(apps, check));
 
     apps.check_inner_state();
@@ -713,7 +716,7 @@ TEST_CASE("Test lookup by ID", "[AppManager]") {
             "Chromium");
 }
 
-TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
+TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
     SECTION("Test 1") {
         AppManager apps(
             {
@@ -725,7 +728,7 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
         },
             {"Kde"}, LocaleSuffixes());
 
-        REQUIRE(apps.count() == 2);
+        REQUIRE(apps.count() == 3);
         {
             ctype check{
                 {"Firefox",              "firefox" },
@@ -739,7 +742,7 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
         apps.add(TEST_FILES "applications/onlyShowIn.desktop",
                  TEST_FILES "applications/", 1);
 
-        REQUIRE(apps.count() == 2);
+        REQUIRE(apps.count() == 4);
         {
             ctype check{
                 {"Firefox",              "firefox" },
@@ -763,7 +766,7 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
         },
             {"i3"}, LocaleSuffixes());
 
-        REQUIRE(apps.count() == 2);
+        REQUIRE(apps.count() == 3);
         {
             ctype check{
                 {"Firefox",              "firefox" },
@@ -777,7 +780,7 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
         apps.add(TEST_FILES "applications/onlyShowIn.desktop",
                  TEST_FILES "applications/", 1);
 
-        REQUIRE(apps.count() == 3);
+        REQUIRE(apps.count() == 4);
 
         {
             ctype check{
@@ -795,15 +798,15 @@ TEST_CASE("Test notShowIn/onlyShowIn", "[AppManager]") {
     }
 }
 
-TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
+TEST_CASE("Test add()ing mixed hidden and not hidden files (see #167)", "[AppManager]") {
     SECTION("Hidden app last") {
         // clang-format off
         AppManager apps(
             {
-                {TEST_FILES "usr/local/share/applications",
+                {TEST_FILES "usr/local/share/applications/",
                  {TEST_FILES
                   "usr/local/share/applications/couldbehidden.desktop"}},
-                {TEST_FILES "usr/share/applications", {}}
+                {TEST_FILES "usr/share/applications/", {}}
         },
             {}, LocaleSuffixes());
         // clang-format on
@@ -837,16 +840,17 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
         // clang-format off
         AppManager apps(
             {
-                {TEST_FILES "usr/share/applications",
+                {TEST_FILES "usr/share/applications/",
                  {TEST_FILES "usr/share/applications/couldbehidden.desktop"}},
-                {TEST_FILES "usr/local/share/applications", {}}
+                {TEST_FILES "usr/local/share/applications/", {}}
         },
             {}, LocaleSuffixes());
         // clang-format on
 
         apps.check_inner_state();
 
-        REQUIRE(apps.count() == 0);
+        REQUIRE(apps.count() == 1);
+        REQUIRE(apps.view_name_app_mapping().size() == 0);
 
         apps.add(TEST_FILES
                  "usr/local/share/applications/couldbehidden.desktop",
@@ -855,13 +859,7 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files", "[AppManager]") {
         apps.check_inner_state();
 
         REQUIRE(apps.count() == 1);
-        {
-            ctype check{
-                {"hidden app",      "hiddenApp"},
-                {"some hidden app", "hiddenApp"},
-            };
-            REQUIRE(checkmap(apps, check));
-        }
+        REQUIRE(apps.view_name_app_mapping().size() == 0);
     }
 }
 
@@ -903,7 +901,7 @@ TEST_CASE("Test reading a unreadable file.", "[AppManager]") {
     std::optional<AppManager> container;
     REQUIRE_NOTHROW(container.emplace(
         Desktop_file_list{
-            {TEST_FILES "applications",
+            {TEST_FILES "applications/",
              {TEST_FILES "applications/eagle.desktop"}          },
             {"/tmp/",                   {unreadable1.get_name()}}
     },
