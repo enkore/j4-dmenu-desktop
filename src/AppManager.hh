@@ -51,7 +51,7 @@ struct Managed_application
 {
     // If app is unoccupied, it means that the app is disabled (using Hidden or
     // OnlyShowIn/NotShowIn), it doesn't provide Name nor GenericName but still
-    // participates in desktop ID shadowing mechanism
+    // participates in desktop ID collision mechanism
     std::optional<Application> app;
     int rank;
 
