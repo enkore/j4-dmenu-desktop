@@ -138,9 +138,10 @@ std::string convert_argv_to_string(const std::vector<std::string> &command) {
 std::vector<std::string>
 wrap_command_in_wrapper(const std::vector<std::string> &command,
                         std::string_view wrapper) {
-    std::vector<std::string> result{"/bin/sh", "-c", "--",
-                                    "wrap=\"$1\"; shift; $wrap \"$@\"",
-                                    std::string{wrapper}};
+    std::vector<std::string> result{
+        "/bin/sh", "-c",
+        "--",      "wrap=\"$1\"; shift; $wrap \"$@\"",
+        "/bin/sh", std::string{wrapper}};
     result.insert(result.cend(), command.cbegin(), command.cend());
     return result;
 }
