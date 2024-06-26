@@ -78,12 +78,14 @@ will exit the program.
 A wrapper binary.
 Useful in case you want to wrap into 'i3 exec'.
 .It Fl I , Fl Fl i3-ipc
-Execute desktop entries through i3 IPC.
-Requires i3 to be running.
+Execute desktop entries through i3 IPC or Sway IPC.
+Requires either i3 or Sway to be running.
 .It Fl Fl skip-i3-exec-check
 Disable the check for
-.Fl Fl wrapper Qq i3 exec .
-j4-dmenu-desktop has direct support for i3 through the
+.Fl Fl wrapper Qq i3 exec
+or
+.Fl Fl wrapper Qq sway exec .
+j4-dmenu-desktop has direct support for i3/Sway through the
 .Fl I
 flag which should be used instead of the
 .Fl Fl wrapper
@@ -344,7 +346,7 @@ had not been passed.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev I3SOCK
-This variable overwrites the i3 IPC socket path.
+This variable overwrites the i3/Sway IPC socket path.
 .It Ev XDG_DATA_HOME
 Primary directory containing desktop files.
 .It Ev XDG_DATA_DIRS

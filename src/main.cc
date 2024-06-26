@@ -1225,10 +1225,15 @@ int main(int argc, char **argv) {
     }
 
     if (!skip_i3_check) {
-        if (wrapper.find("i3") != std::string::npos) {
+        // It is not likely that both i3 and Sway are specified in --wrapper.
+        // The code only checks for Sway to print the error message.
+        bool has_sway = wrapper.find("sway") != std::string::npos;
+        bool has_i3 = wrapper.find("i3") != std::string::npos;
+        if (has_sway || has_i3) {
             SPDLOG_ERROR(
-                "Usage of an i3 wrapper has been detected! Please "
-                "use the new -I flag to enable i3 IPC integration instead.");
+                "Usage of {} wrapper has been detected! Please use the new -I "
+                "flag to enable i3/Sway IPC integration instead.",
+                (has_sway ? "a Sway" : "an i3"));
             SPDLOG_ERROR(
                 "(You can use --skip-i3-exec-check to disable this check. "
                 "Usage of --skip-i3-exec-check is discouraged.)");

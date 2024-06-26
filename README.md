@@ -5,8 +5,8 @@ It scans .desktop files in $XDG_DATA_HOME and $XDG_DATA_DIRS, providing a menu
 for launching applications.
 
 It is inspired by i3-dmenu-desktop. Like i3-dmenu-desktop, j4-dmenu-desktop
-offers optional integration with i3wm (but j4-dmenu-desktop should work just
-fine on about any desktop environment).
+offers optional integration with i3wm and Sway (but j4-dmenu-desktop should work
+just fine on about any desktop environment).
 
 You can also execute shell commands using it.
 
@@ -19,7 +19,7 @@ You can also execute shell commands using it.
 - automatic desktop file loading/removal in daemon mode using inotify/kqueue
 - support for any dmenu-like program (j4-dmenu-desktop is independent of any
   desktop environment + it works with both Xorg and [Wayland](#examples))
-- (optional) i3 IPC integration
+- (optional) i3/Sway IPC integration
 - multiple formatters available (program name, program name with executable
   path...)
 - completions for all major shells + a manpage
@@ -129,6 +129,10 @@ display binary name alongside name (for example `Chromium` will become `Chromium
 Don't display generic names and use `alacritty` as terminal emulator:
 
     j4-dmenu-desktop --no-generic --term alacritty
+
+Enable I3/Sway IPC mode:
+
+    j4-dmenu-desktop --i3-ipc
 
 ## FAQ / RAQ / RMR
 
