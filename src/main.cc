@@ -672,12 +672,12 @@ public:
         else
             command_array = CMDLineAssembly::convert_exec_to_command(
                 command_info.raw_command);
-        if (!wrapper.empty())
-            command_array = CMDLineAssembly::wrap_command_in_wrapper(
-                command_array, wrapper);
         if (command_info.is_terminal)
             command_array =
                 term_assembler(command_array, terminal, command_info.app_name);
+        if (!wrapper.empty())
+            command_array = CMDLineAssembly::wrap_command_in_wrapper(
+                command_array, wrapper);
         return command_array;
     }
 
