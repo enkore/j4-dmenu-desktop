@@ -135,13 +135,14 @@ std::string convert_argv_to_string(const std::vector<std::string> &command) {
     return result;
 }
 
-#include <stdexcept>
-
 std::vector<std::string>
 wrap_command_in_wrapper(const std::vector<std::string> &command,
                         std::string_view wrapper) {
-    // XXX
-    throw std::runtime_error("Not implemented!");
+    std::vector<std::string> result{"/bin/sh", "-c", "--",
+                                    "wrap=\"$1\"; shift; $wrap \"$@\"",
+                                    std::string{wrapper}};
+    result.insert(result.cend(), command.cbegin(), command.cend());
+    return result;
 }
 
 std::vector<const char *> create_argv(const std::vector<std::string> &command) {
