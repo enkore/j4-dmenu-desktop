@@ -36,6 +36,10 @@
 #include "I3Exec.hh"
 #include "Utilities.hh"
 
+// NOTE: Meaningful tests cannot be done on i3 IPC without i3 itself. The most
+// important of i3 IPC implementation, I3Interface::exec(), requires manual
+// testing.
+
 using std::string;
 
 #define SUCCESS_MESSAGE "[{\"success\":true}]"
@@ -53,7 +57,7 @@ static string construct_i3_message(const string &message) {
     return result;
 }
 
-static string handle_request(int sfd) {
+static string read_request_server(int sfd) {
     int cfd = accept(sfd, NULL, NULL);
     if (cfd == -1)
         throw std::runtime_error((string) "accept: " + strerror(errno));
@@ -141,7 +145,7 @@ TEST_CASE("Test I3Exec", "[I3Exec]") {
         SKIP("listen: " << strerror(errno));
     }
 
-    auto result = std::async(std::launch::async, handle_request, sfd);
+    auto result = std::async(std::launch::async, read_request_server, sfd);
 
     I3Interface::exec("true", (string)tmpdirname + "/socket");
 
