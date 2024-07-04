@@ -66,6 +66,7 @@ if bats_exe.found()
       bats_exe.full_path(),
       j4dd_exe.full_path(),
       '--pretty',
+#      '--show-output-of-passing-tests',
       files('bats.bats')
     ],
     depends: j4dd_exe
