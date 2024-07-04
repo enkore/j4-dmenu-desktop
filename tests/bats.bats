@@ -41,7 +41,7 @@ run_j4dd() {
 }
 
 setup() {
-    TMP="$(mktemp j4dd-tests-XXXXXXXXXX --tmpdir)"
+    TMP="$(mktemp j4dd-tests-XXXXXXXXXX -p "$BATS_TMPDIR")"
 }
 
 teardown() {
