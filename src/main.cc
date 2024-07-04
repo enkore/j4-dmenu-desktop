@@ -61,13 +61,13 @@
 #include "DynamicCompare.hh"
 #include "FileFinder.hh"
 #include "Formatters.hh"
-#include "version.hh"
 #include "HistoryManager.hh"
 #include "I3Exec.hh"
 #include "LocaleSuffixes.hh"
 #include "NotifyBase.hh"
 #include "SearchPath.hh"
 #include "Utilities.hh"
+#include "version.hh"
 
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"
@@ -229,21 +229,24 @@ static Desktop_file_list collect_files(const stringlist_t &search_path) {
 // a situation where a directory was specified twice in $XDG_DATA_DIRS.
 static void validate_search_path(stringlist_t &search_path) {
     std::unordered_set<std::string> is_unique;
-    for (auto iter = search_path.begin(); iter != search_path.end(); ++iter) {
+    auto iter = search_path.begin();
+    while (iter != search_path.end()) {
         const std::string &path = *iter;
         if (path.empty())
             SPDLOG_WARN("Empty path in $XDG_DATA_DIRS!");
-        else if (path.front() != '/') {
-            SPDLOG_WARN(
-                "Relative path '{}' found in $XDG_DATA_DIRS, ignoring...",
-                path);
-            iter = search_path.erase(iter);
-            if (iter == search_path.end())
-                return;
+        else {
+            if (path.front() != '/') {
+                SPDLOG_WARN(
+                    "Relative path '{}' found in $XDG_DATA_DIRS, ignoring...",
+                    path);
+                iter = search_path.erase(iter);
+                continue;
+            }
+            if (!is_unique.emplace(path).second)
+                SPDLOG_WARN("$XDG_DATA_DIRS contains duplicate element '{}'!",
+                            path);
         }
-        if (!is_unique.emplace(path).second)
-            SPDLOG_WARN("$XDG_DATA_DIRS contains duplicate element '{}'!",
-                        path);
+        ++iter;
     }
 }
 
