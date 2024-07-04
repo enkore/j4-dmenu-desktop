@@ -98,6 +98,7 @@ endif(WITH_GIT_FMT)
 
 add_executable(j4-dmenu-desktop ${SOURCE} "${CMAKE_CURRENT_BINARY_DIR}/generated/version.cc" src/main.cc)
 target_link_libraries(j4-dmenu-desktop PRIVATE spdlog::spdlog PRIVATE fmt::fmt)
+target_include_directories(j4-dmenu-desktop PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
 if(WITH_TESTS)
   file(GLOB_RECURSE test_src_files tests/*.cc)
