@@ -103,3 +103,43 @@ test_term_mode() {
 
     test_term_mode gnome-terminal
 }
+
+run_base_tests() {
+    XDG_DATA_HOME="${TEST_FILES}bats/desktop-file-samples/rank-0" XDG_DATA_DIRS="${TEST_FILES}bats/desktop-file-samples/rank-1:${TEST_FILES}bats/desktop-file-samples/rank-2" J4DD_UNIT_TEST_STATUS_FILE="$TMP" run_j4dd --dmenu "${HELPERS}/dmenu_noselect_output_imitator.sh" "$@"
+
+    [ -f "$TMP" ]
+}
+
+@test "Test normal behavior of j4-dmenu-desktop" {
+    export LC_MESSAGES="C"
+    run_base_tests
+    sort -o "$TMP" "$TMP"
+    diff "$TMP" - <<EOF
+Eagle
+GNU Image Manipulation Program
+Htop
+Image Editor
+Process Viewer
+Rank 0 collision
+EOF
+
+    XDG_CURRENT_DESKTOP="kde" run_base_tests -x
+    sort -o "$TMP" "$TMP"
+    diff "$TMP" - <<EOF
+Eagle
+GNU Image Manipulation Program
+Image Editor
+Rank 0 collision
+EOF
+
+    XDG_CURRENT_DESKTOP="i3" run_base_tests -x
+    sort -o "$TMP" "$TMP"
+    diff "$TMP" - <<EOF
+Eagle
+GNU Image Manipulation Program
+Htop
+Image Editor
+Process Viewer
+Rank 0 collision
+EOF
+}
