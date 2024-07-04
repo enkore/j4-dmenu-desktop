@@ -357,6 +357,14 @@ dependent desktop files.
 Must be enabled by
 .Fl Fl use-xdg-de .
 .El
+.Pp
+Standard environmental variables for locales are acknowledged in addition to
+those listed above.
+The exact environmental variables used are implementation-dependent, but setting
+.Ev LC_MESSAGES , LC_ALL
+or
+.Ev LANG
+should generally work.
 .Sh SEE ALSO
 .Lk https://github.com/enkore/j4-dmenu-desktop
 .Sh COPYRIGHT
