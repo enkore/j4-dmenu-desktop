@@ -49,11 +49,20 @@ teardown() {
 }
 
 test_term_mode() {
-    [ $# -ne 1 ] && fail
+    [ $# -eq 0 ] && fail
 
-    PATH="$HELPERS:$PATH" J4DD_UNIT_TEST_STATUS_FILE="$TMP" XDG_DATA_HOME="${TEST_FILES}bats/" XDG_DATA_DIRS="${TEST_FILES}empty/" J4DD_UNIT_TEST_ARGS="--help:--:<><>'\$\$::!?" run_j4dd --dmenu "${HELPERS}/dmenu_selected_imitator.sh" --term-mode "$1"
+    local term_mode="$1"
+    shift
+
+    PATH="$HELPERS:$PATH" J4DD_UNIT_TEST_STATUS_FILE="$TMP" XDG_DATA_HOME="${TEST_FILES}bats/" XDG_DATA_DIRS="${TEST_FILES}empty/" J4DD_UNIT_TEST_ARGS="--help:--:<><>'\$\$::!?" run_j4dd --dmenu "${HELPERS}/dmenu_selected_imitator.sh" --term-mode "$term_mode" "$@"
     echo 1 | cmp - "$TMP"
 }
+
+# The following term mode tests are run twice per each mode. First test uses the
+# dedicated --term-mode and the second test uses custom term mode with the value
+# of --term taken from the manpage.
+
+# --term arguments of custom term mode should be in sync with the manpage!
 
 @test "Test >default< term mode" {
     if ! type i3-sensible-terminal > /dev/null 2>&1; then
@@ -61,6 +70,7 @@ test_term_mode() {
     fi
 
     test_term_mode default
+    test_term_mode custom --term "i3-sensible-terminal -e {script}"
 }
 
 @test "Test >xterm< term mode" {
@@ -69,6 +79,7 @@ test_term_mode() {
     fi
 
     test_term_mode xterm
+    test_term_mode custom --term "xterm -title {name} -e {cmdline@}"
 }
 
 @test "Test >alacritty< term mode" {
@@ -77,6 +88,7 @@ test_term_mode() {
     fi
 
     test_term_mode alacritty
+    test_term_mode custom --term "alacritty -T {name} -e {cmdline@}"
 }
 
 @test "Test >kitty< term mode" {
@@ -85,6 +97,7 @@ test_term_mode() {
     fi
 
     test_term_mode kitty
+    test_term_mode custom --term "kitty -T {name} {cmdline@}"
 }
 
 @test "Test >terminator< term mode" {
@@ -94,6 +107,7 @@ test_term_mode() {
     fi
 
     test_term_mode terminator
+    test_term_mode custom --term "terminator -T {name} -x {cmdline@}"
 }
 
 @test "Test >gnome-terminal< term mode" {
@@ -102,6 +116,35 @@ test_term_mode() {
     fi
 
     test_term_mode gnome-terminal
+    test_term_mode custom --term "gnome-terminal --title {name} -- {cmdline@}"
+
+    # Extra check for deprecated mode.
+    test_term_mode custom --term "gnome-terminal --title {name} -e {cmdline*}"
+}
+
+test_custom_term_mode() {
+    XDG_DATA_HOME="${TEST_FILES}empty/" XDG_DATA_DIRS="" run_j4dd --dmenu "${HELPERS}/dmenu_noselect_imitator.sh" --term-mode custom "$@"
+}
+
+@test "Test edge cases of >custom< term mode" {
+    test_custom_term_mode --term "  {cmdline} " && false
+    test_custom_term_mode --term "  {nname} " && false
+    test_custom_term_mode --term "  {} " && false
+    test_custom_term_mode --term "\\n" && false
+    test_custom_term_mode --term "\\x" && false
+    # Test normal behavior too.
+    test_custom_term_mode --term "\\ "
+    test_custom_term_mode --term " {nam{e}" && false
+    test_custom_term_mode --term " {nam{e}}" && false
+    test_custom_term_mode --term " {nam{cmdline*}}" && false
+    test_custom_term_mode --term " {nam{cmdline@}}" && false
+    test_custom_term_mode --term " {nam{nam{name}}}" && false
+    test_custom_term_mode --term "command {{name}}" && false
+    test_custom_term_mode --term "command {{name}" && false
+    test_custom_term_mode --term "command -e={cmdline@}" && false
+
+    # Test must end in `true` because of weird Bash return logic.
+    true
 }
 
 run_base_tests() {
