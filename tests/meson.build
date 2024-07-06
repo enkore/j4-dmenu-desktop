@@ -24,6 +24,7 @@ test_files = [
   'TestNotify.cc',
   'TestSearchPath.cc',
   'TestI3Exec.cc',
+  'TestCMDLineTerm.cc',
   'TestUtilities.cc',
   'TestCMDLineAssembler.cc',
   'MainTest.cc',
