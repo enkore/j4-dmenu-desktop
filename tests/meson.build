@@ -55,7 +55,12 @@ endif
 # of 30 seconds is not sufficient on BSDs, because one of the tests uses Notify.
 test('j4-dmenu-tests', test_exe, timeout: 90)
 
-bats_exe = find_program('bats', native: true, required: false, version: '>=1.2.1')
+bats_exe = find_program(
+  'bats',
+  native: true,
+  required: false,
+  version: '>=1.2.1',
+)
 
 if bats_exe.found()
   test(
@@ -66,10 +71,10 @@ if bats_exe.found()
       bats_exe.full_path(),
       j4dd_exe.full_path(),
       '--pretty',
-#      '--show-output-of-passing-tests',
-      files('bats.bats')
+      #'--show-output-of-passing-tests',
+      files('bats.bats'),
     ],
-    depends: j4dd_exe
+    depends: j4dd_exe,
   )
 else
   warning('Couldn\'t find bats executable, bats tests will be skipped.')

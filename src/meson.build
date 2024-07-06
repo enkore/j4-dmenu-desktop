@@ -60,7 +60,15 @@ endif
 # Actual build definitions begin here.
 
 fmt = dependency('fmt', default_options: ['default_library=static'])
-spdlog = dependency('spdlog', default_options: ['tests=disabled', 'external_fmt=enabled', 'compile_library=true', 'default_library=static'])
+spdlog = dependency(
+  'spdlog',
+  default_options: [
+    'tests=disabled',
+    'external_fmt=enabled',
+    'compile_library=true',
+    'default_library=static',
+  ],
+)
 
 if get_option('set-debug') == 'auto'
   if get_option('debug')
@@ -76,6 +84,8 @@ src = files(
   'AppManager.cc',
   'Application.cc',
   'ApplicationRunner.cc',
+  'CMDLineAssembler.cc',
+  'CMDLineTerm.cc',
   'Dmenu.cc',
   'FileFinder.cc',
   'Formatters.cc',
@@ -85,8 +95,6 @@ src = files(
   'LocaleSuffixes.cc',
   'SearchPath.cc',
   'Utilities.cc',
-  'CMDLineAssembler.cc',
-  'CMDLineTerm.cc',
 )
 
 if inotify
