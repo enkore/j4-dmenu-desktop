@@ -64,14 +64,15 @@ std::string posix_shell_unqote(std::string_view str) {
         }
         close(pipefd[1]);
 
-        const char *argv[] = {"/bin/sh", "-c", request.c_str(), (char *) NULL};
+        const char *argv[] = {"/bin/sh", "-c", request.c_str(), (char *)NULL};
         execv("/bin/sh", (char **)argv);
         _exit(EXIT_FAILURE);
     }
 
     close(pipefd[1]);
 
-    std::shared_ptr<std::atomic_flag> process_terminated = std::make_shared<std::atomic_flag>();
+    std::shared_ptr<std::atomic_flag> process_terminated =
+        std::make_shared<std::atomic_flag>();
     process_terminated->clear();
 
     std::thread timeout_terminator(

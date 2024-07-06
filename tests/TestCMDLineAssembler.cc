@@ -19,8 +19,8 @@
 
 #include <unistd.h>
 
-#include "ShellUnquote.hh"
 #include "CMDLineAssembler.hh"
+#include "ShellUnquote.hh"
 
 bool test_quoting(std::string_view str) {
     auto quoted = CMDLineAssembly::sq_quote(str);
@@ -62,9 +62,15 @@ TEST_CASE("Test quoting for POSIX shell", "[CMDLineAssembler]") {
 
 TEST_CASE("Test converting Exec key to command array") {
     using strvec = std::vector<std::string>;
-    REQUIRE(CMDLineAssembly::convert_exec_to_command("command") == strvec{"command"});
-    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"(command "a b c\"d")") == strvec{"command", R"(a b c"d)"});
-    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"(command "a b c\"")") == strvec{"command", R"(a b c")"});
-    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"("\`")") == strvec{R"(`)"});
-    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"(command --arg "\$  \\")") == strvec{"command", "--arg", R"($  \)"});
+    REQUIRE(CMDLineAssembly::convert_exec_to_command("command") ==
+            strvec{"command"});
+    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"(command "a b c\"d")") ==
+            strvec{"command", R"(a b c"d)"});
+    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"(command "a b c\"")") ==
+            strvec{"command", R"(a b c")"});
+    REQUIRE(CMDLineAssembly::convert_exec_to_command(R"("\`")") ==
+            strvec{R"(`)"});
+    REQUIRE(
+        CMDLineAssembly::convert_exec_to_command(R"(command --arg "\$  \\")") ==
+        strvec{"command", "--arg", R"($  \)"});
 }

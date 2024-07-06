@@ -15,8 +15,8 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_message.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
 #include <errno.h>
@@ -798,7 +798,8 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
     }
 }
 
-TEST_CASE("Test add()ing mixed hidden and not hidden files (see #167)", "[AppManager]") {
+TEST_CASE("Test add()ing mixed hidden and not hidden files (see #167)",
+          "[AppManager]") {
     SECTION("Hidden app last") {
         // clang-format off
         AppManager apps(
@@ -902,8 +903,8 @@ TEST_CASE("Test reading a unreadable file.", "[AppManager]") {
     REQUIRE_NOTHROW(container.emplace(
         Desktop_file_list{
             {TEST_FILES "applications/",
-             {TEST_FILES "applications/eagle.desktop"}          },
-            {"/tmp/",                   {unreadable1.get_name()}}
+             {TEST_FILES "applications/eagle.desktop"}           },
+            {"/tmp/",                    {unreadable1.get_name()}}
     },
         stringlist_t{}, LocaleSuffixes{}));
 

@@ -20,8 +20,8 @@
 #include <stdexcept>
 
 #include "Application.hh"
-#include "Utilities.hh"
 #include "CMDLineAssembler.hh"
+#include "Utilities.hh"
 
 const std::string application_command(const Application &app,
                                       const std::string &args) {
