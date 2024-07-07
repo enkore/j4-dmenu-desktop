@@ -63,14 +63,14 @@ bats_exe = find_program(
   version: '>=1.2.1',
 )
 
-show_passing_tests = []
-
-# Be verbose if Bats allows it
-if bats_exe.version().version_compare('>=1.5.0')
-  show_passing_tests = '--show-output-of-passing-tests'
-endif
-
 if bats_exe.found()
+  show_passing_tests = []
+
+  # Be verbose if Bats allows it
+  if bats_exe.version().version_compare('>=1.5.0')
+    show_passing_tests = '--show-output-of-passing-tests'
+  endif
+
   test(
     'bats-tests',
     files('bats_runner.sh'),
