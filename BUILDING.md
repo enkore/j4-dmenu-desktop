@@ -25,7 +25,19 @@ j4-dmenu-desktop. All of these are internal dependencies and are linked
 statically (unless the build system is overridden or dependencies are provided
 externally).
 
-J4-dmenu-desktop won't depend on Catch2 if unit tests are disabled.
+J4-dmenu-desktop also depends on
+[bats-core](https://github.com/bats-core/bats-core). It is an **optional
+external** dependency. It is used for system testing to supplement Catch2
+tests. If bats-core is not available, bats tests will be marked as skipped.
+
+The Bats testsuite includes tests for various supported terminal emulators.
+These tests are optional, if a certain terminal emulator is available and
+executable (a display server is available), they are enabled, otherwise they are
+skipped. The following terminal emulators can be tested: `i3` (provider of
+`i3-sensible-terminal`), `xterm`, `alacritty`, `kitty`, `terminator` and
+`gnome-terminal`.
+
+J4-dmenu-desktop won't depend on Catch2 or Bats if tests are disabled.
 
 ## Building with CMake
 Out-of-source builds are fully supported.
@@ -44,7 +56,7 @@ If you want to disable dependency fetching altogether, you can use
 `-DNO_DOWNLOAD=ON`. This is more future-proof, because it prevents the download
 of potential new dependencies added to j4-dmenu-desktop.
 
-Unit tests can be disabled using the `-DWITH_TESTS=OFF` flag.
+Tests can be disabled using the `-DWITH_TESTS=OFF` flag.
 
 ## Building with Meson
 J4-dmenu-desktop provides a simple setup helper
@@ -58,7 +70,7 @@ developers may want to set `split-source` to reduce unnecessary recompilation
 when building `j4-dmenu-desktop` and `j4-dmenu-tests` at the same time[^1]
 (`meson-setup.sh` sets this in its debugging build styles).
 
-Unit tests can be disabled using the `-Denable-tests=false` flag.
+Tests can be disabled using the `-Denable-tests=false` flag.
 
 Although it is recommended to use `meson-setup.sh`, you can completely ignore
 its flags and invoke meson manually.
