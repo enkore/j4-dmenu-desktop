@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>
+#include <sys/types.h>
 
 #include "Utilities.hh"
 

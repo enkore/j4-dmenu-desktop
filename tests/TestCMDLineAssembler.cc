@@ -15,9 +15,12 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include <unistd.h>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include "CMDLineAssembler.hh"
 #include "ShellUnquote.hh"

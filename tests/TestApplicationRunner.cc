@@ -22,9 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 #include <unistd.h>
+// IWYU pragma: no_include <vector>
 
 #include "Application.hh"
 #include "ApplicationRunner.hh"

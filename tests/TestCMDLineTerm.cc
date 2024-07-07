@@ -22,10 +22,10 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <fmt/core.h>
+#include <string>
+#include <vector>
 
 #include "CMDLineTerm.hh"
-#include "ShellUnquote.hh"
 
 using namespace CMDLineTerm::assembler_functions;
 using vec = std::vector<std::string>;

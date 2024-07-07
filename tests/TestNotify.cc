@@ -23,8 +23,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+// IWYU pragma: no_include <vector>
+// IWYU pragma: no_include <string>
 
 #include "NotifyBase.hh"
+#include "Utilities.hh"
 
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"

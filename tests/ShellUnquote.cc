@@ -18,12 +18,17 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <errno.h>
 #include <fmt/core.h>
 #include <memory>
+#include <signal.h>
+#include <stdio.h>
 #include <string>
 #include <string_view>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <thread>
 #include <unistd.h>

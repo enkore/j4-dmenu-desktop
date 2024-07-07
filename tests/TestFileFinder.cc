@@ -16,7 +16,6 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
-#include <string>
 
 #include "FileFinder.hh"
 #include "Utilities.hh"

@@ -15,16 +15,15 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdexcept>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string_view>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

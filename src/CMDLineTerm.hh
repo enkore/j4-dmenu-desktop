@@ -20,6 +20,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // See the manpage for detailed explanation of different modes.

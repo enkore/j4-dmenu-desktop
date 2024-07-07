@@ -26,7 +26,11 @@
 #include <optional>
 #include <stdexcept>
 #include <string.h>
+#include <string> // IWYU pragma: keep
 #include <unistd.h>
+// Both of these aren't used in this file.
+// IWYU pragma: no_include <vector>
+// IWYU pragma: no_include <utility>
 
 #include "AppManager.hh"
 #include "FSUtils.hh"

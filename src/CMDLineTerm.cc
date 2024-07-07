@@ -17,12 +17,17 @@
 
 #include "CMDLineTerm.hh"
 
-#include <cstdlib>
-#include <optional>
+#include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
+#include <cstdlib>
+#include <errno.h>
+#include <iterator>
+#include <optional>
+#include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <utility>
 
 #include "CMDLineAssembler.hh"
 #include "Utilities.hh"

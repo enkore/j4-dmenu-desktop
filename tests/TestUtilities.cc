@@ -23,6 +23,9 @@
 #include <string.h>
 #include <string>
 #include <unistd.h>
+// Used in setenv(), unsetenv()
+#include <stdlib.h> // IWYU pragma: keep
+// IWYU pragma: no_include <vector>
 
 #include "Utilities.hh"
 

@@ -21,6 +21,7 @@
 // #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/ansicolor_sink.h>
@@ -44,6 +45,7 @@
 #include <string>
 #include <string_view>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <type_traits>
 #include <unistd.h>

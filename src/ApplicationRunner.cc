@@ -18,6 +18,7 @@
 #include "ApplicationRunner.hh"
 
 #include <stdexcept>
+// IWYU pragma: no_include <vector>
 
 #include "Application.hh"
 #include "CMDLineAssembler.hh"

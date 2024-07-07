@@ -20,7 +20,10 @@
 
 #include <spdlog/spdlog.h>
 
-#include <algorithm>
+// Likely a bug in IWYU. If this include is present, IWYU will tell you to
+// remove it. If it isn't present, it will tell you to add it.
+// IWYU is overridden here to fix this behavior.
+#include <algorithm> // IWYU pragma: keep
 #include <functional>
 #include <limits>
 #include <optional>

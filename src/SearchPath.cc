@@ -19,6 +19,8 @@
 
 #include <string>
 
+// IWYU pragma: no_include <vector>
+
 static void add_applications_dir(std::string &str) {
     if (str.back() == '/') // fix double slashes
         str.pop_back();

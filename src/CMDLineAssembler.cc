@@ -19,6 +19,10 @@
 
 #include <spdlog/spdlog.h>
 
+#include <iterator>
+#include <stdlib.h>
+#include <utility>
+
 // See the header file for documentation of these functions.
 
 namespace CMDLineAssembly

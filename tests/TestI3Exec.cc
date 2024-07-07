@@ -19,12 +19,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/core.h>
 
+#include <chrono>
 #include <cstring>
 #include <errno.h>
 #include <exception>
 #include <future>
 #include <signal.h>
 #include <stdexcept>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string>
 #include <sys/socket.h>

@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <optional>
 #include <string.h>
+#include <string_view>
 #include <tuple>
 #include <unistd.h>
 #include <unordered_set>
