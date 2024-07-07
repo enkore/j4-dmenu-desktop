@@ -1,0 +1,11 @@
+[
+    { symbol: ["std::operator\"\"ms", private, "<chrono>", public] },
+    { symbol: ["std::chrono_literals::operator\"\"s", private, "<chrono>", public] },
+    { symbol: ["std::chrono_literals", private, "<chrono>", public] },
+
+
+    # IWYU belives that <sys/types.h> is superfluous when opendir() is used.
+    # This is not true. Line below is not "correct", sys/types.h doesn't provide
+    # opendir(), but it fixes the issue.
+    { symbol: ["opendir", private, "<sys/types.h>", public] },
+]
