@@ -21,7 +21,6 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <forward_list>
 #include <functional>
 #include <limits>
 #include <optional>
@@ -85,6 +84,9 @@ using Desktop_file_list = std::vector<Desktop_file_rank>;
 
 class AppManager
 {
+    using applications_type =
+        std::unordered_map<string /*desktop ID*/, Managed_application>;
+
 public:
     using name_app_mapping_type =
         std::unordered_map<string_view /*(Generic)Name*/, Resolved_application>;
@@ -101,7 +103,7 @@ public:
     // This function accepts path to the desktop file relative to $XDG_DATA_DIRS
     // and its rank within $XDG_DATA_DIRS
     void add(const string &filename, const string &base_path, int rank);
-    std::forward_list<Managed_application>::difference_type count() const;
+    applications_type::size_type count() const;
     const name_app_mapping_type &view_name_app_mapping() const;
 
     // This function should be used only for debugging.
@@ -254,7 +256,7 @@ private:
     // unordered_map. This list should be modified first when adding something
     // and it should be modified last when removing something for lifetime
     // reasons.
-    std::unordered_map<string /*desktop ID*/, Managed_application> applications;
+    applications_type applications;
     // Map used for lookup and name listing.
     name_app_mapping_type name_app_mapping;
 

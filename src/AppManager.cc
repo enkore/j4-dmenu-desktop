@@ -264,8 +264,7 @@ AppManager::view_name_app_mapping() const {
     return this->name_app_mapping;
 }
 
-std::forward_list<Managed_application>::difference_type
-AppManager::count() const {
+AppManager::applications_type::size_type AppManager::count() const {
     return this->applications.size();
 }
 
