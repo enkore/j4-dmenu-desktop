@@ -58,6 +58,25 @@ test_term_mode() {
     echo 1 | cmp - "$TMP"
 }
 
+check_term_availability() {
+    [ $# -ne 1 ] && [ $# -ne 2 ] && fail
+
+    local separator="${2--e}"
+
+    if ! type "$1" > /dev/null 2>&1; then
+        skip "Can't proceed with terminal mode test! --term $1 is not available."
+    fi
+    if [ "$separator" ]; then
+        if ! "$1" "$separator" true; then
+            skip "Can't proceed with terminal mode test! Terminal emulator $1 cannot be executed in the current environment."
+        fi
+    else
+        if ! "$1" true; then
+            skip "Can't proceed with terminal mode test! Terminal emulator $1 cannot be executed in the current environment."
+        fi
+    fi
+}
+
 # The following term mode tests are run twice per each mode. First test uses the
 # dedicated --term-mode and the second test uses custom term mode with the value
 # of --term taken from the manpage.
@@ -65,36 +84,28 @@ test_term_mode() {
 # --term arguments of custom term mode should be in sync with the manpage!
 
 @test "Test >default< term mode" {
-    if ! type i3-sensible-terminal > /dev/null 2>&1; then
-        skip "Can't proceed with terminal mode test! --term i3-sensible-terminal is not available."
-    fi
+    check_term_availability i3-sensible-terminal
 
     test_term_mode default
     test_term_mode custom --term "i3-sensible-terminal -e {script}"
 }
 
 @test "Test >xterm< term mode" {
-    if ! type xterm > /dev/null 2>&1; then
-        skip "Can't proceed with terminal mode test! --term xterm is not available."
-    fi
+    check_term_availability xterm
 
     test_term_mode xterm
     test_term_mode custom --term "xterm -title {name} -e {cmdline@}"
 }
 
 @test "Test >alacritty< term mode" {
-    if ! type alacritty > /dev/null 2>&1; then
-        skip "Can't proceed with terminal mode test! --term alacritty is not available."
-    fi
+    check_term_availability alacritty
 
     test_term_mode alacritty
     test_term_mode custom --term "alacritty -T {name} -e {cmdline@}"
 }
 
 @test "Test >kitty< term mode" {
-    if ! type kitty > /dev/null 2>&1; then
-        skip "Can't proceed with terminal mode test! --term kitty is not available."
-    fi
+    check_term_availability kitty ""
 
     test_term_mode kitty
     test_term_mode custom --term "kitty -T {name} {cmdline@}"
@@ -102,18 +113,14 @@ test_term_mode() {
 
 @test "Test >terminator< term mode" {
     skip "See https://github.com/gnome-terminator/terminator/issues/923"
-    if ! type terminator > /dev/null 2>&1; then
-        skip "Can't proceed with terminal mode test! --term terminator is not available."
-    fi
+    check_term_availability terminator -x
 
     test_term_mode terminator
     test_term_mode custom --term "terminator -T {name} -x {cmdline@}"
 }
 
 @test "Test >gnome-terminal< term mode" {
-    if ! type gnome-terminal > /dev/null 2>&1; then
-        skip "Can't proceed with terminal mode test! --term gnome-terminal is not available."
-    fi
+    check_term_availability gnome-terminal --
 
     test_term_mode gnome-terminal
     test_term_mode custom --term "gnome-terminal --title {name} -- {cmdline@}"
