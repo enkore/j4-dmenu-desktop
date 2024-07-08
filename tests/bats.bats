@@ -19,7 +19,7 @@ run_j4dd() {
     if [ -z "$MESON_EXE_WRAPPER" ]; then
         "$J4DD_EXECUTABLE" "$@"
     else
-        "$MESON_EXE_WRAPPER" "$J4DD_EXECUTABLE" "$@"
+        $MESON_EXE_WRAPPER "$J4DD_EXECUTABLE" "$@"
     fi
 }
 

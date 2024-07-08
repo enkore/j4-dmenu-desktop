@@ -94,7 +94,7 @@ shift
 
 # $MESON_EXE_WRAPPER should be supplied by Meson in its test target
 if [ "$MESON_EXE_WRAPPER" ]; then
-  "$MESON_EXE_WRAPPER" "$J4DD_EXECUTABLE" --help > /dev/null 2>&1 || failed_to_execute_j4dd
+  $MESON_EXE_WRAPPER "$J4DD_EXECUTABLE" --help > /dev/null 2>&1 || failed_to_execute_j4dd
 else
   "$J4DD_EXECUTABLE" --help > /dev/null 2>&1 || failed_to_execute_j4dd
 fi
@@ -103,8 +103,9 @@ case "$J4DD_EXECUTABLE" in
 /*)
     ;;
 *)
-    echo "WARNING: j4dd_exe_path is relative! Please use an absolute path"\
-        "instead." >&2
+    echo "WARNING: j4dd_exe_path is relative! Converting to an absolute"\
+        "path (assuming relative to CWD)..." >&2
+    J4DD_EXECUTABLE="${PWD}/${J4DD_EXECUTABLE}"
 esac
 
 if ! { export -p | grep -q "TERM"; }; then

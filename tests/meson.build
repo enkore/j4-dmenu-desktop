@@ -77,7 +77,7 @@ if bats_exe.found()
     args: [
       '-b',
       bats_exe.full_path(),
-      j4dd_exe.full_path(),
+      j4dd_exe,
       '--pretty',
       show_passing_tests,
       files('bats.bats'),
