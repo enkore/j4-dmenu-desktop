@@ -22,6 +22,7 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <fmt/xchar.h>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/ansicolor_sink.h>
