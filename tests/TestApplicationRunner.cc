@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 // IWYU pragma: no_include <vector>
 

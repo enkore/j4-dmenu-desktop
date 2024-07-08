@@ -979,6 +979,7 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
  * repeat. Also handle desktop file changes through Notify* mechanism.
  */
 // clang-format on
+
 int main(int argc, char **argv) {
     // Coverage needs special attention, because it doesn't get recorded when
     // program exits abnormally (through abort() or execve()).
