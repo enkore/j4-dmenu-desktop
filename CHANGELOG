@@ -103,3 +103,19 @@ r3.0 released 2024-06-02
 	  app)
 	+ added completions for Bash, Fish and ZSH
 	+ added --version flag
+
+r3.1 to be released
+	+ fixed a lot of bugs introduced by r3.0 release (most important fixes are
+	  mentioned below)
+	+ fixed bug with --no-exec not outputting terminal emulator for
+	  Terminal=true applications
+	+ fixed hidden desktop files not participating in desktop ID precedence
+	  rules
+	+ added explicit support for Sway using existing i3 IPC infrastructure
+	+ fixed --no-exec printing to stderr instead of stdout
+	+ added --term-mode to fix deprecation of "gnome-terminal -e" and to handle
+	  other terminal emulators well too
+	+ revorked and improved entire command line assembly mechanism
+	+ improved Exec mechanism (see 7efae31)
+	+ fix minor bugs
+	+ added Bats testsuite
