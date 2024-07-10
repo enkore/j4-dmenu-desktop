@@ -1,3 +1,3 @@
 #!/bin/sh
 cat > /dev/null
-exec echo selected
+exec echo selected "$@"

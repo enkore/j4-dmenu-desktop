@@ -1,0 +1,6 @@
+[Desktop Entry]
+Version=1.0
+Name=selected
+Type=Application
+Comment=Unit test test program
+Exec=was_executed.sh %F
