@@ -74,7 +74,7 @@ create_term_emulator_temp_script(const std::vector<std::string> &commandline,
     // Passing scriptname unquoted is safe, it can not contain user data
     fmt::print(script, "rm {}\n", scriptname);
     // Set window title through an escape sequence
-    fmt::print(script, "printf '\\033]2;%%s\\007' {}\n", sq_quote(app_name));
+    fmt::print(script, "printf '\\033]2;%s\\007' {}\n", sq_quote(app_name));
     fmt::print(script, "exec {}\n",
                CMDLineAssembly::convert_argv_to_string(commandline));
 
