@@ -65,7 +65,7 @@ flags. You can run this script with the `-d` flag to do a dry run, which just
 prints the commands it would have executed to stdout. You can then tweak it to
 your needs using standard Meson flags.
 
-Meson, like CMake, provide several options that tweak the build. In particular,
+Meson, like CMake, provides several options that tweak the build. In particular,
 developers may want to set `split-source` to reduce unnecessary recompilation
 when building `j4-dmenu-desktop` and `j4-dmenu-tests` at the same time[^1]
 (`meson-setup.sh` sets this in its debugging build styles).
