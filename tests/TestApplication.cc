@@ -22,7 +22,7 @@
 #include "LineReader.hh"
 #include "LocaleSuffixes.hh"
 
-TEST_CASE("Test Nonexistant file", "[Application]") {
+TEST_CASE("Test nonexistent file", "[Application]") {
     LocaleSuffixes ls("en_US");
     LineReader liner;
     REQUIRE_THROWS(Application("some-file-that-doesnt-exist", liner, ls, {}));
