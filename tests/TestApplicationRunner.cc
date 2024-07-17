@@ -27,6 +27,8 @@
 #include <unistd.h>
 // IWYU pragma: no_include <vector>
 
+#include "generated/tests_config.hh"
+
 #include "Application.hh"
 #include "ApplicationRunner.hh"
 #include "LineReader.hh"

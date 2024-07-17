@@ -26,6 +26,8 @@
 // IWYU pragma: no_include <vector>
 // IWYU pragma: no_include <string>
 
+#include "generated/tests_config.hh"
+
 #include "NotifyBase.hh"
 #include "Utilities.hh"
 

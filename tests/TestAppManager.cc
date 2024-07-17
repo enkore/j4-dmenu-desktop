@@ -36,6 +36,8 @@
 #include <utility>
 #include <vector>
 
+#include "generated/tests_config.hh"
+
 #include "AppManager.hh"
 #include "Application.hh"
 #include "FSUtils.hh"

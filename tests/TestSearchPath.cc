@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include "generated/tests_config.hh"
+
 #include "SearchPath.hh"
 #include "Utilities.hh"
 

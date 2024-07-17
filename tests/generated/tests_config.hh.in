@@ -15,21 +15,11 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <catch2/catch_test_macros.hpp>
+#ifndef J4DDTESTSCONFIG_DEF
+#define J4DDTESTSCONFIG_DEF
 
-#include "generated/tests_config.hh"
+// cmakedefine is used instead of mesondefine because Meson supports
+// cmakedefine syntax but CMake doesn't support CMake syntax.
+#cmakedefine TEST_FILES @TEST_FILES@
 
-#include "FileFinder.hh"
-#include "Utilities.hh"
-
-TEST_CASE("Test FileFinder", "[FileFinder]") {
-    FileFinder ff(TEST_FILES);
-    bool found = false;
-    while (++ff) {
-        if (endswith(ff.path(), "other.ext")) {
-            found = true;
-            break;
-        }
-    }
-    REQUIRE(found);
-}
+#endif

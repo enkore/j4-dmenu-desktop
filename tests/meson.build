@@ -30,13 +30,13 @@ test_files = [
   'MainTest.cc',
 ]
 
-test_files_location = meson.project_source_root() / 'tests/test_files/"'
+subdir('generated')
 
 test_exe = executable(
   'j4-dmenu-tests',
   test_files,
   dependencies: [catch2, spdlog, fmt, source_dep],
-  cpp_args: ['-DTEST_FILES="' + test_files_location, flags],
+  cpp_args: flags,
 )
 
 # NotifyKqueue checks for changes every minute. This means that the default timeout

@@ -18,6 +18,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 
+#include "generated/tests_config.hh"
+
 #include "Application.hh"
 #include "Formatters.hh"
 #include "LineReader.hh"

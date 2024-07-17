@@ -32,6 +32,8 @@
 // IWYU pragma: no_include <vector>
 // IWYU pragma: no_include <utility>
 
+#include "generated/tests_config.hh"
+
 #include "AppManager.hh"
 #include "FSUtils.hh"
 #include "HistoryManager.hh"

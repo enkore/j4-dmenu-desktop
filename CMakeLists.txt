@@ -103,10 +103,12 @@ target_include_directories(j4-dmenu-desktop PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}
 if(WITH_TESTS)
   file(GLOB_RECURSE test_src_files tests/*.cc)
 
+  set(TEST_FILES "\"${CMAKE_CURRENT_SOURCE_DIR}/tests/test_files/\"")
+  configure_file(tests/generated/tests_config.hh.in tests/generated/tests_config.hh @ONLY)
+
   add_executable(j4-dmenu-tests ${test_src_files} ${SOURCE})
-  target_compile_definitions(
-    j4-dmenu-tests PRIVATE TEST_FILES="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_files/")
   target_include_directories(j4-dmenu-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+  target_include_directories(j4-dmenu-tests PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/tests/")
   target_link_libraries(j4-dmenu-tests PRIVATE spdlog::spdlog PRIVATE fmt::fmt)
 
   if(WITH_GIT_CATCH)
