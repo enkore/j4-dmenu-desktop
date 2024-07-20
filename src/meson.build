@@ -118,25 +118,24 @@ if get_option('split-source')
     dependencies: [spdlog, fmt],
   )
 
-  j4dd_exe = executable(
-    'j4-dmenu-desktop',
-    'main.cc',
-    version_def_file,
+  source_dep = declare_dependency(
     dependencies: [spdlog, fmt],
-    cpp_args: [flags, main_flags],
+    include_directories: include_directories('.'),
     link_with: source_lib,
-    install: true,
   )
 else
-  j4dd_exe = executable(
-    'j4-dmenu-desktop',
-    src,
-    'main.cc',
-    version_def_file,
-    cpp_args: [flags, main_flags],
+  source_dep = declare_dependency(
     dependencies: [spdlog, fmt],
-    install: true,
+    include_directories: include_directories('.'),
+    sources: src,
   )
 endif
 
-inc = include_directories('.')
+j4dd_exe = executable(
+  'j4-dmenu-desktop',
+  'main.cc',
+  version_def_file,
+  cpp_args: [flags, main_flags],
+  dependencies: [spdlog, fmt, source_dep],
+  install: true,
+)

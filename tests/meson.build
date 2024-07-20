@@ -32,25 +32,12 @@ test_files = [
 
 test_files_location = meson.project_source_root() / 'tests/test_files/"'
 
-if get_option('split-source')
-  test_exe = executable(
-    'j4-dmenu-tests',
-    test_files,
-    dependencies: [catch2, spdlog, fmt],
-    link_with: source_lib,
-    include_directories: inc,
-    cpp_args: ['-DTEST_FILES="' + test_files_location, flags],
-  )
-else
-  test_exe = executable(
-    'j4-dmenu-tests',
-    test_files,
-    src,
-    dependencies: [catch2, spdlog, fmt],
-    include_directories: inc,
-    cpp_args: ['-DTEST_FILES="' + test_files_location, flags],
-  )
-endif
+test_exe = executable(
+  'j4-dmenu-tests',
+  test_files,
+  dependencies: [catch2, spdlog, fmt, source_dep],
+  cpp_args: ['-DTEST_FILES="' + test_files_location, flags],
+)
 
 # NotifyKqueue checks for changes every minute. This means that the default timeout
 # of 30 seconds is not sufficient on BSDs, because one of the tests uses Notify.
