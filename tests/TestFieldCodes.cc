@@ -30,7 +30,7 @@
 #include "generated/tests_config.hh"
 
 #include "Application.hh"
-#include "ApplicationRunner.hh"
+#include "FieldCodes.hh"
 #include "LineReader.hh"
 #include "LocaleSuffixes.hh"
 #include "Utilities.hh"

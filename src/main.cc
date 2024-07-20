@@ -57,11 +57,11 @@
 
 #include "AppManager.hh"
 #include "Application.hh"
-#include "ApplicationRunner.hh"
 #include "CMDLineAssembler.hh"
 #include "CMDLineTerm.hh"
 #include "Dmenu.hh"
 #include "DynamicCompare.hh"
+#include "FieldCodes.hh"
 #include "FileFinder.hh"
 #include "Formatters.hh"
 #include "HistoryManager.hh"

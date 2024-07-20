@@ -15,8 +15,8 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef APPLICATIONRUNNER_DEF
-#define APPLICATIONRUNNER_DEF
+#ifndef FIELDCODES_DEF
+#define FIELDCODES_DEF
 
 #include <string>
 

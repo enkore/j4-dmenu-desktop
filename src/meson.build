@@ -83,10 +83,10 @@ endif
 src = files(
   'AppManager.cc',
   'Application.cc',
-  'ApplicationRunner.cc',
   'CMDLineAssembler.cc',
   'CMDLineTerm.cc',
   'Dmenu.cc',
+  'FieldCodes.cc',
   'FileFinder.cc',
   'Formatters.cc',
   'HistoryManager.cc',

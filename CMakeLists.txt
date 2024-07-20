@@ -33,7 +33,7 @@ else()
          "Use the kqueue event notification mechanism instead of Inotify" OFF)
 endif()
 
-SET(SOURCE AppManager.cc Application.cc ApplicationRunner.cc Dmenu.cc FileFinder.cc Formatters.cc HistoryManager.cc I3Exec.cc LocaleSuffixes.cc SearchPath.cc Utilities.cc LineReader.cc CMDLineAssembler.cc CMDLineTerm.cc)
+SET(SOURCE AppManager.cc Application.cc FieldCodes.cc Dmenu.cc FileFinder.cc Formatters.cc HistoryManager.cc I3Exec.cc LocaleSuffixes.cc SearchPath.cc Utilities.cc LineReader.cc CMDLineAssembler.cc CMDLineTerm.cc)
 list(TRANSFORM SOURCE PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
 SET(OVERRIDE_VERSION "" CACHE STRING "Override version")

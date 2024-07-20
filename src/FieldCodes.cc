@@ -15,7 +15,7 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "ApplicationRunner.hh"
+#include "FieldCodes.hh"
 
 #include <stdexcept>
 // IWYU pragma: no_include <vector>

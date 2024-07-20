@@ -17,7 +17,7 @@ test_files = [
   'TestApplication.cc',
   'TestHistoryManager.cc',
   'TestDynamicCompare.cc',
-  'TestApplicationRunner.cc',
+  'TestFieldCodes.cc',
   'TestFileFinder.cc',
   'TestFormatters.cc',
   'TestLocaleSuffixes.cc',
