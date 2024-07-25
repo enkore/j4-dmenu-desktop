@@ -544,17 +544,26 @@ public:
     void operator=(const CommandRetrievalLoop &) = delete;
     void operator=(CommandRetrievalLoop &&) = delete;
 
-    struct CommandInfo
+    struct DesktopCommandInfo
+    {
+        const Application *app;
+        std::string args; // Arguments provided to %f, %F, %u and %U field codes
+                          // in desktop files. This will be empty in most cases.
+
+        DesktopCommandInfo(const Application *app, std::string args)
+            : app(app), args(std::move(args)) {}
+    };
+
+    struct CustomCommandInfo
     {
         std::string raw_command;
-        bool is_custom;
-        bool is_terminal;     // Corresponds to Terminal field.
-        std::string path;     // CWD of app if not empty; corresponds to Path
-                              // desktop entry key
-        std::string app_name; // This element isn't that important, it is used
-                              // to set the window title when using a terminal
-                              // emulator
+
+        CustomCommandInfo(std::string raw_command)
+            : raw_command(std::move(raw_command)) {}
     };
+
+    using CommandInfoVariant =
+        std::variant<DesktopCommandInfo, CustomCommandInfo>;
 
     // This function is separate from prompt_user_for_choice() because it needs
     // to be executed at different times when j4dd is executed normally and when
@@ -566,7 +575,7 @@ public:
         this->dmenu.run();
     }
 
-    std::optional<CommandInfo> prompt_user_for_choice() {
+    std::optional<CommandInfoVariant> prompt_user_for_choice() {
         std::optional<std::string> query =
             RunPhase::do_dmenu(this->dmenu, this->mapping.get_formatted_map(),
                                (this->hist_manager ? this->hist_manager->view()
@@ -587,12 +596,9 @@ public:
         else
             SPDLOG_DEBUG("Selected entry is: desktop app");
 
-        std::string raw_command;
-        bool terminal = false;
-        std::string path;
-        std::string app_name;
         if (is_custom)
-            raw_command = std::get<CommandLookup>(lookup).command;
+            return CommandInfoVariant(std::in_place_type_t<CustomCommandInfo>{},
+                                      std::get<CommandLookup>(lookup).command);
         else {
             const ApplicationLookup &appl = std::get<ApplicationLookup>(lookup);
             if (!this->no_exec && this->hist_manager) {
@@ -600,14 +606,10 @@ public:
                     (appl.is_generic ? appl.app->generic_name : appl.app->name);
                 this->hist_manager->increment(name);
             }
-            raw_command = application_command(*appl.app, appl.args);
-            terminal = appl.app->terminal;
-            path = appl.app->path;
-            app_name = appl.app->name;
+            return CommandInfoVariant(
+                std::in_place_type_t<DesktopCommandInfo>{}, appl.app,
+                appl.args);
         }
-
-        return CommandInfo{std::move(raw_command), is_custom, terminal, path,
-                           app_name};
     }
 
     void update_mapping(const AppManager &appm) {
@@ -646,7 +648,7 @@ class BaseExecutable
 {
 public:
     virtual void
-    execute(const RunPhase::CommandRetrievalLoop::CommandInfo &) = 0;
+    execute(const RunPhase::CommandRetrievalLoop::CommandInfoVariant &) = 0;
 
     virtual ~BaseExecutable() {}
 };
@@ -668,32 +670,54 @@ public:
 
     // This is used in both NormalExecutable and in FakeExecutable
     static stringlist_t prepare_processed_argv(
-        const RunPhase::CommandRetrievalLoop::CommandInfo &command_info,
+        const RunPhase::CommandRetrievalLoop::CommandInfoVariant &command_info,
         const std::string &wrapper, const std::string &terminal,
         CMDLineTerm::term_assembler term_assembler) {
         std::vector<std::string> command_array;
-        if (command_info.is_custom)
-            command_array = CMDLineAssembly::wrap_cmdstring_in_shell(
-                command_info.raw_command);
-        else
-            command_array = CMDLineAssembly::convert_exec_to_command(
-                command_info.raw_command);
-        if (command_info.is_terminal)
+
+        using CustomCommandInfo =
+            RunPhase::CommandRetrievalLoop::CustomCommandInfo;
+        using DesktopCommandInfo =
+            RunPhase::CommandRetrievalLoop::DesktopCommandInfo;
+
+        if (std::holds_alternative<CustomCommandInfo>(command_info)) {
+            const auto &info = std::get<CustomCommandInfo>(command_info);
+
             command_array =
-                term_assembler(command_array, terminal, command_info.app_name);
+                CMDLineAssembly::wrap_cmdstring_in_shell(info.raw_command);
+        } else {
+            const auto &info = std::get<DesktopCommandInfo>(command_info);
+
+            command_array =
+                CMDLineAssembly::convert_exec_to_command(info.app->exec);
+            expand_field_codes(command_array, *info.app, info.args);
+            if (info.app->terminal)
+                command_array =
+                    term_assembler(command_array, terminal, info.app->name);
+        }
+
         if (!wrapper.empty())
             command_array = CMDLineAssembly::wrap_command_in_wrapper(
                 command_array, wrapper);
+
         return command_array;
     }
 
-    void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
+    void execute(const RunPhase::CommandRetrievalLoop::CommandInfoVariant
                      &command_info) override {
-        if (!command_info.path.empty()) {
-            if (chdir(command_info.path.c_str()) == -1) {
-                SPDLOG_ERROR("Couldn't chdir() to '{}' set in Path key: {}",
-                             command_info.path, strerror(errno));
-                exit(EXIT_FAILURE);
+        if (std::holds_alternative<
+                RunPhase::CommandRetrievalLoop::DesktopCommandInfo>(
+                command_info)) {
+            const std::string &path =
+                std::get<RunPhase::CommandRetrievalLoop::DesktopCommandInfo>(
+                    command_info)
+                    .app->path;
+            if (!path.empty()) {
+                if (chdir(path.c_str()) == -1) {
+                    SPDLOG_ERROR("Couldn't chdir() to '{}' set in Path key: {}",
+                                 path, strerror(errno));
+                    exit(EXIT_FAILURE);
+                }
             }
         }
 
@@ -724,7 +748,7 @@ public:
     void operator=(const FakeExecutable &) = delete;
     void operator=(FakeExecutable &&) = delete;
 
-    void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
+    void execute(const RunPhase::CommandRetrievalLoop::CommandInfoVariant
                      &command_info) override {
         auto argv = NormalExecutable::prepare_processed_argv(
             command_info, this->wrapper, this->terminal, this->term_assembler);
@@ -754,38 +778,46 @@ public:
     void operator=(const I3Executable &) = delete;
     void operator=(I3Executable &&) = delete;
 
-    void execute(const RunPhase::CommandRetrievalLoop::CommandInfo
+    void execute(const RunPhase::CommandRetrievalLoop::CommandInfoVariant
                      &command_info) override {
         std::vector<std::string> command_array;
-        if (command_info.is_custom) {
-            std::string command = command_info.raw_command;
-            if (!command_info.path.empty())
-                command = "cd " + CMDLineAssembly::sq_quote(command_info.path) +
-                          " && " + command;
-            command_array = CMDLineAssembly::wrap_cmdstring_in_shell(command);
+
+        using CustomCommandInfo =
+            RunPhase::CommandRetrievalLoop::CustomCommandInfo;
+        using DesktopCommandInfo =
+            RunPhase::CommandRetrievalLoop::DesktopCommandInfo;
+
+        if (std::holds_alternative<CustomCommandInfo>(command_info)) {
+            const auto &info = std::get<CustomCommandInfo>(command_info);
+
+            command_array =
+                CMDLineAssembly::wrap_cmdstring_in_shell(info.raw_command);
         } else {
-            command_array = CMDLineAssembly::convert_exec_to_command(
-                command_info.raw_command);
-            if (!command_info.path.empty()) {
+            const auto &info = std::get<DesktopCommandInfo>(command_info);
+
+            command_array =
+                CMDLineAssembly::convert_exec_to_command(info.app->exec);
+            if (!info.app->path.empty()) {
                 // This is kinda convoluted to be honest. chdir() can't be used
                 // here, because I3 is responsible for the execution
                 // environment. I believe that the most portable way to chdir is
                 // to wrap command_array in shell and prepend the part wrapped
                 // in shell with "cd <directory> && exec <command>".
                 command_array = CMDLineAssembly::wrap_cmdstring_in_shell(
-                    "cd " + CMDLineAssembly::sq_quote(command_info.path) +
+                    "cd " + CMDLineAssembly::sq_quote(info.app->path) +
                     " && exec " +
                     CMDLineAssembly::convert_argv_to_string(command_array));
             }
+
+            if (info.app->terminal)
+                command_array = this->term_assembler(
+                    command_array, this->terminal, info.app->name);
         }
         // wrapper and i3 mode are mutally exclusive, no need to handle it here.
         /*
         if (!this->wrapper.empty())
             ...
         */
-        if (command_info.is_terminal)
-            command_array = this->term_assembler(command_array, this->terminal,
-                                                 command_info.app_name);
         I3Interface::exec(
             CMDLineAssembly::convert_argv_to_string(command_array),
             this->i3_ipc_path);
@@ -1394,8 +1426,8 @@ int main(int argc, char **argv) {
                        command_retrieval_loop, executor.get());
             abort();
         } else {
-            std::optional<RunPhase::CommandRetrievalLoop::CommandInfo> command =
-                command_retrieval_loop.prompt_user_for_choice();
+            std::optional<RunPhase::CommandRetrievalLoop::CommandInfoVariant>
+                command = command_retrieval_loop.prompt_user_for_choice();
             if (!command)
                 return 0;
             executor->execute(*command);

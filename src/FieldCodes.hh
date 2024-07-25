@@ -19,12 +19,13 @@
 #define FIELDCODES_DEF
 
 #include <string>
+#include <vector>
 
 class Application;
 
-// This functions expands the field codes in Exec and prepares the arguments for
-// the shell
-const std::string application_command(const Application &app,
-                                      const std::string &args);
+// This function should be used on the output of convert_exec_to_command().
+// It expands field codes in every argument.
+void expand_field_codes(std::vector<std::string> &args, const Application &app,
+                        const std::string &user_arguments);
 
 #endif

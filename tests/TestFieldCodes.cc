@@ -30,6 +30,7 @@
 #include "generated/tests_config.hh"
 
 #include "Application.hh"
+#include "CMDLineAssembler.hh"
 #include "FieldCodes.hh"
 #include "LineReader.hh"
 #include "LocaleSuffixes.hh"
@@ -37,7 +38,8 @@
 
 // This function will pass the string to the shell, the shell will unquote and
 // expand it and it will return the split arguments.
-static stringlist_t getshell(const std::string &args) {
+// NOTE: This could be merged with ShellUnquote.sh
+static stringlist_t getshell(const std::vector<std::string> &args) {
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         WARN("Unable to create pipe: " << strerror(errno));
@@ -53,8 +55,10 @@ static stringlist_t getshell(const std::string &args) {
         close(pipefd[0]);
         close(pipefd[1]);
         close(STDIN_FILENO);
-        execl("/bin/sh", "/bin/sh", "-c",
-              ((std::string) "printf '%s\\0' " + args).c_str(), (char *)NULL);
+        std::string joined_args = CMDLineAssembly::convert_argv_to_string(args);
+        execl("/bin/sh", "/bin/sh", "-c", "--",
+              ((std::string) "printf '%s\\0' " + joined_args).c_str(),
+              (char *)NULL);
         _exit(1);
     }
     close(pipefd[1]);
@@ -83,7 +87,9 @@ TEST_CASE("Tests proper handling of special characters",
     LineReader liner;
     Application app(TEST_FILES "applications/gimp.desktop", liner, ls, {});
 
-    auto result = getshell(application_command(app, R"--(@#$%^&*}{)(\)--"));
+    auto args = CMDLineAssembly::convert_exec_to_command(app.exec);
+    expand_field_codes(args, app, R"--(@#$%^&*}{)(\)--");
+    auto result = getshell(args);
 
     stringlist_t cmp({"gimp-2.8", R"--(@#$%^&*}{)(\)--"});
     REQUIRE(result == cmp);
@@ -95,7 +101,10 @@ TEST_CASE("Test field codes", "[ApplicationRunner]") {
     Application app(TEST_FILES "applications/field_codes.desktop", liner, ls,
                     {});
 
-    auto result = getshell(application_command(app, "arg1 arg2\\ arg3"));
+    auto args = CMDLineAssembly::convert_exec_to_command(app.exec);
+    expand_field_codes(args, app, "arg1 arg2\\ arg3");
+    auto result = getshell(args);
+
     stringlist_t cmp({"true", "--name=%c", "--location",
                       TEST_FILES "applications/field_codes.desktop", "arg1",
                       "arg2\\", "arg3"});
@@ -108,7 +117,10 @@ TEST_CASE("Regression test for issue #18, %c was not escaped",
     LineReader liner;
     Application app(TEST_FILES "applications/caption.desktop", liner, ls, {});
 
-    auto result = getshell(application_command(app, ""));
+    auto args = CMDLineAssembly::convert_exec_to_command(app.exec);
+    expand_field_codes(args, app, "");
+    auto result = getshell(args);
+
     stringlist_t cmp({"1234", "--caption", "Regression Test 18"});
     REQUIRE(result == cmp);
 }
