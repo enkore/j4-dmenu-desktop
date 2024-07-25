@@ -17,11 +17,11 @@
 
 #include "FieldCodes.hh"
 
-#include <optional>
+#include <algorithm>
+#include <iterator>
 #include <stdexcept>
 
 #include "Application.hh"
-#include "CMDLineAssembler.hh"
 #include "Utilities.hh"
 
 void expand_field_codes(std::vector<std::string> &args, const Application &app,
