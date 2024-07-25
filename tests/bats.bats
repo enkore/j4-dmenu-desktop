@@ -197,4 +197,7 @@ EOF
 @test "Test correct handling of %F arguments to desktop apps" {
     PATH="$HELPERS:$PATH" J4DD_UNIT_TEST_STATUS_FILE="$TMP" XDG_DATA_HOME="${TEST_FILES}bats/args/" XDG_DATA_DIRS="${TEST_FILES}empty/" J4DD_UNIT_TEST_ARGS="arg1:arg2:arg3:--arg4" run_j4dd --dmenu "${HELPERS}/dmenu_selected_imitator.sh arg1 arg2 arg3 --arg4"
     echo 1 | cmp - "$TMP"
+
+    PATH="$HELPERS:$PATH" J4DD_UNIT_TEST_STATUS_FILE="$TMP" XDG_DATA_HOME="${TEST_FILES}bats/args/" XDG_DATA_DIRS="${TEST_FILES}empty/" J4DD_UNIT_TEST_ARGS="arg1:arg2:arg3:--arg4" run_j4dd --dmenu "${HELPERS}/dmenu_selected_imitator.sh arg1 arg2  arg3   --arg4"
+    echo 1 | cmp - "$TMP"
 }
