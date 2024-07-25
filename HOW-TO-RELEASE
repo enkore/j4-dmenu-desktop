@@ -3,7 +3,7 @@
 - Commit message follows the pattern "rX.Y released ISO8601DATE"
 - Tag:
   git tag -a -m '<CHANGELOG ENTRY>' rX.Y --sign
-- Use GPG key A1774C1B37DC1DCEDB65EE469B8450B91D1362C1
+- Use GPG key 7B0F58A5E0F1A2EA11578A731A14CB3464CBE5BF (formerly key A1774C1B37DC1DCEDB65EE469B8450B91D1362C1)
 - git push --tags
 - Create GitHub release
 - Download .tar.gz

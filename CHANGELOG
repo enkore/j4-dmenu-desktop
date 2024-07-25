@@ -119,3 +119,4 @@ r3.1 to be released
 	+ improved Exec mechanism (see 7efae31)
 	+ fix minor bugs
 	+ added Bats testsuite
+	+ changed signing key
