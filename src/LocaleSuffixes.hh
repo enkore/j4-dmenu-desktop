@@ -26,7 +26,11 @@
 class LocaleSuffixes
 {
 public:
-    LocaleSuffixes(std::string locale = set_locale());
+    LocaleSuffixes(std::string locale);
+
+    static LocaleSuffixes from_environment() {
+        return LocaleSuffixes(set_locale());
+    }
 
     // this function tests if a given string is matched by the current locale
     // it returns an int that signifies how well it matches so that Application

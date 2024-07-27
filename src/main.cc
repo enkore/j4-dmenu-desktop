@@ -1347,7 +1347,7 @@ int main(int argc, char **argv) {
         for (const std::string &file : item.files)
             SPDLOG_DEBUG("   {}", file);
     }
-    LocaleSuffixes locales;
+    LocaleSuffixes locales = LocaleSuffixes::from_environment();
     {
         auto suffixes = locales.list_suffixes_for_logging_only();
         SPDLOG_DEBUG("Found {} locale suffixes:", suffixes.size());
