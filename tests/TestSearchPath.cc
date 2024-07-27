@@ -42,15 +42,30 @@ TEST_CASE("Check SearchPath honors XDG_DATA_HOME", "[SearchPath]") {
     }
 }
 
+TEST_CASE("Check SearchPath defaults for unset XDG_DATA_DIRS", "[SearchPath]") {
+    setenv("XDG_DATA_HOME", "/does/not/exist", 1);
+    unsetenv("XDG_DATA_DIRS");
+
+    std::vector<std::string> result = get_search_path();
+
+    std::vector<std::string> expected;
+    if (is_directory("/usr/local/share/applications/"))
+        expected.push_back("/usr/local/share/applications/");
+    if (is_directory("/usr/share/applications/"))
+        expected.push_back("/usr/share/applications/");
+
+    REQUIRE(result == expected);
+}
+
 TEST_CASE("Check SearchPath honors XDG_DATA_DIRS", "[SearchPath]") {
     unsetenv("XDG_DATA_HOME");
     setenv("HOME", "/home/testuser", 1);
     setenv("XDG_DATA_DIRS",
-           TEST_FILES "usr/share/:" TEST_FILES "usr/local/share/", 1);
+           TEST_FILES "usr/local/share/:" TEST_FILES "usr/share/", 1);
 
     std::vector<std::string> result = get_search_path();
 
     REQUIRE(result.size() == 2);
-    REQUIRE(result[0] == TEST_FILES "usr/share/applications/");
-    REQUIRE(result[1] == TEST_FILES "usr/local/share/applications/");
+    REQUIRE(result[0] == TEST_FILES "usr/local/share/applications/");
+    REQUIRE(result[1] == TEST_FILES "usr/share/applications/");
 }
