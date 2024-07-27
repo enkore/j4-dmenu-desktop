@@ -177,7 +177,7 @@ TEST_CASE("Test conversion from v0 to v1", "[History]") {
                      TEST_FILES "applications/visible.desktop",
                  }}
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
         HistoryManager hist =
             HistoryManager::convert_history_from_v0(tmpfile.get_name(), apps);
         REQUIRE(compare_maps(hist.view(), history));
@@ -225,7 +225,7 @@ TEST_CASE("Test imperfect conversion from history v0 to v1", "[History]") {
                      TEST_FILES "applications/visible.desktop",
                  }}
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
         HistoryManager hist =
             HistoryManager::convert_history_from_v0(tmpfile.get_name(), apps);
         REQUIRE(compare_maps(hist.view(), history));

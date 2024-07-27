@@ -110,7 +110,7 @@ TEST_CASE("Test basic functionality + hidden desktop file", "[AppManager]") {
               TEST_FILES "a/applications/firefox.desktop",
               TEST_FILES "a/applications/hidden.desktop"}}
     },
-        {}, LocaleSuffixes());
+        {}, LocaleSuffixes("en_US"));
 
     REQUIRE(apps.count() == 3);
 
@@ -142,7 +142,7 @@ TEST_CASE("Test basic NotShowIn/OnlyShowIn interactions", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            {"i3"}, LocaleSuffixes());
+            {"i3"}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 2);
         REQUIRE(apps.view_name_app_mapping().size() == 2);
@@ -155,7 +155,7 @@ TEST_CASE("Test basic NotShowIn/OnlyShowIn interactions", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            {"Kde"}, LocaleSuffixes());
+            {"Kde"}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 2);
         REQUIRE(apps.view_name_app_mapping().size() == 0);
@@ -168,7 +168,7 @@ TEST_CASE("Test basic NotShowIn/OnlyShowIn interactions", "[AppManager]") {
                  {TEST_FILES "applications/notShowIn.desktop",
                   TEST_FILES "applications/onlyShowIn.desktop"}}
         },
-            {"Gnome"}, LocaleSuffixes());
+            {"Gnome"}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 2);
         REQUIRE(apps.view_name_app_mapping().size() == 2);
@@ -184,7 +184,7 @@ TEST_CASE("Test ID collisions", "[AppManager]") {
                 {TEST_FILES "usr/local/share/applications/",
                  {TEST_FILES "usr/local/share/applications/collision.desktop"}},
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
         REQUIRE(apps.count() == 1);
         {
             ctype check{
@@ -203,7 +203,7 @@ TEST_CASE("Test ID collisions", "[AppManager]") {
                 {TEST_FILES "usr/share/applications/",
                  {TEST_FILES "usr/share/applications/collision.desktop"}      },
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
         REQUIRE(apps.count() == 1);
         {
             ctype check{
@@ -226,7 +226,7 @@ TEST_CASE("Test collisions and remove()", "[AppManager]") {
              {TEST_FILES "b/applications/chrome.desktop",
               TEST_FILES "b/applications/safari.desktop"} },
     },
-        {}, LocaleSuffixes());
+        {}, LocaleSuffixes("en_US"));
 
     REQUIRE(apps.count() == 4);
 
@@ -324,7 +324,7 @@ TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
                 {TEST_FILES "applications/",
                  {TEST_FILES "applications/chromium-variant1.desktop"}},
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 3);
 
@@ -361,7 +361,7 @@ TEST_CASE("Test removing app with shadowed name", "[AppManager]") {
                  {TEST_FILES "applications/chromium-variant1.desktop",
                   TEST_FILES "applications/chromium-variant2.desktop"}},
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 2);
 
@@ -395,7 +395,7 @@ TEST_CASE("Test collisions, remove() and add()", "[AppManager]") {
             {TEST_FILES "c/applications/",
              {TEST_FILES "c/applications/vivaldi.desktop"}}
     },
-        {}, LocaleSuffixes());
+        {}, LocaleSuffixes("en_US"));
     // clang-format on
     REQUIRE(apps.count() == 4);
 
@@ -540,7 +540,7 @@ TEST_CASE("Test overwriting with add()", "[AppManager]") {
             {TEST_FILES "c/applications/",
              {TEST_FILES "c/applications/vivaldi.desktop"}     }
     },
-        {}, LocaleSuffixes());
+        {}, LocaleSuffixes("en_US"));
 
     apps.check_inner_state();
 
@@ -627,7 +627,7 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
                 {TEST_FILES "usr/share/applications/",
                  {TEST_FILES "usr/share/applications/collision.desktop"}},
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 1);
 
@@ -651,7 +651,7 @@ TEST_CASE("Test desktop ID collisions, remove() and add()", "[AppManager]") {
                 {TEST_FILES "usr/local/share/applications/",
                  {TEST_FILES "usr/local/share/applications/collision.desktop"}},
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 1);
         {
@@ -683,7 +683,7 @@ TEST_CASE("Test adding a disabled file", "[AppManager]") {
              {TEST_FILES "a/applications/chromium.desktop",
               TEST_FILES "a/applications/firefox.desktop"}},
     },
-        {}, LocaleSuffixes());
+        {}, LocaleSuffixes("en_US"));
 
     REQUIRE(apps.count() == 2);
 
@@ -712,7 +712,7 @@ TEST_CASE("Test lookup by ID", "[AppManager]") {
               TEST_FILES "a/applications/firefox.desktop",
               TEST_FILES "a/applications/hidden.desktop"}}
     },
-        {}, LocaleSuffixes());
+        {}, LocaleSuffixes("en_US"));
 
     REQUIRE(apps.lookup_by_ID("chromium.desktop").value().get().name ==
             "Chromium");
@@ -728,7 +728,7 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
                 {TEST_FILES "applications/",
                  {TEST_FILES "applications/notShowIn.desktop"}}
         },
-            {"Kde"}, LocaleSuffixes());
+            {"Kde"}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 3);
         {
@@ -766,7 +766,7 @@ TEST_CASE("Test NotShowIn/OnlyShowIn", "[AppManager]") {
                 {TEST_FILES "applications/",
                  {TEST_FILES "applications/notShowIn.desktop"}}
         },
-            {"i3"}, LocaleSuffixes());
+            {"i3"}, LocaleSuffixes("en_US"));
 
         REQUIRE(apps.count() == 3);
         {
@@ -811,7 +811,7 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files (see #167)",
                   "usr/local/share/applications/couldbehidden.desktop"}},
                 {TEST_FILES "usr/share/applications/", {}}
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
         // clang-format on
 
         apps.check_inner_state();
@@ -847,7 +847,7 @@ TEST_CASE("Test add()ing mixed hidden and not hidden files (see #167)",
                  {TEST_FILES "usr/share/applications/couldbehidden.desktop"}},
                 {TEST_FILES "usr/local/share/applications/", {}}
         },
-            {}, LocaleSuffixes());
+            {}, LocaleSuffixes("en_US"));
         // clang-format on
 
         apps.check_inner_state();
@@ -908,7 +908,7 @@ TEST_CASE("Test reading a unreadable file.", "[AppManager]") {
              {TEST_FILES "applications/eagle.desktop"}           },
             {"/tmp/",                    {unreadable1.get_name()}}
     },
-        stringlist_t{}, LocaleSuffixes{}));
+        stringlist_t{}, LocaleSuffixes("en_US")));
 
     AppManager &apps = *container;
 
@@ -1011,7 +1011,7 @@ TEST_CASE("Test removing an unknown desktop file", "[AppManager]") {
               TEST_FILES "applications/gimp.desktop",
               TEST_FILES "applications/hidden.desktop"}}
     },
-        {}, LocaleSuffixes());
+        {}, LocaleSuffixes("en_US"));
 
     apps.check_inner_state();
 
