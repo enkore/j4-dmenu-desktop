@@ -43,35 +43,4 @@ test_exe = executable(
 # of 30 seconds is not sufficient on BSDs, because one of the tests uses Notify.
 test('j4-dmenu-tests', test_exe, timeout: 90)
 
-bats_exe = find_program(
-  'bats',
-  native: true,
-  required: false,
-  version: '>=1.2.1',
-)
-
-if bats_exe.found()
-  show_passing_tests = []
-
-  # Be verbose if Bats allows it
-  if bats_exe.version().version_compare('>=1.5.0')
-    show_passing_tests = '--show-output-of-passing-tests'
-  endif
-
-  test(
-    'bats-tests',
-    files('bats_runner.sh'),
-    args: [
-      '-b',
-      bats_exe.full_path(),
-      j4dd_exe,
-      '--pretty',
-      show_passing_tests,
-      files('bats.bats'),
-    ],
-    depends: j4dd_exe,
-  )
-else
-  warning('Couldn\'t find bats executable, bats tests will be skipped.')
-  test('bats-tests', files('skipped_test.sh'))
-endif
+subdir('system_tests')
