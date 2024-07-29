@@ -31,7 +31,7 @@ option(
     'enable-tests',
     type: 'boolean',
     value: true,
-    description: 'Enable unit tests. If disabled, j4-dmenu-desktop will not depend on Catch2 or Bats.'
+    description: 'Enable unit tests. If disabled, j4-dmenu-desktop will not depend on Catch2 or pytest.'
 )
 
 option(

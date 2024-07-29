@@ -26,18 +26,16 @@ statically (unless the build system is overridden or dependencies are provided
 externally).
 
 J4-dmenu-desktop also depends on
-[bats-core](https://github.com/bats-core/bats-core). It is an **optional
+[pytest](https://docs.pytest.org/en/stable/). It is an **optional
 external** dependency. It is used for system testing to supplement Catch2
-tests. If bats-core is not available, bats tests will be marked as skipped.
+tests. If pytest is not available, pytest tests will be marked as skipped.
 
-The Bats testsuite includes tests for various supported terminal emulators.
-These tests are optional, if a certain terminal emulator is available and
-executable (a display server is available), they are enabled, otherwise they are
-skipped. The following terminal emulators can be tested: `i3` (provider of
-`i3-sensible-terminal`), `xterm`, `alacritty`, `kitty`, `terminator` and
-`gnome-terminal`.
+The pytest testsuite includes tests for various supported terminal emulators.
+See
+[tests/system_tests/README.md](tests/system_tests/README.md#Terminal-emulators)
+for more info.
 
-J4-dmenu-desktop won't depend on Catch2 or Bats if tests are disabled.
+J4-dmenu-desktop won't depend on Catch2 or pytest if tests are disabled.
 
 ## Building with CMake
 Out-of-source builds are fully supported.
