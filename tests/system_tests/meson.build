@@ -18,4 +18,3 @@ else
   warning('Couldn\'t find \'pytest\' executable, pytest tests will be skipped.')
   test('pytest-system-tests', files('skipped_test.sh'), args: ['Meson'])
 endif
-
