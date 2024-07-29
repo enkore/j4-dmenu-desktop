@@ -94,7 +94,6 @@ def check_term_emulator_availability(
         raise DisabledTermError(
             f"`{shlex.join(args)}` returned with exit status {result.returncode}!"
         )
-    pass
 
 
 def check_term_mode(
@@ -105,7 +104,7 @@ def check_term_mode(
 ):
     """Run j4-dmenu-desktop with specific terminal emulator and test results."""
     path_env = os.getenv("PATH")
-    term_mode_result_path = tmp_path / "term_mode_result"
+    term_mode_result_path = tmp_path / f"{term_mode}_term_mode_was_executed.sh_result"
     mkfifo(term_mode_result_path)
     async_result = run_j4dd(
         {
