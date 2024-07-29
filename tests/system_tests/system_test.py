@@ -15,9 +15,9 @@ import pytest
 
 import j4dd_run_helper
 
-test_files = pathlib.Path(__file__).parent.parent.absolute() / "test_files"
-helpers = pathlib.Path(__file__).parent.parent.absolute() / "bats_helpers"
-
+test_files = pathlib.Path(__file__).parent.parent.absolute() / "test_files/pytest"
+helpers = pathlib.Path(__file__).parent.absolute() / "helper_scripts"
+empty_dir = pathlib.Path(__file__).parent.parent.absolute() / "test_files/empty"
 
 def mkfifo(name: pathlib.Path | str) -> None:
     try:
@@ -43,9 +43,9 @@ def run_j4dd(j4dd_path):
 
 
 @pytest.fixture
-def chdir_bats():  # noqa: D103
+def chdir_test_files():  # noqa: D103
     oldpwd = os.getcwd()
-    os.chdir(test_files / "bats")
+    os.chdir(test_files)
     yield
     os.chdir(oldpwd)
 
@@ -60,10 +60,10 @@ def test_version(run_j4dd):
     run_j4dd({}, "--version")
 
 
-def test_SearchPath_checks(run_j4dd, chdir_bats):  # noqa: N802
+def test_SearchPath_checks(run_j4dd, chdir_test_files):  # noqa: N802
     """Regression test faulty SearchPath checks."""
     run_j4dd(
-        {"XDG_DATA_HOME": str(test_files / "empty"), "XDG_DATA_DIRS": ".:a:b"},
+        {"XDG_DATA_HOME": str(empty_dir), "XDG_DATA_DIRS": ".:a:b"},
         "--dmenu",
         str(helpers / "dmenu_noselect_imitator.sh"),
     )
@@ -109,8 +109,8 @@ def check_term_mode(
         {
             "PATH": f"{helpers}:{path_env}",
             "J4DD_UNIT_TEST_STATUS_FILE": str(term_mode_result_path),
-            "XDG_DATA_HOME": str(test_files / "bats"),
-            "XDG_DATA_DIRS": str(test_files / "empty"),
+            "XDG_DATA_HOME": str(test_files),
+            "XDG_DATA_DIRS": str(empty_dir),
             "J4DD_UNIT_TEST_ARGS": "--help:--:<><>'$$::!?",
         },
         "--dmenu",
@@ -203,8 +203,8 @@ def check_custom_term(run_j4dd):
     return functools.partial(
         run_j4dd,
         {
-            "XDG_DATA_HOME": str(test_files / "empty"),
-            "XDG_DATA_DIRS": str(test_files / "empty"),
+            "XDG_DATA_HOME": str(empty_dir),
+            "XDG_DATA_DIRS": str(empty_dir),
         },
         "--dmenu",
         str(helpers / "dmenu_noselect_imitator.sh"),
@@ -279,9 +279,9 @@ def test_normal_behavior(run_base_tests, tmp_path):
     """
     tmp_file = tmp_path / "normal-behavior-dmenu-input"
     env = {
-        "XDG_DATA_HOME": str(test_files / "bats/desktop-file-samples/rank-0"),
-        "XDG_DATA_DIRS": f"{test_files / 'bats/desktop-file-samples/rank-1'}"
-        f":{test_files / 'bats/desktop-file-samples/rank-2'}",
+        "XDG_DATA_HOME": str(test_files / "desktop-file-samples/rank-0"),
+        "XDG_DATA_DIRS": f"{test_files / 'desktop-file-samples/rank-1'}"
+        f":{test_files / 'desktop-file-samples/rank-2'}",
         "J4DD_UNIT_TEST_STATUS_FILE": str(tmp_file),
         "LC_MESSAGES": "C",
     }
@@ -331,8 +331,8 @@ def test_halding_of_file_field_codes(run_j4dd, tmp_path):
     env = {
         "PATH": f"{helpers}:{path}",
         "J4DD_UNIT_TEST_STATUS_FILE": str(tmp_file),
-        "XDG_DATA_HOME": str(test_files / "bats/args"),
-        "XDG_DATA_DIRS": str(test_files / "empty"),
+        "XDG_DATA_HOME": str(test_files / "args"),
+        "XDG_DATA_DIRS": str(empty_dir),
         "J4DD_UNIT_TEST_ARGS": "arg1:arg2:arg3:--arg4",
     }
 
