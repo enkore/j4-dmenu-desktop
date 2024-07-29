@@ -42,7 +42,7 @@ stringlist_t get_search_path() {
 
     std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
     if (xdg_data_dirs.empty())
-        xdg_data_dirs = "/usr/share/:/usr/local/share/";
+        xdg_data_dirs = "/usr/local/share/:/usr/share/";
 
     auto dirs = split(xdg_data_dirs, ':');
     for (auto &path : dirs) {
