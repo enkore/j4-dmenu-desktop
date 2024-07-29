@@ -20,7 +20,13 @@
 
 #include "Utilities.hh"
 
+#include <string>
+
 // The spec says that these paths must be absolute
+stringlist_t build_search_path(std::string xdg_data_home, std::string home,
+                               std::string xdg_data_dirs,
+                               bool (*is_directory_func)(const std::string &));
+
 stringlist_t get_search_path();
 
 #endif
