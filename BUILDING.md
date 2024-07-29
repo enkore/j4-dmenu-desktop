@@ -32,7 +32,7 @@ tests. If pytest is not available, pytest tests will be marked as skipped.
 
 The pytest testsuite includes tests for various supported terminal emulators.
 See
-[tests/system_tests/README.md](tests/system_tests/README.md#Terminal-emulators)
+[tests/system_tests/README.md](tests/system_tests/README.md#terminal-emulators)
 for more info.
 
 J4-dmenu-desktop won't depend on Catch2 or pytest if tests are disabled.
