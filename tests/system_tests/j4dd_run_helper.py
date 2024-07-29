@@ -1,5 +1,7 @@
 """Run j4-dmenu-desktop with set environment and print good error messages."""
 
+from __future__ import annotations
+
 import os  # noqa: I001
 import pathlib
 import shlex

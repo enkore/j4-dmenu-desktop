@@ -19,9 +19,8 @@ environments](https://docs.python.org/3/library/venv.html) is recommended.
 System tests depend on [pytest](https://docs.pytest.org/en/stable/) testing
 framework.
 
-The minimum supported Python version is **3.9.0** (but it shouldn't be that hard
-to make slight modifications to the scripts to add support for older versions of
-Python).
+System tests have been verified to work on Python 3.7.4 with pytest version
+3.10.1. System tests may work with older versions of these programs too.
 
 ### Terminal emulators
 The tests can optionally test j4-dmenu-desktop integration with various terminal

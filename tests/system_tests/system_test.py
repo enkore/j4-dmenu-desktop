@@ -4,6 +4,8 @@ These tests execute j4-dmenu-desktop with predetermined arguments and environmen
 variables and observe its result.
 """
 
+from __future__ import annotations
+
 import functools
 import os.path
 import pathlib
