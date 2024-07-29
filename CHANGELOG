@@ -111,6 +111,8 @@ r3.1 to be released
 	  Terminal=true applications
 	+ fixed hidden desktop files not participating in desktop ID precedence
 	  rules
+	+ fixed unit tests being dependent on current locale
+	+ fixed default value of XDG_DATA_DIRS
 	+ added explicit support for Sway using existing i3 IPC infrastructure
 	+ fixed --no-exec printing to stderr instead of stdout
 	+ added --term-mode to fix deprecation of "gnome-terminal -e" and to handle
