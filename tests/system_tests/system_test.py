@@ -17,13 +17,9 @@ import pytest
 
 import j4dd_run_helper
 
-test_files = (
-    pathlib.Path(__file__).parent.parent.absolute() / "test_files/pytest"
-)
+test_files = pathlib.Path(__file__).parent.parent.absolute() / "test_files/pytest"
 helpers = pathlib.Path(__file__).parent.absolute() / "helper_scripts"
-empty_dir = (
-    pathlib.Path(__file__).parent.parent.absolute() / "test_files/empty"
-)
+empty_dir = pathlib.Path(__file__).parent.parent.absolute() / "test_files/empty"
 
 
 def mkfifo(name: pathlib.Path | str) -> None:
@@ -86,9 +82,7 @@ def check_term_emulator_availability(
     """Check whether a terminal emulator is usable for tests."""
     term_path = shutil.which(terminal_emulator)
     if term_path is None:
-        raise DisabledTermError(
-            f"'{terminal_emulator}' couldn't be located in $PATH!"
-        )
+        raise DisabledTermError(f"'{terminal_emulator}' couldn't be located in $PATH!")
     args = [term_path, separator, "true"] if separator else [term_path, "true"]
     result = subprocess.run(
         args,
@@ -109,9 +103,7 @@ def check_term_mode(
 ):
     """Run j4-dmenu-desktop with specific terminal emulator and test results."""
     path_env = os.getenv("PATH")
-    term_mode_result_path = (
-        tmp_path / f"{term_mode}_term_mode_was_executed.sh_result"
-    )
+    term_mode_result_path = tmp_path / f"{term_mode}_term_mode_was_executed.sh_result"
     mkfifo(term_mode_result_path)
     async_result = run_j4dd(
         {
@@ -177,9 +169,7 @@ def test_terminal_emulator(
 ):
     """Test all supported terminal emulators."""
     if mode == "terminator":
-        pytest.skip(
-            "See https://github.com/gnome-terminator/terminator/issues/923"
-        )
+        pytest.skip("See https://github.com/gnome-terminator/terminator/issues/923")
 
     try:
         check_term_emulator_availability(terminal_emulator, program_flag)
@@ -364,8 +354,7 @@ def test_halding_of_file_field_codes(run_j4dd, tmp_path):
     async_result = run_j4dd(
         env,
         "--dmenu",
-        str(helpers / "dmenu_selected_imitator.sh")
-        + " arg1 arg2  arg3   --arg4",
+        str(helpers / "dmenu_selected_imitator.sh") + " arg1 arg2  arg3   --arg4",
         asynchronous=True,
     )
     try:

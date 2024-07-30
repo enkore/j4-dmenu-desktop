@@ -1,6 +1,3 @@
-[tool.ruff]
-line-length = 79
-
 [tool.ruff.lint]
 # First four warning types are enabled by default.
 select = ["E4", "E7", "E9", "F", "C90", "I", "N", "D", "B"]
