@@ -17,9 +17,14 @@ import pytest
 
 import j4dd_run_helper
 
-test_files = pathlib.Path(__file__).parent.parent.absolute() / "test_files/pytest"
+test_files = (
+    pathlib.Path(__file__).parent.parent.absolute() / "test_files/pytest"
+)
 helpers = pathlib.Path(__file__).parent.absolute() / "helper_scripts"
-empty_dir = pathlib.Path(__file__).parent.parent.absolute() / "test_files/empty"
+empty_dir = (
+    pathlib.Path(__file__).parent.parent.absolute() / "test_files/empty"
+)
+
 
 def mkfifo(name: pathlib.Path | str) -> None:
     try:
@@ -104,7 +109,9 @@ def check_term_mode(
 ):
     """Run j4-dmenu-desktop with specific terminal emulator and test results."""
     path_env = os.getenv("PATH")
-    term_mode_result_path = tmp_path / f"{term_mode}_term_mode_was_executed.sh_result"
+    term_mode_result_path = (
+        tmp_path / f"{term_mode}_term_mode_was_executed.sh_result"
+    )
     mkfifo(term_mode_result_path)
     async_result = run_j4dd(
         {
