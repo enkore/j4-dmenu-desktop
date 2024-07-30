@@ -44,6 +44,10 @@ You must run this command from a Meson build directory. In CMake, you can run
 ctest -R pytest-system-test
 ```
 
+> [!NOTE]
+> Running system tests when cross compiling is currently supported in Meson
+> only.
+
 You must run this command from a CMake build directory. Note that
 `j4-dmenu-desktop` **must be built** (with `make j4-dmenu-desktop`) beforehand!
 Tests will fail otherwise[^1].
