@@ -130,31 +130,35 @@ def check_term_mode(
     assert fifo_message == "1\n"
 
 
+terminal_emulators = [
+    (
+        "default",
+        "i3-sensible-terminal",
+        "-e",
+        "i3-sensible-terminal -e {script}",
+    ),
+    ("xterm", "xterm", "-e", "xterm -title {name} -e {cmdline@}"),
+    ("alacritty", "alacritty", "-e", "alacritty -T {name} -e {cmdline@}"),
+    ("kitty", "kitty", "", "kitty -T {name} {cmdline@}"),
+    (
+        "terminator",
+        "terminator",
+        "-x",
+        "terminator -T {name} -x {cmdline@}",
+    ),
+    (
+        "gnome-terminal",
+        "gnome-terminal",
+        "--",
+        "gnome-terminal --title {name} -- {cmdline@}",
+    ),
+]
+
+
 @pytest.mark.parametrize(
     "mode,terminal_emulator,program_flag,custom_test",
-    [
-        (
-            "default",
-            "i3-sensible-terminal",
-            "-e",
-            "i3-sensible-terminal -e {script}",
-        ),
-        ("xterm", "xterm", "-e", "xterm -title {name} -e {cmdline@}"),
-        ("alacritty", "alacritty", "-e", "alacritty -T {name} -e {cmdline@}"),
-        ("kitty", "kitty", "", "kitty -T {name} {cmdline@}"),
-        (
-            "terminator",
-            "terminator",
-            "-x",
-            "terminator -T {name} -x {cmdline@}",
-        ),
-        (
-            "gnome-terminal",
-            "gnome-terminal",
-            "--",
-            "gnome-terminal --title {name} -- {cmdline@}",
-        ),
-    ],
+    terminal_emulators,
+    ids=(emulator[0] for emulator in terminal_emulators),
 )
 def test_terminal_emulator(
     mode: str,
