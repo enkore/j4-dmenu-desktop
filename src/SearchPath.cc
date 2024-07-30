@@ -17,8 +17,6 @@
 
 #include "SearchPath.hh"
 
-#include <string>
-
 // IWYU pragma: no_include <vector>
 
 static void add_applications_dir(std::string &str) {
@@ -29,27 +27,33 @@ static void add_applications_dir(std::string &str) {
     str += '/';
 }
 
-stringlist_t get_search_path() {
+stringlist_t build_search_path(std::string xdg_data_home, std::string home,
+                               std::string xdg_data_dirs,
+                               bool (*is_directory_func)(const std::string &)) {
     stringlist_t result;
 
-    std::string xdg_data_home = get_variable("XDG_DATA_HOME");
     if (xdg_data_home.empty())
-        xdg_data_home = get_variable("HOME") + "/.local/share/";
+        xdg_data_home = home + "/.local/share/";
 
     add_applications_dir(xdg_data_home);
-    if (is_directory(xdg_data_home))
+    if (is_directory_func(xdg_data_home))
         result.push_back(xdg_data_home);
 
-    std::string xdg_data_dirs = get_variable("XDG_DATA_DIRS");
     if (xdg_data_dirs.empty())
         xdg_data_dirs = "/usr/local/share/:/usr/share/";
 
     auto dirs = split(xdg_data_dirs, ':');
     for (auto &path : dirs) {
         add_applications_dir(path);
-        if (is_directory(path))
+        if (is_directory_func(path))
             result.push_back(path);
     }
 
     return result;
+}
+
+stringlist_t get_search_path() {
+    return build_search_path(get_variable("XDG_DATA_HOME"),
+                             get_variable("HOME"),
+                             get_variable("XDG_DATA_DIRS"), is_directory);
 }
