@@ -19,6 +19,7 @@ class J4ddRunError(Exception):
 def _assemble_to_reproduce_line(
     override_env: dict[str, str], args: Iterable[str]
 ) -> str:
+    """Assemble 'To reproduce:' section contents of main error message."""
     if len(override_env) == 0:
         reproducer = ""
     else:
@@ -69,6 +70,11 @@ def _assemble_error_message(
 
 @dataclass
 class _SubprocessRunResult:
+    """Abstract return value of subprocess run.
+
+    This dataclass can contain process information of both synchronous and
+    asynchronous processes.
+    """
     returncode: int
     stdout: str
     stderr: str
@@ -78,8 +84,11 @@ class _SubprocessRunResult:
 class _AsyncData:
     """A messanger class.
 
-    This is a messanger class between _run_j4dd_impl, _subprocess_asynchronous
-    run and AsyncJ4ddResult.
+    This is a messanger class between _run_j4dd_impl(),
+    _subprocess_asynchronous() run and AsyncJ4ddResult.
+    _subprocess_asynchronous() needs this additional class to be able to return
+    extra information without actually returning it from the function (because
+    the function must return _SubprocessRunResult).
     """
 
     result: _SubprocessRunResult
@@ -114,6 +123,9 @@ class AsyncJ4ddResult:
 
         process = self._async_data.process
         stdout, stderr = process.communicate(timeout=timeout)
+        # _run_j4dd_impl_generator has access to self._async_data. It expects
+        # that it will be poppulated after next() is called and after the first
+        # (and only) yield is passed in _run_j4dd_impl()
         self._async_data.result.returncode = process.returncode
         self._async_data.result.stdout = stdout
         self._async_data.result.stderr = stderr
@@ -176,7 +188,12 @@ def _run_j4dd_impl(
             f"    {_assemble_to_reproduce_line(override_env, args)}\n"
         ) from exc
 
-    # Return execution to the caller temporarily (most useful in anync calls).
+    # Return execution to the caller temporarily. If calling synchronously,
+    # run_j4dd() will immediately reactivate this function as if the yield
+    # wasn't there.
+    # If calling asynchronously, execution will continue until
+    # AsyncJ4ddResult.wait() is called, which will poppulate the result variable
+    # here.
     yield
     if shouldfail:
         if result.returncode == 0:
@@ -225,6 +242,7 @@ def run_j4dd(
         async_data = _AsyncData(_SubprocessRunResult(1000, "", ""))
 
         def async_run(*args):
+            nonlocal async_data
             return _subprocess_asynchronous_run(async_data, *args)
 
         generator = _run_j4dd_impl(
@@ -234,6 +252,8 @@ def run_j4dd(
             *j4dd_arguments,
             shouldfail=shouldfail,
         )
+        # Execute first part of _run_j4dd_impl(), which executes
+        # j4-dmenu-desktop but doesn't check the result of the execution.
         next(generator)
         return AsyncJ4ddResult(async_data, generator)
     else:
@@ -244,6 +264,11 @@ def run_j4dd(
             *j4dd_arguments,
             shouldfail=shouldfail,
         )
+        # Execute first part of _run_j4dd_impl(), which executes
+        # j4-dmenu-desktop but doesn't check the result of the execution.
         next(result)
+        # Immediatelly execute the rest of _run_j4dd_impl(), which may throw
+        # J4ddRunError to signify that j4-dmenu-desktop exited with unexpected
+        # exit status.
         next(result, None)
     return None
