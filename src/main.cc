@@ -780,7 +780,7 @@ public:
 
     void execute(const RunPhase::CommandRetrievalLoop::CommandInfoVariant
                      &command_info) override {
-        std::vector<std::string> command_array;
+        std::string result;
 
         using CustomCommandInfo =
             RunPhase::CommandRetrievalLoop::CustomCommandInfo;
@@ -790,38 +790,36 @@ public:
         if (std::holds_alternative<CustomCommandInfo>(command_info)) {
             const auto &info = std::get<CustomCommandInfo>(command_info);
 
-            command_array =
-                CMDLineAssembly::wrap_cmdstring_in_shell(info.raw_command);
+            // command is already wrapped in i3's shell.
+            result = info.raw_command;
         } else {
             const auto &info = std::get<DesktopCommandInfo>(command_info);
 
-            command_array =
+            std::vector<std::string> command_array =
                 CMDLineAssembly::convert_exec_to_command(info.app->exec);
             expand_field_codes(command_array, *info.app, info.args);
-            if (!info.app->path.empty()) {
-                // This is kinda convoluted to be honest. chdir() can't be used
-                // here, because I3 is responsible for the execution
-                // environment. I believe that the most portable way to chdir is
-                // to wrap command_array in shell and prepend the part wrapped
-                // in shell with "cd <directory> && exec <command>".
-                command_array = CMDLineAssembly::wrap_cmdstring_in_shell(
-                    "cd " + CMDLineAssembly::sq_quote(info.app->path) +
-                    " && exec " +
-                    CMDLineAssembly::convert_argv_to_string(command_array));
-            }
+            if (!info.app->path.empty())
+                result = "cd " + CMDLineAssembly::sq_quote(info.app->path) +
+                         " && " +
+                         CMDLineAssembly::convert_argv_to_string(command_array);
+            else
+                result = CMDLineAssembly::convert_argv_to_string(command_array);
 
-            if (info.app->terminal)
-                command_array = this->term_assembler(
-                    command_array, this->terminal, info.app->name);
+            if (info.app->terminal) {
+                std::vector<std::string> new_command_array =
+                    CMDLineAssembly::wrap_cmdstring_in_shell(result);
+                new_command_array = this->term_assembler(
+                    new_command_array, this->terminal, info.app->name);
+                result =
+                    CMDLineAssembly::convert_argv_to_string(new_command_array);
+            }
         }
         // wrapper and i3 mode are mutally exclusive, no need to handle it here.
         /*
         if (!this->wrapper.empty())
             ...
         */
-        I3Interface::exec(
-            CMDLineAssembly::convert_argv_to_string(command_array),
-            this->i3_ipc_path);
+        I3Interface::exec(result, this->i3_ipc_path);
     }
 
 private:

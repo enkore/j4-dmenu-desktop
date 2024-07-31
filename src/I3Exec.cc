@@ -166,24 +166,6 @@ static string read_JSON_string(string::const_iterator iter,
     }
 }
 
-// See https://i3wm.org/docs/userguide.html#exec_quoting for more info.
-// The escaping rules differ slightly from those described there.
-static string escape_command(const string &command) {
-    string result;
-    result.reserve(command.length());
-
-    for (const auto &ch : command) {
-        switch (ch) {
-        case '"':
-        case '\\':
-            result += R"(\)";
-            break;
-        }
-        result.push_back(ch);
-    }
-    return result;
-}
-
 // This is used for the poor man's JSON parser
 static string trim_spaces(const string &orig) {
     bool is_in_quotes = false;
@@ -214,16 +196,13 @@ static string trim_spaces(const string &orig) {
     return result;
 }
 
-void exec(const string &raw_command, const string &socket_path) {
+void exec(const string &command, const string &socket_path) {
     // These are the base lengths (sum of message_base_header_length,
     // message_base_command_length and command.length() should result in the
     // payload length).
     constexpr int message_base_header_length =
         sizeof "i3-ipc" - 1 + sizeof(uint32_t) * 2;
-    constexpr int message_base_command_length = sizeof "exec \"\"" - 1;
-
-    // This is the escaped command.
-    string command = escape_command(raw_command);
+    constexpr int message_base_command_length = sizeof "exec " - 1;
 
     constexpr auto max_message_length =
         std::numeric_limits<uint32_t>::max() - message_base_command_length;
@@ -270,11 +249,10 @@ void exec(const string &raw_command, const string &socket_path) {
     std::memset(message, 0, 4); // message type 0 (RUN_COMMAND)
     message += 4;
 
-    std::memcpy(message, "exec \"", sizeof "exec \"" - 1);
-    message += sizeof "exec \"" - 1;
+    std::memcpy(message, "exec ", sizeof "exec " - 1);
+    message += sizeof "exec " - 1;
 
     std::memcpy(message, command.data(), command.size());
-    message[command.size()] = '"';
 
 #ifdef DEBUG
     // Print the payload in hex, because some parts of it can't be printed
