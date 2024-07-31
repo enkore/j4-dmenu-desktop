@@ -6,7 +6,8 @@ import os  # noqa: I001
 import pathlib
 import shlex
 import subprocess
-from typing import Iterable, NamedTuple
+from dataclasses import dataclass
+from typing import Callable, Iterable
 
 
 class J4ddRunError(Exception):
@@ -38,24 +39,19 @@ def _assemble_error_message(
     """
     message = ""
     if stdout not in ("", "\n"):
-        message += "".join(
-            f"    {line}" for line in stdout.splitlines(keepends=True)
-        )
+        message += "".join(f"    {line}" for line in stdout.splitlines(keepends=True))
 
     message += "Stderr:\n"
 
     if stderr not in ("", "\n"):
-        message += "".join(
-            f"    {line}" for line in stderr.splitlines(keepends=True)
-        )
+        message += "".join(f"    {line}" for line in stderr.splitlines(keepends=True))
 
     message += "To reproduce:\n"
     if len(override_env) == 0:
         reproducer = ""
     else:
         reproducer = " ".join(
-            f"{key}={shlex.quote(value)}"
-            for key, value in override_env.items()
+            f"{key}={shlex.quote(value)}" for key, value in override_env.items()
         )
         reproducer += " "
 
@@ -66,9 +62,23 @@ def _assemble_error_message(
     return message
 
 
-class _ProcessedEnvironment(NamedTuple):
-    args: list[str]
-    env: dict[str, str]
+@dataclass
+class _SubprocessRunResult:
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+@dataclass
+class _AsyncData:
+    """A messanger class.
+
+    This is a messanger class between _run_j4dd_impl, _subprocess_asynchronous
+    run and AsyncJ4ddResult.
+    """
+
+    result: _SubprocessRunResult
+    process: subprocess.Popen[str] | None = None
 
 
 class AsyncJ4ddResult:
@@ -76,19 +86,15 @@ class AsyncJ4ddResult:
 
     def __init__(
         self,
-        j4dd_process: subprocess.Popen[str],
-        override_env: dict[str, str],
-        cmdline: Iterable[str],
-        shouldfail: bool,
+        async_data: _AsyncData,
+        run_j4dd_impl_generator,
     ):
         """Internal initor.
 
         This initor should be only called by run_j4dd().
         """
-        self._j4dd_process = j4dd_process
-        self._override_env = override_env
-        self._cmdline = cmdline
-        self._shouldfail = shouldfail
+        self._async_data = async_data
+        self._run_j4dd_impl_generator = run_j4dd_impl_generator
 
     def wait(self, timeout: None | int | float = None) -> None:
         """Wait for j4-dmenu-desktop to finish.
@@ -99,24 +105,83 @@ class AsyncJ4ddResult:
         Raises:
             Same as run_j4dd().
         """
-        stdout, stderr = self._j4dd_process.communicate(timeout=timeout)
-        if self._shouldfail:
-            if self._j4dd_process.returncode == 0:
-                raise J4ddRunError(
-                    "j4-dmenu-desktop exitted with return code 0!\n"
-                    + _assemble_error_message(
-                        stdout, stderr, self._override_env, self._cmdline
-                    )
+        assert self._async_data.process is not None
+
+        process = self._async_data.process
+        stdout, stderr = process.communicate(timeout=timeout)
+        self._async_data.result.returncode = process.returncode
+        self._async_data.result.stdout = stdout
+        self._async_data.result.stderr = stderr
+        next(self._run_j4dd_impl_generator, None)
+
+
+def _subprocess_synchronous_run(
+    args: list[str], env: dict[str, str]
+) -> _SubprocessRunResult:
+    result = subprocess.run(args, capture_output=True, text=True, env=env)
+    return _SubprocessRunResult(result.returncode, result.stdout, result.stderr)
+
+
+def _subprocess_asynchronous_run(
+    async_data: _AsyncData, args: list[str], env: dict[str, str]
+) -> _SubprocessRunResult:
+    async_data.process = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+        text=True,
+    )
+    return async_data.result
+
+
+def _run_j4dd_impl(
+    subprocess_run: Callable[[list[str], dict[str, str]], _SubprocessRunResult],
+    j4dd_executable_path: pathlib.Path,
+    override_env: dict[str, str],
+    *j4dd_arguments: str,
+    shouldfail: bool = False,
+):
+    # This function doesn't accept j4dd_exe as str directly because having the
+    # location as a pathlib.Path could be useful in the future (although it
+    # isn't currently used in this implementation).
+    j4dd_path_string = str(j4dd_executable_path)
+
+    args: list[str]
+    if "MESON_EXE_WRAPPER" in os.environ:
+        args = (
+            shlex.split(os.environ["MESON_EXE_WRAPPER"])
+            + [j4dd_path_string]
+            + list(j4dd_arguments)
+        )
+    else:
+        args = [j4dd_path_string] + list(j4dd_arguments)
+
+    env = os.environ.copy()
+    for key, val in override_env.items():
+        env[key] = val
+
+    # Execute subprocess either synchronously or asynchronously
+    result = subprocess_run(args, env)
+    # Return execution to the caller temporarily (most useful in anync calls).
+    yield
+    if shouldfail:
+        if result.returncode == 0:
+            raise J4ddRunError(
+                "j4-dmenu-desktop exitted with return code 0!\n"
+                + _assemble_error_message(
+                    result.stdout, result.stderr, override_env, args
                 )
-        else:
-            if self._j4dd_process.returncode != 0:
-                raise J4ddRunError(
-                    f"j4-dmenu-desktop exitted with return code "
-                    f"{self._j4dd_process.returncode}!\n"
-                    + _assemble_error_message(
-                        stdout, stderr, self._override_env, self._cmdline
-                    )
+            )
+    else:
+        if result.returncode != 0:
+            raise J4ddRunError(
+                f"j4-dmenu-desktop exitted with return code "
+                f"{result.returncode}!\n"
+                + _assemble_error_message(
+                    result.stdout, result.stderr, override_env, args
                 )
+            )
 
 
 def run_j4dd(
@@ -143,51 +208,29 @@ def run_j4dd(
     Returns:
         None if asynchronous is False,
     """
-    # This function doesn't accept j4dd_exe as str directly because having the
-    # location as a pathlib.Path could be useful in the future (although it
-    # isn't currently used in this implementation).
-    j4dd_path_string = str(j4dd_executable_path)
+    if asynchronous:
+        async_data = _AsyncData(_SubprocessRunResult(1000, "", ""))
 
-    args: list[str]
-    if "MESON_EXE_WRAPPER" in os.environ:
-        args = (
-            shlex.split(os.environ["MESON_EXE_WRAPPER"])
-            + [j4dd_path_string]
-            + list(j4dd_arguments)
+        def async_run(*args):
+            return _subprocess_asynchronous_run(async_data, *args)
+
+        generator = _run_j4dd_impl(
+            async_run,
+            j4dd_executable_path,
+            override_env,
+            *j4dd_arguments,
+            shouldfail=shouldfail,
         )
+        next(generator)
+        return AsyncJ4ddResult(async_data, generator)
     else:
-        args = [j4dd_path_string] + list(j4dd_arguments)
-
-    env = os.environ.copy()
-    for key, val in override_env.items():
-        env[key] = val
-
-    if not asynchronous:
-        result = subprocess.run(args, capture_output=True, text=True, env=env)
-        if shouldfail:
-            if result.returncode == 0:
-                raise J4ddRunError(
-                    "j4-dmenu-desktop exitted with return code 0!\n"
-                    + _assemble_error_message(
-                        result.stdout, result.stderr, override_env, args
-                    )
-                )
-        else:
-            if result.returncode != 0:
-                raise J4ddRunError(
-                    f"j4-dmenu-desktop exitted with return code "
-                    f"{result.returncode}!\n"
-                    + _assemble_error_message(
-                        result.stdout, result.stderr, override_env, args
-                    )
-                )
-    else:
-        async_result = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            text=True,
+        result = _run_j4dd_impl(
+            _subprocess_synchronous_run,
+            j4dd_executable_path,
+            override_env,
+            *j4dd_arguments,
+            shouldfail=shouldfail,
         )
-        return AsyncJ4ddResult(async_result, override_env, args, shouldfail)
+        next(result)
+        next(result, None)
     return None
