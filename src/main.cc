@@ -797,6 +797,7 @@ public:
 
             command_array =
                 CMDLineAssembly::convert_exec_to_command(info.app->exec);
+            expand_field_codes(command_array, *info.app, info.args);
             if (!info.app->path.empty()) {
                 // This is kinda convoluted to be honest. chdir() can't be used
                 // here, because I3 is responsible for the execution
