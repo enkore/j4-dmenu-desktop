@@ -16,6 +16,21 @@ class J4ddRunError(Exception):
     pass
 
 
+def _assemble_to_reproduce_line(
+    override_env: dict[str, str], args: Iterable[str]
+) -> str:
+    if len(override_env) == 0:
+        reproducer = ""
+    else:
+        reproducer = " ".join(
+            f"{key}={shlex.quote(value)}" for key, value in override_env.items()
+        )
+        reproducer += " "
+
+    reproducer += shlex.join(args)
+    return reproducer
+
+
 def _assemble_error_message(
     stdout: str,
     stderr: str,
@@ -47,17 +62,7 @@ def _assemble_error_message(
         message += "".join(f"    {line}" for line in stderr.splitlines(keepends=True))
 
     message += "To reproduce:\n"
-    if len(override_env) == 0:
-        reproducer = ""
-    else:
-        reproducer = " ".join(
-            f"{key}={shlex.quote(value)}" for key, value in override_env.items()
-        )
-        reproducer += " "
-
-    reproducer += shlex.join(args)
-
-    message += f"    {reproducer}\n"
+    message += f"    {_assemble_to_reproduce_line(override_env, args)}\n"
 
     return message
 
@@ -162,7 +167,15 @@ def _run_j4dd_impl(
         env[key] = val
 
     # Execute subprocess either synchronously or asynchronously
-    result = subprocess_run(args, env)
+    try:
+        result = subprocess_run(args, env)
+    except OSError as exc:
+        raise J4ddRunError(
+            f"Couldn't execute j4-dmenu-desktop: {exc}\n"
+            f"To reproduce:\n"
+            f"    {_assemble_to_reproduce_line(override_env, args)}\n"
+        ) from exc
+
     # Return execution to the caller temporarily (most useful in anync calls).
     yield
     if shouldfail:
