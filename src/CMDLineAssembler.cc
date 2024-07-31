@@ -125,7 +125,7 @@ std::vector<std::string> convert_exec_to_command(std::string_view exec_key) {
 }
 
 std::vector<std::string> wrap_cmdstring_in_shell(std::string_view cmdstring) {
-    return {"/bin/sh", "-c", "--", std::string(cmdstring)};
+    return {"/bin/sh", "-c", std::string(cmdstring)};
 }
 
 std::string convert_argv_to_string(const std::vector<std::string> &command) {
@@ -142,10 +142,9 @@ std::string convert_argv_to_string(const std::vector<std::string> &command) {
 std::vector<std::string>
 wrap_command_in_wrapper(const std::vector<std::string> &command,
                         std::string_view wrapper) {
-    std::vector<std::string> result{
-        "/bin/sh", "-c",
-        "--",      "wrap=\"$1\"; shift; $wrap \"$@\"",
-        "/bin/sh", std::string{wrapper}};
+    std::vector<std::string> result{"/bin/sh", "-c",
+                                    "wrap=\"$1\"; shift; $wrap \"$@\"",
+                                    "/bin/sh", std::string{wrapper}};
     result.insert(result.cend(), command.cbegin(), command.cend());
     return result;
 }

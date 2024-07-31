@@ -38,7 +38,7 @@ std::string sq_quote(std::string_view);
 std::vector<std::string> convert_exec_to_command(std::string_view exec_key);
 
 // Pass the command string through a shell
-// `true` becomes `{"/bin/sh", "-c", "--", "true"}`. cmdstring is quoted
+// `true` becomes `{"/bin/sh", "-c", "true"}`. cmdstring is quoted
 // properly.
 std::vector<std::string> wrap_cmdstring_in_shell(std::string_view cmdstring);
 

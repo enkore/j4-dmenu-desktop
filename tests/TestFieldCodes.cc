@@ -56,7 +56,7 @@ static stringlist_t getshell(const std::vector<std::string> &args) {
         close(pipefd[1]);
         close(STDIN_FILENO);
         std::string joined_args = CMDLineAssembly::convert_argv_to_string(args);
-        execl("/bin/sh", "/bin/sh", "-c", "--",
+        execl("/bin/sh", "/bin/sh", "-c",
               ((std::string) "printf '%s\\0' " + joined_args).c_str(),
               (char *)NULL);
         _exit(1);
