@@ -901,11 +901,26 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
             // a bunch of events piled up. This nonblocking read() loop prevents
             // this.
             char data;
-            ssize_t err;
-            while ((err = read(fd, &data, sizeof(data))) == 1)
-                continue;
+            ssize_t err = read(fd, &data, sizeof(data));
+            bool nothing_received = false;
+            if (err > 0) {
+                while ((err = read(fd, &data, sizeof(data))) == 1)
+                    continue;
+            } else if (err == 0)
+                nothing_received = true;
             if (err == -1 && errno != EAGAIN)
                 PFATALE("read");
+            if (err == 0) {
+                // EOF was reached, fd is useless now.
+                close(fd);
+                fd = open(wait_on, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+                if (fd == -1)
+                    PFATALE("open");
+                watch[0].fd = fd;
+                watch[0].revents = 0;
+                if (nothing_received)
+                    continue;
+            }
             // Only the last event is taken into account (there is usually only
             // a single event).
             if (data == 'q')
