@@ -104,7 +104,7 @@ r3.0 released 2024-06-02
 	+ added completions for Bash, Fish and ZSH
 	+ added --version flag
 
-r3.1 to be released
+r3.1 released 2024-07-31
 	+ fixed a lot of bugs introduced by r3.0 release (most important fixes are
 	  mentioned below)
 	+ fixed bug with --no-exec not outputting terminal emulator for
