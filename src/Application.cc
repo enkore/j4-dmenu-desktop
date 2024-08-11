@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string_view>
 #include <sys/types.h>
+#include <system_error>
 #include <utility>
 
 #include "LineReader.hh"
@@ -53,9 +54,16 @@ Application::Application(const char *path, LineReader &liner,
     ssize_t line_length;
     std::unique_ptr<FILE, fclose_deleter> file(fopen(path, "r"));
     if (!file)
-        throw invalid_error(strerror(errno));
+        throw std::system_error(errno, std::system_category());
+
+    // The choice of 'unsigned long' is arbitrary here. This variable isn't
+    // checked for integer overflow, but it is unlikely that a desktop file will
+    // have more than (unsigned long)-1 lines. This is used for diagnostics
+    // only, so it doesn't matter much.
+    unsigned long line_number = 0;
 
     while ((line_length = liner.getline(file.get())) != -1) {
+        ++line_number;
         char *line = liner.get_lineptr();
         line[--line_length] = 0; // Chop off \n
 
@@ -71,13 +79,17 @@ Application::Application(const char *path, LineReader &liner,
             // Split that string in place
             char *key = line, *value = strpbrk(line, " =");
             if (!value || value == line)
-                throw std::runtime_error("Malformed file.");
+                throw invalid_error(
+                    "Malformed file, invalid key=value pair (line " +
+                    std::to_string(line_number) + ").");
             // Cut spaces before equal sign
             if (*value != '=') {
                 *value++ = '\0';
                 value = strchr(value, '=');
                 if (!value)
-                    throw std::runtime_error("Malformed file.");
+                    throw invalid_error(
+                        "Malformed file, invalid key=value pair (line " +
+                        std::to_string(line_number) + ").");
             } else
                 *value = '\0';
             value++;
@@ -126,17 +138,16 @@ Application::Application(const char *path, LineReader &liner,
                 }
             } catch (const escape_error &e) {
                 SPDLOG_ERROR("{}: {}\n", location, e.what());
-                throw;
+                throw escape_error((std::string)e.what() + " (line " +
+                                   std::to_string(line_number) + ")");
             }
         } else if (!strcmp(line, "[Desktop Entry]"))
             parse_key_values = true;
     }
     if (!parse_key_values)
-        throw invalid_error("Invalid desktop file! Desktop file doesn't "
-                            "contain '[Desktop Entry]'.");
+        throw invalid_error("Desktop file doesn't contain '[Desktop Entry]'.");
     if (this->name.empty())
-        throw invalid_error(
-            "Invalid desktop file! 'Name' key is missing or empty.");
+        throw invalid_error("'Name' key is missing or empty.");
 }
 
 char Application::convert(char escape) {

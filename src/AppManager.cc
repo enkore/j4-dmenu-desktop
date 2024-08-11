@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <stdlib.h>
+#include <system_error>
 
 using std::in_place_t;
 
@@ -126,7 +127,7 @@ AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
                             "taken! Not registering.",
                             newly_added.app->generic_name);
                 }
-            } catch (disabled_error &e) {
+            } catch (const disabled_error &e) {
                 SPDLOG_DEBUG("AppManager:     Desktop file is disabled: {}",
                              e.what());
                 // Add an empty Application that only occupies desktop ID + rank
@@ -136,8 +137,12 @@ AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
                     SPDLOG_DEBUG(
                         "AppManager:     Collision detected, skipping!");
                 continue;
-            } catch (invalid_error &e) {
+            } catch (const std::system_error &e) {
                 SPDLOG_WARN("Couldn't open file '{}': {}", filename, e.what());
+                continue;
+            } catch (const invalid_error &e) {
+                SPDLOG_WARN("Desktop file '{}' is invalid: {}", filename,
+                            e.what());
                 continue;
             }
         }
@@ -207,12 +212,16 @@ void AppManager::add(const string &filename, const string &base_path,
         try {
             new_app.emplace(filename.c_str(), this->liner, this->suffixes,
                             this->desktopenvs);
-        } catch (disabled_error &e) {
+        } catch (const disabled_error &e) {
             SPDLOG_DEBUG("AppManager:     App is disabled: {}", e.what());
             is_disabled = true;
-        } catch (invalid_error &e) {
-            SPDLOG_WARN("Couldn't open newly added file '{}': {}", filename,
-                        e.what());
+        } catch (const std::system_error &e) {
+            SPDLOG_WARN("Couldn't open newly added desktop file '{}': {}",
+                        filename, e.what());
+            return;
+        } catch (const invalid_error &e) {
+            SPDLOG_WARN("Newly added desktop file '{}' is invalid: {}",
+                        filename, e.what());
             return;
         }
 
@@ -239,13 +248,17 @@ void AppManager::add(const string &filename, const string &base_path,
                                         filename.c_str(), this->liner,
                                         this->suffixes, this->desktopenvs)
                            .first->second;
-        } catch (disabled_error &e) {
+        } catch (const disabled_error &e) {
             SPDLOG_DEBUG("AppManager:     App is disabled: {}", e.what());
             this->applications.try_emplace(ID, rank);
             return;
-        } catch (invalid_error &e) {
-            SPDLOG_WARN("Couldn't open newly added file '{}': {}", filename,
-                        e.what());
+        } catch (const std::system_error &e) {
+            SPDLOG_WARN("Couldn't open newly added desktop file '{}': {}",
+                        filename, e.what());
+            return;
+        } catch (const invalid_error &e) {
+            SPDLOG_WARN("Newly added desktop file '{}' is invalid: {}",
+                        filename, e.what());
             return;
         }
 
