@@ -76,7 +76,13 @@ Performing
 will exit the program.
 .It Fl Fl wrapper Ar wrapper
 A wrapper binary.
-Useful in case you want to wrap into 'i3 exec'.
+Usage of
+.Ql --wrapper Qq i3 exec
+and
+.Ql --wrapper Qq sway exec
+is deprecated, use
+.Fl Fl i3-ipc
+instead.
 .It Fl I , Fl Fl i3-ipc
 Execute desktop entries through i3 IPC or Sway IPC.
 Requires either i3 or Sway to be running.
