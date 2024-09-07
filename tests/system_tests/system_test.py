@@ -154,6 +154,30 @@ terminal_emulators = [
 ]
 
 
+@pytest.fixture(scope="session")
+def get_available_term_emulators():
+    """Test whether all terminal emulators are available.
+
+    Some terminal emulators are used more than once, this fixture makes sure
+    that terminal emulator availability is checked only once.
+
+    Returns:
+        A dict with key being terminal emulator executable string and value
+        being an exception onject if terminal emulator isn't available or None
+        if it is.
+    """
+    result = {}
+    for term_emulator_data in terminal_emulators:
+        term_emulator = term_emulator_data[1]
+        result[term_emulator] = None
+        try:
+            check_term_emulator_availability(term_emulator, term_emulator_data[2])
+        except DisabledTermError as exc:
+            result[term_emulator] = exc
+
+    return result
+
+
 @pytest.mark.parametrize(
     "mode,terminal_emulator,program_flag,custom_test",
     terminal_emulators,
@@ -166,30 +190,31 @@ def test_terminal_emulator(
     custom_test: str,
     run_j4dd,
     tmp_path,
+    get_available_term_emulators,
 ):
     """Test all supported terminal emulators."""
     if mode == "terminator":
         pytest.skip("See https://github.com/gnome-terminator/terminator/issues/923")
 
-    try:
-        check_term_emulator_availability(terminal_emulator, program_flag)
-    except DisabledTermError as exc:
-        pytest.skip(str(exc))
+    is_available = get_available_term_emulators[terminal_emulator]
+    if is_available is not None:
+        pytest.skip(str(is_available))
 
     check_term_mode(mode, run_j4dd, tmp_path, [])
     check_term_mode("custom", run_j4dd, tmp_path, ["--term", custom_test])
 
 
-def test_gnome_terminal_deprecated_example(run_j4dd, tmp_path):
+def test_gnome_terminal_deprecated_example(
+    run_j4dd, tmp_path, get_available_term_emulators
+):
     """Check deprecated custom example of gnome-terminal.
 
     This example is given in j4-dmenu-desktop's manpage to demonstrate
     {cmdline*} --term-mode custom functionality.
     """
-    try:
-        check_term_emulator_availability("gnome-terminal", "--")
-    except DisabledTermError as exc:
-        pytest.skip(str(exc))
+    is_available = get_available_term_emulators["gnome-terminal"]
+    if is_available is not None:
+        pytest.skip(str(is_available))
 
     check_term_mode(
         "custom",
