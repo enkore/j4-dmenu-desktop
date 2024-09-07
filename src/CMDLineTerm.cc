@@ -343,10 +343,60 @@ custom_term_assembler(const std::vector<std::string> &commandline,
     parsed_term_type parsed_term = parse_escaped_term(terminal_emulator);
 
     std::vector<std::string> &args = parsed_term.args;
+    const auto &placeholders = parsed_term.placeholders;
 
     std::optional<std::string> temp_script_path;
 
-    for (const auto &[arg_pos, pos] : parsed_term.placeholders) {
+#ifdef DEBUG
+    using found_placeholder = parsed_term_type::found_placeholder;
+
+    // See comment below for explanation why does this function check whether
+    // placeholders is sorted.
+    if (!placeholders.empty()) {
+        std::optional<decltype(found_placeholder::arg)> last_arg;
+        decltype(found_placeholder::arg) last_pos;
+
+        // Make sure that parsed_term.placeholders is sorted.
+        for (const auto &[arg, pos] : parsed_term.placeholders) {
+            if (!last_arg) {
+                // First iteration.
+                last_arg = arg;
+                last_pos = pos;
+            } else if (arg < *last_arg) {
+                SPDLOG_ERROR(
+                    "Internal error occurred while parsing custom --term");
+                abort();
+            } else if (arg > *last_arg) {
+                last_arg = arg;
+                last_pos = pos;
+            } else {
+                if (pos <= last_pos) {
+                    SPDLOG_ERROR(
+                        "Internal error occurred while parsing custom --term");
+                    abort();
+                }
+                last_pos = pos;
+            }
+        }
+    }
+#endif
+
+    // Placeholders must be processed from right to left.
+    // Both arg and pos are "indexed from the left", indexed from the beginning.
+    // This means that if text **before** a placeholder changes, arg and/or pos
+    // will no longer be valid.
+    // Example: {cmdline*} {name}
+    // When processing from left to right (which is wrong), two placehonders are
+    // found: {cmdline*} at arg 0 and {name} at arg 1. We first expand
+    // {cmdline*} with {"a", "b", "c"}, so the commandline becomes: a b c {name}
+    // {name} is no longer the 1. arg (zero based), but it's the 3.
+    // Parsing frol right to left fixes this problem.
+    // This approach requires parsed_term.placeholders to be sorted by arg and
+    // by pos. This is checked above.
+    for (auto iter = placeholders.crbegin(); iter != placeholders.crend();
+         ++iter) {
+        const auto &[arg_pos, pos] = *iter;
+
         std::string &arg = args[arg_pos];
         std::string_view placeholder = std::string_view(arg).substr(pos);
         if (startswith(placeholder, "{name}")) {

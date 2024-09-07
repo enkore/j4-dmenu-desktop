@@ -126,3 +126,15 @@ TEST_CASE("Test cmdline in custom term handler", "[CMDLineTerm]") {
         vec{"command", "-e", "!@#$%^&*{}", "''''''''''", "'", "!?$ > /dev/null",
             "-x"});
 }
+
+TEST_CASE("Test placeholders after {cmdline@} (#179)", "[CMDLineTerm]") {
+    const char *term = "alacritty -e {cmdline@} {name}";
+    REQUIRE_NOTHROW(validate_custom_term(term));
+    REQUIRE_NOTHROW(custom_term_assembler({"a", "b", "c"}, term, "Name"));
+
+    const char *term2 =
+        R"(/bin/sh -c alacritty\ msg\ create-window\ -T\ {name}\ {cmdline*}\ ||\ alacritty\ -T\ {name}\ {cmdline*})";
+
+    REQUIRE_NOTHROW(validate_custom_term(term2));
+    REQUIRE_NOTHROW(custom_term_assembler({"a", "b", "c"}, term2, "Name"));
+}
