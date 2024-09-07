@@ -255,6 +255,25 @@ This means that it is
 possible to pass zero-length arguments to
 .Fl Fl term .
 .Pp
+The contents of
+.Fl Fl term
+are
+.Em not
+executed through a shell.
+This means that shell constructs like redirection,
+.Ic &&
+and
+.Ic ||
+chaining and more will not work.
+If you need this, you can either create a wrapper shell script and call it from
+.Fl Fl term
+or you can call
+.Cm /bin/sh -c
+or some other shell directly from
+.Fl Fl term
+(although using a wrapper script should be preferred, because it is clearer and
+simpler to use).
+.Pp
 The following placeholders are recognised:
 .Bl -tag -width indent-two
 .It Brq Ic name
