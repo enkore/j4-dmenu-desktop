@@ -799,20 +799,28 @@ public:
             std::vector<std::string> command_array =
                 CMDLineAssembly::convert_exec_to_command(info.app->exec);
             expand_field_codes(command_array, *info.app, info.args);
-            if (!info.app->path.empty())
+            if (!info.app->path.empty()) {
                 result = "cd " + CMDLineAssembly::sq_quote(info.app->path) +
                          " && " +
                          CMDLineAssembly::convert_argv_to_string(command_array);
-            else
-                result = CMDLineAssembly::convert_argv_to_string(command_array);
-
-            if (info.app->terminal) {
-                std::vector<std::string> new_command_array =
-                    CMDLineAssembly::wrap_cmdstring_in_shell(result);
-                new_command_array = this->term_assembler(
-                    new_command_array, this->terminal, info.app->name);
-                result =
-                    CMDLineAssembly::convert_argv_to_string(new_command_array);
+                if (info.app->terminal) {
+                    std::vector<std::string> new_command_array =
+                        CMDLineAssembly::wrap_cmdstring_in_shell(result);
+                    new_command_array = this->term_assembler(
+                        new_command_array, this->terminal, info.app->name);
+                    result = CMDLineAssembly::convert_argv_to_string(
+                        new_command_array);
+                }
+            } else {
+                if (info.app->terminal) {
+                    std::vector<std::string> new_command_array =
+                        this->term_assembler(command_array, this->terminal,
+                                             info.app->name);
+                    result = CMDLineAssembly::convert_argv_to_string(
+                        new_command_array);
+                } else
+                    result =
+                        CMDLineAssembly::convert_argv_to_string(command_array);
             }
         }
         // wrapper and i3 mode are mutally exclusive, no need to handle it here.
