@@ -93,11 +93,11 @@ std::string LocaleSuffixes::set_locale() {
     char *user_locale = setlocale(LC_MESSAGES, "");
     if (!user_locale) {
         SPDLOG_WARN("Locale configuration invalid, check locale(1).\n"
-                    "No translated menu entries will be available.\n");
+                    "No translated menu entries will be available.");
         user_locale = setlocale(LC_MESSAGES, "C");
         if (!user_locale) {
             SPDLOG_ERROR("POSIX/C locale is not available, setlocale(3) "
-                         "failed. Bailing.\n");
+                         "failed. Bailing.");
             exit(EXIT_FAILURE);
         }
     }
