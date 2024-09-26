@@ -1270,6 +1270,10 @@ int main(int argc, char **argv) {
     stderr_sink.reset();
     custom_logger.reset();
 
+    // This is almost identical to the default (%+), but %-3# was added to add
+    // alignment to the line number part of the message.
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] [%s:%-3#] %v");
+
     /// i3 ipc
     SPDLOG_DEBUG("I3 IPC interface is {}.", (use_i3_ipc ? "on" : "off"));
 
