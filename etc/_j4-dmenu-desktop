@@ -5,24 +5,24 @@
 
 # shellcheck disable=SC2016
 _arguments -s \
-    '(- *)'{-h,--help}'[Print help message]' `#- and * mean that no flags shall follow --help` \
-    '(- *)--version[Display program version]' \
-    '(-b --display-binary)'{-b,--display-binary}'[Display binary name after each entry]' \
-    '(-f --display-binary-base)'{-f,--display-binary-base}'[Display basename of binary name after each entry]' \
-    '(-d --dmenu)'{-d,--dmenu}'=[Command used to invoke dmenu]:command:_files -g \*\(\*\)' \
-    '--no-exec[Do not execute selected command, send to stdout instead]' \
-    '--no-generic[Do not include the generic name of desktop entries]' \
-    '(-t --term)'{-t,--term}'=[Sets the terminal emulator used to start terminal apps]:command:_files -g \*\(\*\)' \
-    '--term-mode=[Set terminal emulator execution strategy]:term_mode:(default xterm alacritty kitty terminator gnome-terminal custom)' \
-    '--usage-log=[Set usage log]:file:_files' \
-    '--prune-bad-usage-log-entries[Remove bad history entries]' \
-    '(-x --use-xdg-de)'{-x,--use-xdg-de}'[Enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment]' \
-    '--wait-on=[Enable daemon mode]:path:_files' \
-    '--wrapper=[A wrapper binary]:command:_files -g \*\(\*\)' \
-    '(-I --i3-ipc)'{-I,--i3-ipc}'[Execute desktop entries through i3 IPC]' \
-    '--skip-i3-exec-check[Disable the check for '\''--wrapper "i3 exec"'\'']' \
-    '(-i --case-insensitive)'{-i,--case-insensitive}'[Sort applications case insensitively]' \
-    '-v[Be more verbose, can be specified multiple times]' \
-    '--log-level=[Set loglevel]:level:(ERROR WARNING INFO DEBUG)' \
-    '--log-file=[Specify a log file]:file:_files' \
-    '--log-file-level=[Set file loglevel]:level:(ERROR WARNING INFO DEBUG)'
+    '(- *)'{-h,--help}'[print help message]' `#- and * mean that no flags shall follow --help` \
+    '(- *)--version[display program version]' \
+    '(-b --display-binary)'{-b,--display-binary}'[display binary name after each entry]' \
+    '(-f --display-binary-base)'{-f,--display-binary-base}'[display basename of binary name after each entry]' \
+    '(-d --dmenu)'{-d,--dmenu}'=[command used to invoke dmenu]:command:_files -g \*\(\*\)' \
+    '--no-exec[do not execute selected command, send to stdout instead]' \
+    '--no-generic[do not include the generic name of desktop entries]' \
+    '(-t --term)'{-t,--term}'=[sets the terminal emulator used to start terminal apps]:command:_files -g \*\(\*\)' \
+    '--term-mode=[set terminal emulator execution strategy]:term_mode:(default xterm alacritty kitty terminator gnome-terminal custom)' \
+    '--usage-log=[set usage log]:file:_files' \
+    '--prune-bad-usage-log-entries[remove bad history entries]' \
+    '(-x --use-xdg-de)'{-x,--use-xdg-de}'[enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment]' \
+    '--wait-on=[enable daemon mode]:path:_files' \
+    '--wrapper=[a wrapper binary]:command:_files -g \*\(\*\)' \
+    '(-I --i3-ipc)'{-I,--i3-ipc}'[execute desktop entries through i3 IPC]' \
+    '--skip-i3-exec-check[disable the check for '\''--wrapper "i3 exec"'\'']' \
+    '(-i --case-insensitive)'{-i,--case-insensitive}'[sort applications case insensitively]' \
+    '-v[be more verbose, can be specified multiple times]' \
+    '--log-level=[set loglevel]:level:(ERROR WARNING INFO DEBUG)' \
+    '--log-file=[specify a log file]:file:_files' \
+    '--log-file-level=[set file loglevel]:level:(ERROR WARNING INFO DEBUG)'
