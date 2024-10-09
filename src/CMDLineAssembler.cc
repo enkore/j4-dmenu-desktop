@@ -94,6 +94,9 @@ std::vector<std::string> convert_exec_to_command(std::string_view exec_key) {
                 case '"':
                     in_quotes = false;
                     break;
+		case '\'':
+		    in_quotes = false;
+		    break;
                 case '\\':
                     escaping = true;
                     break;
@@ -106,6 +109,9 @@ std::vector<std::string> convert_exec_to_command(std::string_view exec_key) {
                 case '"':
                     in_quotes = true;
                     break;
+		case '\'':
+		    in_quotes = true;
+		    break;
                 case ' ':
                     result.push_back(std::move(curr));
                     curr.clear();
