@@ -3,6 +3,11 @@
 # Some of the flags accept executables. They are matced with _files -g \(\*\).
 # This is a glob that maches files that are executable.
 
+# https://github.com/markfasheh/duperemove/blob/b76d569c4b96d4afb745b7970f87fbb0193b2792/completion/zsh/_duperemove
+# can serve as inspiration for further changes to ZSH completion. Duperemove is
+# similar to j4-dmenu-desktop (it doesn't have subcommands) and its ZSH
+# completion script is similar to this one.
+
 # shellcheck disable=SC2016
 _arguments -s \
     '(- *)'{-h,--help}'[print help message]' `#- and * mean that no flags shall follow --help` \
