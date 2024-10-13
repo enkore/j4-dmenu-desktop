@@ -8,26 +8,29 @@
 # similar to j4-dmenu-desktop (it doesn't have subcommands) and its ZSH
 # completion script is similar to this one.
 
-# shellcheck disable=SC2016
-_arguments -s \
-    '(- *)'{-h,--help}'[print help message]' `#- and * mean that no flags shall follow --help` \
-    '(- *)--version[display program version]' \
-    '(-b --display-binary)'{-b,--display-binary}'[display binary name after each entry]' \
-    '(-f --display-binary-base)'{-f,--display-binary-base}'[display basename of binary name after each entry]' \
-    '(-d --dmenu)'{-d,--dmenu}'=[command used to invoke dmenu]:command:_files -g \*\(\*\)' \
-    '--no-exec[do not execute selected command, send to stdout instead]' \
-    '--no-generic[do not include the generic name of desktop entries]' \
-    '(-t --term)'{-t,--term}'=[sets the terminal emulator used to start terminal apps]:command:_files -g \*\(\*\)' \
-    '--term-mode=[set terminal emulator execution strategy]:term_mode:(default xterm alacritty kitty terminator gnome-terminal custom)' \
-    '--usage-log=[set usage log]:file:_files' \
-    '--prune-bad-usage-log-entries[remove bad history entries]' \
-    '(-x --use-xdg-de)'{-x,--use-xdg-de}'[enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment]' \
-    '--wait-on=[enable daemon mode]:path:_files' \
-    '--wrapper=[a wrapper binary]:command:_files -g \*\(\*\)' \
-    '(-I --i3-ipc)'{-I,--i3-ipc}'[execute desktop entries through i3 IPC]' \
-    '--skip-i3-exec-check[disable the check for '\''--wrapper "i3 exec"'\'']' \
-    '(-i --case-insensitive)'{-i,--case-insensitive}'[sort applications case insensitively]' \
-    '-v[be more verbose, can be specified multiple times]' \
-    '--log-level=[set loglevel]:level:(ERROR WARNING INFO DEBUG)' \
-    '--log-file=[specify a log file]:file:_files' \
+declare -a args
+args=(
+    '(- *)'{-h,--help}'[print help message]' #- and * mean that no flags shall follow --help
+    '(- *)--version[display program version]'
+    '(-b --display-binary)'{-b,--display-binary}'[display binary name after each entry]'
+    '(-f --display-binary-base)'{-f,--display-binary-base}'[display basename of binary name after each entry]'
+    '(-d --dmenu)'{-d,--dmenu}'=[command used to invoke dmenu]:command:_files -g \*\(\*\)'
+    '--no-exec[do not execute selected command, send to stdout instead]'
+    '--no-generic[do not include the generic name of desktop entries]'
+    '(-t --term)'{-t,--term}'=[sets the terminal emulator used to start terminal apps]:command:_files -g \*\(\*\)'
+    '--term-mode=[set terminal emulator execution strategy]:term_mode:(default xterm alacritty kitty terminator gnome-terminal custom)'
+    '--usage-log=[set usage log]:file:_files'
+    '--prune-bad-usage-log-entries[remove bad history entries]'
+    '(-x --use-xdg-de)'{-x,--use-xdg-de}'[enables reading $XDG_CURRENT_DESKTOP to determine the desktop environment]'
+    '--wait-on=[enable daemon mode]:path:_files'
+    '--wrapper=[a wrapper binary]:command:_files -g \*\(\*\)'
+    '(-I --i3-ipc)'{-I,--i3-ipc}'[execute desktop entries through i3 IPC]'
+    '--skip-i3-exec-check[disable the check for '\''--wrapper "i3 exec"'\'']'
+    '(-i --case-insensitive)'{-i,--case-insensitive}'[sort applications case insensitively]'
+    '-v[be more verbose, can be specified multiple times]'
+    '--log-level=[set loglevel]:level:(ERROR WARNING INFO DEBUG)'
+    '--log-file=[specify a log file]:file:_files'
     '--log-file-level=[set file loglevel]:level:(ERROR WARNING INFO DEBUG)'
+)
+
+_arguments -s $args
