@@ -122,6 +122,37 @@ By default, the
 loglevel is used.
 .It Fl Fl log-file-level Ar ERROR | WARNING | INFO | DEBUG
 Set file log level.
+.It Fl Fl desktop-file-quirks Ar ARGS
+Modify
+.Nm j4-dmenu-desktop's
+desktop file parsing mechanism to accomodate desktop files not conforming to the
+Desktop Entry Specification.
+Several modes may be specified.
+They shall be separated by a comma (,).
+A warning is printed when a desktop file makes use of an enabled quirk.
+.Ar ARGS
+can contain the following modes:
+.Bl -tag -width Ds
+.It Ar wine
+Tolerate invalid escape codes
+.Pq such as escaping a space to disable separating arguments
+in the
+.Cm Exec
+key of desktop files.
+Enabled by default.
+.El
+.Pp
+This flag is mutaly exclusive with
+.Fl Fl strict-parsing .
+.Pp
+Modes enabled by default may be subject to change in future versions of
+.Nm .
+.It Fl Fl strict-parsing
+Strictly adhere to the Desktop Entry Specification while parsing desktop files.
+Not enabled by default.
+.Pp
+This flag is mutaly exclusive with
+.Fl Fl desktop-file-quirks .
 .It Fl Fl version
 Display program version.
 .It Fl h , Fl Fl help
