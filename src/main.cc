@@ -167,7 +167,8 @@ static void print_usage(FILE *f) {
         "        Enable daemon mode\n"
         "    --wrapper=<wrapper>\n"
         "        A wrapper binary.\n"
-        "        Usage of '--wrapper \"i3 exec\"' and '--wrapper \"sway exec\"' is deprecated,\n" 
+        "        Usage of '--wrapper \"i3 exec\"' and '--wrapper \"sway "
+        "exec\"' is deprecated,\n"
         "        use '--i3-ipc' instead.\n"
         "    -I, --i3-ipc\n"
         "        Execute desktop entries through i3 IPC. Requires i3 to be "
@@ -1110,10 +1111,12 @@ int main(int argc, char **argv) {
     bool skip_i3_check = false;
     bool prune_bad_usage_log_entries = false;
     bool wine_compatibility_mode = true;
+
     // This variable doesn't have much use, wine_compatibility_mode is more
     // important. It is only used to detect if both mutaly exclusive flags have
     // been specified.
-    enum {STRICT, NONE, QUIRKS} parsing_mode = NONE;
+    enum { STRICT, NONE, QUIRKS } parsing_mode = NONE;
+
     int verbose_flag = 0;
 
     bool loglevel_overridden = false;
