@@ -17,6 +17,10 @@ _j4-dmenu-desktop()
 			COMPREPLY=( $(compgen -o filenames -W "default xterm alacritty kitty terminator gnome-terminal custom" -- "$cur" ) )
 			return 0
 			;;
+		--desktop-file-quirks)
+			COMPREPLY=( $(compgen -o filenames -W "wine" -- "$cur" ) )
+			return 0
+			;;
 		-h|--help|--version)
 			return 0
 			;;
@@ -40,6 +44,8 @@ _j4-dmenu-desktop()
 		--log-level
 		--log-file
 		--log-file-level
+		--desktop-file-quirks
+		--strict-parsing
 		--version
 		-h --help)
 	COMPREPLY=( $(compgen -W "${OPTS[*]}" -- "$cur") )
