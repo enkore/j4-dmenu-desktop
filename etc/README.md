@@ -14,4 +14,3 @@ to replace it, completions could be delegated to it.
 The complgen file in this directory is unused and can be out of date. It is kept
 in the repository because it might be useful in the future if complgen would
 be used for completion generation.
-
