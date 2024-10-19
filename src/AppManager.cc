@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <system_error>
 
+#include "CMDLineAssembler.hh"
+
 using std::in_place_t;
 
 std::string get_desktop_id(std::string filename) {
@@ -70,7 +72,7 @@ bool validate_desktop_file_list(const Desktop_file_list &files) {
 #endif
 
 AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
-                       LocaleSuffixes suffixes)
+                       LocaleSuffixes suffixes, bool wine_compatibility_mode)
     : suffixes(std::move(suffixes)), desktopenvs(desktopenvs) {
     SPDLOG_DEBUG("AppManager: Entered AppManager");
 #ifdef DEBUG
@@ -109,6 +111,26 @@ AppManager::AppManager(Desktop_file_list files, stringlist_t desktopenvs,
                 }
 
                 Managed_application &newly_added = try_add.first->second;
+
+                // Skip desktop file if its Exec key is malformed.
+                auto validate_exec_key =
+                    CMDLineAssembly::validate_exec_key(newly_added.app->exec);
+                if (wine_compatibility_mode) {
+                    if (validate_exec_key)
+                        SPDLOG_DEBUG("AppManager:     Desktop file's Exec is "
+                                     "malformed, but desktop file is protected "
+                                     "by Wine compatibility mode: {}",
+                                     *validate_exec_key);
+                } else {
+                    if (validate_exec_key) {
+                        SPDLOG_WARN("Desktop file '{}' is using invalid escape "
+                                    "sequence in it's Exec key, skipping: {}",
+                                    filename, *validate_exec_key);
+                        // Remove the app.
+                        this->applications.erase(try_add.first);
+                        continue;
+                    }
+                }
 
                 // Add the names.
                 auto add_result = this->name_app_mapping.try_emplace(

@@ -21,6 +21,7 @@
 
 #include <iterator>
 #include <stdlib.h>
+#include <string>
 #include <utility>
 
 // See the header file for documentation of these functions.
@@ -64,12 +65,59 @@ std::string sq_quote(std::string_view input) {
     }
 }
 
-std::vector<std::string> convert_exec_to_command(std::string_view exec_key) {
+std::optional<std::string> validate_exec_key(std::string_view exec_key) {
+    bool in_quotes = false;
+
+    for (std::string_view::size_type i = 0; i < exec_key.size(); ++i) {
+        auto ch = exec_key[i];
+        if (in_quotes) {
+            if (ch == '\\') {
+                if (i == (exec_key.size() - 1))
+                    return "Escape character '\\' found at enf of line! "
+                           "Nothing to escape!";
+                switch (exec_key[i + 1]) {
+                case '"':
+                case '`':
+                case '$':
+                case '\\':
+                    break;
+                default:
+                    return (std::string) "Found invalid escape sequence '\\" +
+                           exec_key[i + 1] + "' on characters " +
+                           std::to_string(i + 1) + "-" + std::to_string(i + 2) +
+                           " in the Exec field (character count is counted "
+                           "excluding \"Exec=\" part).";
+                }
+                ++i;
+            } else if (ch == '"') {
+                in_quotes = false;
+            }
+        } else {
+            if (ch == '"') {
+                in_quotes = true;
+            } else if (ch == '\\') {
+                return (std::string) "Found unquoted escape sequence on "
+                                     "character " +
+                       std::to_string(i + 1) +
+                       " in the Exec field (character count is counted "
+                       "excluding \"Exec=\" part)";
+            }
+        }
+    }
+    if (in_quotes)
+        return "\"\" qouted string is missing the end quote in the Exec field.";
+    return {};
+}
+
+std::vector<std::string> convert_exec_to_command(std::string_view exec_key,
+                                                 bool wine_compatibility_mode) {
     std::vector<std::string> result;
 
     std::string curr;
     bool in_quotes = false;
     bool escaping = false;
+
+    bool has_wine_warning_been_printed = false;
 
     for (char ch : exec_key) {
         if (escaping) {
@@ -85,6 +133,14 @@ std::vector<std::string> convert_exec_to_command(std::string_view exec_key) {
                 break;
             case '\\':
                 curr += '\\';
+                break;
+            case ' ':
+                if (wine_compatibility_mode)
+                    curr += ' ';
+                else {
+                    throw Exec_invalid_escape(
+                        "Found invalid escape sequence `\\ ` in the Exec key!");
+                }
                 break;
             }
             escaping = false;
@@ -109,6 +165,23 @@ std::vector<std::string> convert_exec_to_command(std::string_view exec_key) {
                 case ' ':
                     result.push_back(std::move(curr));
                     curr.clear();
+                    break;
+                case '\\':
+                    if (wine_compatibility_mode) {
+                        if (!has_wine_warning_been_printed) {
+                            SPDLOG_WARN(
+                                "The currently selected desktop file is "
+                                "using invalid escape codes in its Exec "
+                                "key! This behavior does not conform to "
+                                "the Desktop Entry Specification! See "
+                                "documentation for --desktop-file-quirks for "
+                                "more info.");
+                        }
+                        has_wine_warning_been_printed = true;
+                        escaping = true;
+                    } else
+                        throw Exec_invalid_escape(
+                            "Found '\\' unquoted in Exec!");
                     break;
                 default:
                     curr += ch;
