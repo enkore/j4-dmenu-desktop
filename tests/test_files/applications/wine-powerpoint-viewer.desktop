@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Microsoft Office PowerPoint Viewer 2003
+Exec=env WINEPREFIX="/home/meator/wine" wine C:\\\\users\\\\meator\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start\\ Menu\\\\Programs\\\\Microsoft\\ Office\\ PowerPoint\\ Viewer\\ 2003.lnk
+Type=Application
+StartupNotify=true
+Comment=View presentations created with Microsoft Office PowerPoint.
+Icon=2B75_ppvwicon.0
+StartupWMClass=pptview.exe

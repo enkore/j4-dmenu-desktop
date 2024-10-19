@@ -18,11 +18,17 @@
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "generated/tests_config.hh"
+
+#include "Application.hh"
 #include "CMDLineAssembler.hh"
+#include "LineReader.hh"
+#include "LocaleSuffixes.hh"
 #include "ShellUnquote.hh"
 
 bool test_quoting(std::string_view str) {
@@ -63,7 +69,7 @@ TEST_CASE("Test quoting for POSIX shell", "[CMDLineAssembler]") {
     REQUIRE(test_quoting("testte'''sttest'"));
 }
 
-TEST_CASE("Test converting Exec key to command array") {
+TEST_CASE("Test converting Exec key to command array", "[CMDLineAssembler]") {
     using strvec = std::vector<std::string>;
     REQUIRE(CMDLineAssembly::convert_exec_to_command("command") ==
             strvec{"command"});
@@ -76,4 +82,53 @@ TEST_CASE("Test converting Exec key to command array") {
     REQUIRE(
         CMDLineAssembly::convert_exec_to_command(R"(command --arg "\$  \\")") ==
         strvec{"command", "--arg", R"($  \)"});
+}
+
+// See #181
+TEST_CASE("Test Wine generated desktop file failing",
+          "[CMDLineAssembler][!mayfail]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+
+    std::optional<Application> app_optional;
+    std::vector<std::string> arguments;
+    bool enable_compatibility_mode;
+
+    SECTION("Wine generated desktop file from issue #174") {
+        app_optional.emplace(TEST_FILES "applications/wine-#174.desktop", liner,
+                             ls, std::vector<std::string>{});
+        arguments = {
+            "env", "WINEPREFIX=/home/baltazar/.wine", "wine",
+            R"(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Line 6\POD HD Pro X Edit\POD HD Pro X Edit.lnk)"};
+        SECTION("Compatibility mode ON") {
+            enable_compatibility_mode = true;
+        }
+        SECTION("Compatibility mode OFF") {
+            enable_compatibility_mode = false;
+        }
+    }
+    SECTION("Wine generated desktop file for PowerPoint viewer") {
+        app_optional.emplace(TEST_FILES
+                             "applications/wine-powerpoint-viewer.desktop",
+                             liner, ls, std::vector<std::string>{});
+        arguments = {
+            "env", "WINEPREFIX=/home/meator/wine", "wine",
+            R"(C:\users\meator\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Microsoft Office PowerPoint Viewer 2003.lnk)"};
+        SECTION("Compatibility mode ON") {
+            enable_compatibility_mode = true;
+        }
+        SECTION("Compatibility mode OFF") {
+            enable_compatibility_mode = false;
+        }
+    }
+
+    Application &app = *app_optional;
+
+    if (enable_compatibility_mode) {
+        auto commandline =
+            CMDLineAssembly::convert_exec_to_command(app.exec, true);
+        REQUIRE(commandline == arguments);
+    } else
+        REQUIRE_THROWS(CMDLineAssembly::convert_exec_to_command(
+            app.exec, enable_compatibility_mode));
 }

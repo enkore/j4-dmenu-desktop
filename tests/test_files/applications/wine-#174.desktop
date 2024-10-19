@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=POD HD Pro X Edit
+Exec=env WINEPREFIX="/home/baltazar/.wine" wine C:\\\\ProgramData\\\\Microsoft\\\\Windows\\\\Start\\ Menu\\\\Programs\\\\Line\\ 6\\\\POD\\ HD\\ Pro\\ X\\ Edit\\\\POD\\ HD\\ Pro\\ X\\ Edit.lnk
+Type=Application
+StartupNotify=true
+Path=/home/baltazar/.wine/dosdevices/c:/Program Files (x86)/Line6/POD HD Pro X Edit
+Icon=452C_POD HD Pro X Edit.0
+StartupWMClass=pod hd pro x edit.exe
