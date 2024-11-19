@@ -1040,7 +1040,7 @@ do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
             processes_to_wait_for = std::move(new_processes_to_wait_for);
         }
     }
-    // Make reaaly sure [[noreturn]] is upheld.
+    // Make really sure [[noreturn]] is upheld.
     abort();
 }
 

@@ -1,7 +1,7 @@
 #compdef j4-dmenu-desktop
 
 # Some of the flags accept executables. They are matced with _files -g \(\*\).
-# This is a glob that maches files that are executable.
+# This is a glob that matches files that are executable.
 
 # https://github.com/markfasheh/duperemove/blob/b76d569c4b96d4afb745b7970f87fbb0193b2792/completion/zsh/_duperemove
 # can serve as inspiration for further changes to ZSH completion. Duperemove is

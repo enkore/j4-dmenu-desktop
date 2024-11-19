@@ -98,7 +98,7 @@ std::string posix_shell_unqote(std::string_view str) {
     // <--
     // There could be a race condition between these lines of code. This is code
     // for unit tests, not for j4-dmenu-desktop, so I find this tolerable. The
-    // probability of hitting this race condition is miniscule. If input string
+    // probability of hitting this race condition is minuscule. If input string
     // is escaped well, no shell injection happened and the unit tests aren't
     // being run on a extremely slow computer, the race condition will never be
     // hit.

@@ -47,7 +47,7 @@ def _assemble_error_message(
     Args:
         stdout: stdout contents
         stderr: stderr contents
-        override_env: overriden environment variables
+        override_env: overridden environment variables
         args: commandline executed
 
     Returns:
@@ -82,9 +82,9 @@ class _SubprocessRunResult:
 
 @dataclass
 class _AsyncData:
-    """A messanger class.
+    """A messenger class.
 
-    This is a messanger class between _run_j4dd_impl(),
+    This is a messenger class between _run_j4dd_impl(),
     _subprocess_asynchronous() run and AsyncJ4ddResult.
     _subprocess_asynchronous() needs this additional class to be able to return
     extra information without actually returning it from the function (because
@@ -267,7 +267,7 @@ def run_j4dd(
         # Execute first part of _run_j4dd_impl(), which executes
         # j4-dmenu-desktop but doesn't check the result of the execution.
         next(result)
-        # Immediatelly execute the rest of _run_j4dd_impl(), which may throw
+        # Immediately execute the rest of _run_j4dd_impl(), which may throw
         # J4ddRunError to signify that j4-dmenu-desktop exited with unexpected
         # exit status.
         next(result, None)

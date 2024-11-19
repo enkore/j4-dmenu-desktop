@@ -105,7 +105,7 @@ std::optional<std::string> validate_exec_key(std::string_view exec_key) {
         }
     }
     if (in_quotes)
-        return "\"\" qouted string is missing the end quote in the Exec field.";
+        return "\"\" quoted string is missing the end quote in the Exec field.";
     return {};
 }
 
