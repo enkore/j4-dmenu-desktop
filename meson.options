@@ -16,7 +16,7 @@ option(
 option(
     'notify-implementation',
     type: 'combo',
-    choices: ['inotify', 'kqueue', 'auto'],
+    choices: ['inotify', 'kqueue', 'auto', 'none'],
     value: 'auto',
     description: 'Set the notify implementation.',
 )

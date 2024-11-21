@@ -6,17 +6,17 @@ comp = meson.get_compiler('cpp')
 if get_option('notify-implementation') == 'auto'
   if host_machine.system() in ['freebsd', 'dragonfly', 'netbsd', 'openbsd']
     if comp.check_header('sys/event.h', prefix: '#include <sys/types.h>')
-      inotify = false
+      notify = 'kqueue'
     else
       error(
         'Couldn\'t determine notify implementation. Please set it with',
-        '-Dnotify-implementation=<inotify or kqueue> when creating the builddir.',
+        '-Dnotify-implementation=<inotify, kqueue or none> when creating the builddir.',
       )
     endif
   elif host_machine.system() == 'linux'
     # Using kqueue on Linux is very unlikely.
     if comp.check_header('sys/inotify.h')
-      inotify = true
+      notify = 'inotify'
     else
       error(
         'Couldn\'t determine notify implementation. Please report this to',
@@ -25,13 +25,13 @@ if get_option('notify-implementation') == 'auto'
     endif
   else
     if comp.check_header('sys/inotify.h')
-      inotify = true
+      notify = 'inotify'
     elif comp.check_header('sys/event.h', prefix: '#include <sys/types.h>')
-      inotify = false
+      notify = 'kqueue'
     else
       error(
         'Couldn\'t determine notify implementation. Please set it with',
-        '-Dnotify-implementation=<inotify or kqueue> when creating the builddir.',
+        '-Dnotify-implementation=<inotify, kqueue or none> when creating the builddir.',
       )
     endif
   endif
@@ -47,15 +47,25 @@ elif get_option('notify-implementation') == 'inotify'
 '''.substring(0, -1) # Strip the last \n
     )
   endif
-  inotify = true
+  notify = 'inotify'
 elif get_option('notify-implementation') == 'kqueue'
-  inotify = false
+  notify = 'kqueue'
+elif get_option('notify-implementation') == 'none'
+  warning(
+    'You have disabled the notify backend, the --wait-on flag will not work!',
+    'If you did this because of compilation issues or because of backend',
+    'autodetection issues, please report them at',
+    'https://github.com/enkore/j4-dmenu-desktop/issues/new.'
+  )
+  notify = 'none'
 endif
 
 flags = ['-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG']
 
-if not inotify
+if notify == 'kqueue'
   flags += '-DUSE_KQUEUE'
+elif notify == 'inotify'
+  flags += '-DUSE_INOTIFY'
 endif
 
 # Actual build definitions begin here.
@@ -97,9 +107,9 @@ src = files(
   'Utilities.cc',
 )
 
-if inotify
+if notify == 'inotify'
   src += files('NotifyInotify.cc')
-else
+elif notify == 'kqueue'
   src += files('NotifyKqueue.cc')
 endif
 

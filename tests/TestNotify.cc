@@ -33,7 +33,7 @@
 
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"
-#else
+#elif defined USE_INOTIFY
 #include "NotifyInotify.hh"
 #endif
 
@@ -47,7 +47,7 @@ TEST_CASE("Test detection of file creation and deletion of a subdirectory of "
     WARN("Tests on kqueue based systems can take about a minute. Please be "
          "patient.");
     NotifyKqueue notify(search_path);
-#else
+#elif defined USE_INOTIFY
     NotifyInotify notify(search_path);
 #endif
 
