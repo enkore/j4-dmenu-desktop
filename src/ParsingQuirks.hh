@@ -26,10 +26,6 @@ struct ParsingQuirks
     // Accept multiple spaces instead of a single space as an argument separator
     // in Exec.
     bool multiple_spaces_in_exec;
-
-    void disable() {
-        extra_wine_escaping = multiple_spaces_in_exec = false;
-    }
 };
 
 #endif

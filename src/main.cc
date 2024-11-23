@@ -1108,6 +1108,9 @@ int main(int argc, char **argv) {
     bool skip_i3_check = false;
     bool prune_bad_usage_log_entries = false;
     ParsingQuirks quirks{true, true};
+    enum class quirk_override_mode { TRUE, FALSE, DEFAULT };
+    quirk_override_mode wine = quirk_override_mode::DEFAULT,
+                        multispace = quirk_override_mode::DEFAULT;
 
     // This variable doesn't have much use, wine_compatibility_mode is more
     // important. It is only used to detect if both mutaly exclusive flags have
@@ -1266,20 +1269,27 @@ int main(int argc, char **argv) {
             break;
         case 'D':
             if (parsing_mode == STRICT) {
-                // This behavior may be subject to change.
                 fmt::print(stderr,
                            "You may not supply both --strict-parsing and "
                            "--desktop-file-quirks at the same time!\n");
                 exit(1);
+            } else if (parsing_mode == QUIRKS) {
+                SPDLOG_WARN("You have specified the --desktop-file-quirks flag "
+                            "multiple times. They do not stack! Only the last "
+                            "--desktop-file-quirks will be respected.");
             }
             parsing_mode = QUIRKS;
-            quirks.disable();
             arg = optarg;
+            wine = multispace = quirk_override_mode::DEFAULT;
             for (const auto &curr_arg : split((std::string)arg, ',')) {
-                if (curr_arg == "wine") {
-                    quirks.extra_wine_escaping = true;
-                } else if (curr_arg == "multispace") {
-                    quirks.multiple_spaces_in_exec = true;
+                if (endswith(curr_arg, "wine")) {
+                    wine = (startswith(curr_arg, "no")
+                                ? quirk_override_mode::FALSE
+                                : quirk_override_mode::TRUE);
+                } else if (endswith(curr_arg, "multispace")) {
+                    multispace = (startswith(curr_arg, "no")
+                                      ? quirk_override_mode::FALSE
+                                      : quirk_override_mode::TRUE);
                 } else {
                     fmt::print(stderr, "Invalid compatibility mode supplied to "
                                        "--desktop-file-compatibility!\n");
@@ -1295,8 +1305,8 @@ int main(int argc, char **argv) {
                            "--desktop-file-quirks at the same time!\n");
                 exit(1);
             }
+            quirks.extra_wine_escaping = quirks.multiple_spaces_in_exec = false;
             parsing_mode = STRICT;
-            quirks.disable();
             break;
         case 'E':
             puts(version());
@@ -1310,6 +1320,22 @@ int main(int argc, char **argv) {
         SPDLOG_WARN("Positional arguments '{}' are unused!",
                     fmt::join(argv + optind, argv + argc, " "));
     }
+
+    if (wine == quirk_override_mode::FALSE &&
+        multispace == quirk_override_mode::FALSE) {
+        fmt::print(stderr,
+                   "You have disabled all quirks using --desktop-file-quirks. "
+                   "Please use --strict-parsing to enforce standard conformant "
+                   "behavior instead.\n");
+        exit(1);
+    }
+
+    if (wine != quirk_override_mode::DEFAULT)
+        quirks.extra_wine_escaping =
+            wine == quirk_override_mode::TRUE ? true : false;
+    if (multispace != quirk_override_mode::DEFAULT)
+        quirks.multiple_spaces_in_exec =
+            multispace == quirk_override_mode::TRUE ? true : false;
 
     /// Handle logging
     // Handle -v or -vv flag if --log-level wasn't specified.
