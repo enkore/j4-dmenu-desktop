@@ -858,7 +858,8 @@ public:
                         CMDLineAssembly::convert_argv_to_string(command_array);
             }
         }
-        // wrapper and i3 mode are mutually exclusive, no need to handle it here.
+        // wrapper and i3 mode are mutually exclusive, no need to handle it
+        // here.
         /*
         if (!this->wrapper.empty())
             ...
@@ -1113,8 +1114,8 @@ int main(int argc, char **argv) {
                         multispace = quirk_override_mode::DEFAULT;
 
     // This variable doesn't have much use, wine_compatibility_mode is more
-    // important. It is only used to detect if both mutually exclusive flags have
-    // been specified.
+    // important. It is only used to detect if both mutually exclusive flags
+    // have been specified.
     enum { STRICT, NONE, QUIRKS } parsing_mode = NONE;
 
     int verbose_flag = 0;
