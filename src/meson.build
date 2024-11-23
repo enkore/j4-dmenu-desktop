@@ -9,7 +9,7 @@ if get_option('notify-implementation') == 'auto'
       inotify = false
     else
       error(
-        'Couldn\'t determine notify implementation. Please set it with ',
+        'Couldn\'t determine notify implementation. Please set it with',
         '-Dnotify-implementation=<inotify or kqueue> when creating the builddir.',
       )
     endif
@@ -19,7 +19,7 @@ if get_option('notify-implementation') == 'auto'
       inotify = true
     else
       error(
-        'Couldn\'t determine notify implementation. Please report this to ',
+        'Couldn\'t determine notify implementation. Please report this to',
         'https://github.com/enkore/j4-dmenu-desktop/issues/new',
       )
     endif
@@ -30,7 +30,7 @@ if get_option('notify-implementation') == 'auto'
       inotify = false
     else
       error(
-        'Couldn\'t determine notify implementation. Please set it with ',
+        'Couldn\'t determine notify implementation. Please set it with',
         '-Dnotify-implementation=<inotify or kqueue> when creating the builddir.',
       )
     endif
