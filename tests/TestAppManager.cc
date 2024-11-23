@@ -17,6 +17,7 @@
 
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include <algorithm>
 #include <errno.h>
@@ -42,6 +43,7 @@
 #include "Application.hh"
 #include "FSUtils.hh"
 #include "LocaleSuffixes.hh"
+#include "ParsingQuirks.hh"
 #include "Utilities.hh"
 
 struct check_entry
@@ -1017,4 +1019,33 @@ TEST_CASE("Test removing an unknown desktop file", "[AppManager]") {
 
     REQUIRE_NOTHROW(apps.remove(TEST_FILES "applications/hidden.desktop",
                                 TEST_FILES "applications/"));
+}
+
+TEST_CASE("Test skipping malformed desktop files using quirks",
+          "[AppManager]") {
+    // multispace should not affect the result of this test. It is modified
+    // here to make sure that the test passes no matter if it's set to true or
+    // false.
+    bool multispace = GENERATE(true, false);
+    bool wine;
+    SECTION("Quirk support enabled") {
+        wine = true;
+    }
+    SECTION("Quirk support disabled") {
+        wine = false;
+    }
+    AppManager apps(
+        {
+            {TEST_FILES "applications/",
+             {TEST_FILES "applications/wine-#174.desktop",
+              TEST_FILES "applications/wine-powerpoint-viewer.desktop"}}
+    },
+        {}, LocaleSuffixes("en_US"), ParsingQuirks{wine, multispace});
+
+    apps.check_inner_state();
+
+    if (wine)
+        REQUIRE(apps.count() == 2);
+    else
+        REQUIRE(apps.count() == 0);
 }

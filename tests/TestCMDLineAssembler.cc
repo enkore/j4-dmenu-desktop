@@ -17,6 +17,7 @@
 
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include <optional>
 #include <string>
@@ -84,6 +85,18 @@ TEST_CASE("Test converting Exec key to command array", "[CMDLineAssembler]") {
         strvec{"command", "--arg", R"($  \)"});
 }
 
+TEST_CASE("Test Exec key validation", "[CMDLineAssembler][!mayfail]") {
+    REQUIRE(CMDLineAssembly::validate_exec_key(R"--(some string\)--"));
+    REQUIRE(CMDLineAssembly::validate_exec_key(R"--("some string\)--"));
+    REQUIRE(CMDLineAssembly::validate_exec_key(R"--(so\me string)--"));
+    REQUIRE(CMDLineAssembly::validate_exec_key(R"--("so\me" string)--"));
+    REQUIRE(CMDLineAssembly::validate_exec_key(
+        R"--("string a""stringb" and "string c)--"));
+    REQUIRE_FALSE(CMDLineAssembly::validate_exec_key(R"--(some string)--"));
+    REQUIRE_FALSE(
+        CMDLineAssembly::validate_exec_key(R"--("\"\`\$\\" valid escapes)--"));
+}
+
 // See #181
 TEST_CASE("Test Wine generated desktop file failing",
           "[CMDLineAssembler][!mayfail]") {
@@ -97,6 +110,11 @@ TEST_CASE("Test Wine generated desktop file failing",
     // a compiler warning. This is not true, code below will always initialize
     // it, but it is also set here to silence the warnings.
     bool enable_compatibility_mode = false;
+
+    // This test focuses on wine quirk. The multispace_unused variable makes
+    // sure that the behavior of wine quirk has no correlation to the
+    // multispace quirk (which is not relevant here).
+    bool multispace_unused = GENERATE(true, false);
 
     SECTION("Wine generated desktop file from issue #174") {
         app_optional.emplace(TEST_FILES "applications/wine-#174.desktop", liner,
@@ -129,12 +147,12 @@ TEST_CASE("Test Wine generated desktop file failing",
     Application &app = *app_optional;
 
     if (enable_compatibility_mode) {
-        auto commandline =
-            CMDLineAssembly::convert_exec_to_command(app.exec, {true, false});
+        auto commandline = CMDLineAssembly::convert_exec_to_command(
+            app.exec, {true, multispace_unused});
         REQUIRE(commandline == arguments);
     } else
         REQUIRE_THROWS(CMDLineAssembly::convert_exec_to_command(
-            app.exec, {enable_compatibility_mode, false}));
+            app.exec, {enable_compatibility_mode, multispace_unused}));
 }
 
 // See #181
@@ -146,14 +164,33 @@ TEST_CASE("Test desktop files with superfluous whitespace in Exec",
     Application app(TEST_FILES "applications/eagle-extra-spaces.desktop", liner,
                     ls, {});
 
+    // This test focuses on multispace quirk. The wine_unused variable makes
+    // sure that the behavior of multispace quirk has no correlation to the
+    // wine quirk (which is not relevant here).
+    bool wine_unused = GENERATE(true, false);
+
     auto collapse_extra_spaces =
-        CMDLineAssembly::convert_exec_to_command(app.exec, {false, true});
-    auto no_collapse_extra_spaces =
-        CMDLineAssembly::convert_exec_to_command(app.exec, {false, false});
+        CMDLineAssembly::convert_exec_to_command(app.exec, {wine_unused, true});
+    auto no_collapse_extra_spaces = CMDLineAssembly::convert_exec_to_command(
+        app.exec, {wine_unused, false});
 
     REQUIRE(collapse_extra_spaces ==
             std::vector<std::string>{"eagle", "-style", "plastique"});
     REQUIRE(
         no_collapse_extra_spaces ==
         std::vector<std::string>{"eagle", "", "-style", "", "", "plastique"});
+}
+
+TEST_CASE("Test wine and multispace quirk", "[CMDLineAssembler]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+
+    Application app(TEST_FILES "applications/all-quirks.desktop", liner, ls,
+                    {});
+
+    auto result =
+        CMDLineAssembly::convert_exec_to_command(app.exec, {true, true});
+
+    REQUIRE(result == std::vector<std::string>{"eagle", "-style", "some flag",
+                                               "plastique"});
 }
