@@ -37,13 +37,14 @@ if get_option('notify-implementation') == 'auto'
   endif
 elif get_option('notify-implementation') == 'inotify'
   if target_machine.system() in ['freebsd', 'dragonfly', 'netbsd', 'openbsd']
-    warning(
-      '#################################################################\n',
-      '# WARNING: Meson has detected usage of inotify notify backend   #\n',
-      '#          on a BSD. If you\'re using libinotify-kqueue, be      #\n',
-      '#          aware that j4-dmenu-desktop isn\'t fully compatible   #\n',
-      '#          with it. You should use kqueue if possible.          #\n',
-      '#################################################################',
+    warning('''
+  #################################################################
+  # WARNING: Meson has detected usage of inotify notify backend   #
+  #          on a BSD. If you're using libinotify-kqueue, be      #
+  #          aware that j4-dmenu-desktop isn't fully compatible   #
+  #          with it. You should use kqueue if possible.          #
+  #################################################################
+'''.substring(0, -1) # Strip the last \n
     )
   endif
   inotify = true
