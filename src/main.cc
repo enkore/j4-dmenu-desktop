@@ -193,7 +193,7 @@ static void print_usage(FILE *f) {
         "        Enable nonconformant desktop file parsing quirks. Available "
         "modes: wine, multispace.\n"
         "    --strict-parsing\n"
-        "        Enable strict desktop file parsing. Mutaly exclusive with\n"
+        "        Enable strict desktop file parsing. Mutually exclusive with\n"
         "        --desktop-file-compatibility.\n"
         "    --version\n"
         "        Display program version\n"
@@ -858,7 +858,7 @@ public:
                         CMDLineAssembly::convert_argv_to_string(command_array);
             }
         }
-        // wrapper and i3 mode are mutally exclusive, no need to handle it here.
+        // wrapper and i3 mode are mutually exclusive, no need to handle it here.
         /*
         if (!this->wrapper.empty())
             ...
@@ -1113,7 +1113,7 @@ int main(int argc, char **argv) {
                         multispace = quirk_override_mode::DEFAULT;
 
     // This variable doesn't have much use, wine_compatibility_mode is more
-    // important. It is only used to detect if both mutaly exclusive flags have
+    // important. It is only used to detect if both mutually exclusive flags have
     // been specified.
     enum { STRICT, NONE, QUIRKS } parsing_mode = NONE;
 
