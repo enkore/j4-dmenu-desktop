@@ -21,6 +21,8 @@ test_files = pathlib.Path(__file__).parent.parent.absolute() / "test_files/pytes
 helpers = pathlib.Path(__file__).parent.absolute() / "helper_scripts"
 empty_dir = pathlib.Path(__file__).parent.parent.absolute() / "test_files/empty"
 
+quirk_modes = ("wine", "multispace")
+
 
 def mkfifo(name: pathlib.Path | str) -> None:
     try:
@@ -389,3 +391,45 @@ def test_halding_of_file_field_codes(run_j4dd, tmp_path):
     finally:
         async_result.wait()
     assert fifo_message == "1\n"
+
+def test_quirks_mutual_exclusivity(run_j4dd):
+    """Test --desktop-file-quirks and --strict-parsing conflict."""
+    run_j4dd({}, "--desktop-file-quirks", ",".join(quirk_modes), "--strict-parsing", shouldfail=True)
+
+
+def test_quirks_alldisabled(run_j4dd):
+    """Test that --desktop-file-quirks with everything disabled fails."""
+    run_j4dd({}, "--desktop-file-quirks", ",".join(f"no{mode}" for mode in quirk_modes), shouldfail=True)
+
+
+def test_quirks_nomode(run_j4dd):
+    """Test that --desktop-file-quirks supports disabling."""
+    path_env = os.getenv("PATH")
+    run_j4dd(
+        {
+            "PATH": f"{helpers}:{path_env}",
+            "XDG_DATA_HOME": str(test_files / "quirks"),
+            "XDG_DATA_DIRS": str(empty_dir),
+        },
+        "--dmenu",
+        str(helpers / "dmenu_noselect_imitator.sh"),
+        "--desktop-file-quirks",
+        "nomultispace",
+    )
+
+def test_quirks_chaining(run_j4dd):
+    """Test that --desktop-file-quirks specified multiple times works."""
+    path_env = os.getenv("PATH")
+    run_j4dd(
+        {
+            "PATH": f"{helpers}:{path_env}",
+            "XDG_DATA_HOME": str(test_files / "quirks"),
+            "XDG_DATA_DIRS": str(empty_dir),
+        },
+        "--dmenu",
+        str(helpers / "dmenu_noselect_imitator.sh"),
+        "--desktop-file-quirks",
+        "nomultispace",
+        "--desktop-file-quirks",
+        "nowine",
+    )
