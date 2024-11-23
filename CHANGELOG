@@ -134,3 +134,4 @@ r3.2 to be released
 	+ improved program execution
 	+ minor logging improvements
 	+ added informative summary of enabled optional features to Meson
+	+ fixed typos in manpage and elsewhere
