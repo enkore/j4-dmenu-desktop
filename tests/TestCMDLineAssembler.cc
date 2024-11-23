@@ -181,6 +181,21 @@ TEST_CASE("Test desktop files with superfluous whitespace in Exec",
         std::vector<std::string>{"eagle", "", "-style", "", "", "plastique"});
 }
 
+TEST_CASE("Test Distrobox compatibility", "[CMDLineAssembler]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+
+    Application app(TEST_FILES "applications/alpine-toolbox-latest-feh.desktop",
+                    liner, ls, {});
+
+    auto split_exec =
+        CMDLineAssembly::convert_exec_to_command(app.exec, {false, true});
+    REQUIRE(split_exec == std::vector<std::string>{
+                              "/home/meator/distrobox-1.8.0/distrobox-enter",
+                              "-n", "alpine-toolbox-latest", "--", "feh",
+                              "--start-at", "%u"});
+}
+
 TEST_CASE("Test wine and multispace quirk", "[CMDLineAssembler]") {
     LocaleSuffixes ls("en_US");
     LineReader liner;
