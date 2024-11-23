@@ -189,7 +189,7 @@ static void print_usage(FILE *f) {
         "        Specify a log file\n"
         "    --log-file-level=ERROR | WARNING | INFO | DEBUG\n"
         "        Set file log level\n"
-        "    --desktop-file-compatibility=wine,multispace\n"
+        "    --desktop-file-quirks=wine,multispace\n"
         "        Enable nonconformant desktop file parsing quirks. Available "
         "modes: wine, multispace.\n"
         "    --strict-parsing\n"
