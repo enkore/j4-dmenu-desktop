@@ -137,7 +137,6 @@ Application::Application(const char *path, LineReader &liner,
                     this->terminal = strcmp(value, "true") == 0;
                 }
             } catch (const escape_error &e) {
-                SPDLOG_ERROR("{}: {}", location, e.what());
                 throw escape_error((std::string)e.what() + " (line " +
                                    std::to_string(line_number) + ")");
             }
