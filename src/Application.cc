@@ -78,10 +78,17 @@ Application::Application(const char *path, LineReader &liner,
 
             // Split that string in place
             char *key = line, *value = strpbrk(line, " =");
-            if (!value || value == line)
-                throw invalid_error(
-                    "Malformed file, invalid key=value pair (line " +
-                    std::to_string(line_number) + ").");
+            if (!value || value == line) {
+                if (line[0] == ' ')
+                    throw invalid_error(
+                        "Malformed file, expected key=value pair, got invalid "
+                        "whitespace at start of line (line " +
+                        std::to_string(line_number) + ").");
+                else
+                    throw invalid_error(
+                        "Malformed file, invalid key=value pair (line " +
+                        std::to_string(line_number) + ").");
+            }
             // Cut spaces before equal sign
             if (*value != '=') {
                 *value++ = '\0';
