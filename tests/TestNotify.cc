@@ -44,6 +44,8 @@ TEST_CASE("Test detection of file creation and deletion of a subdirectory of "
           "[Notify]") {
     stringlist_t search_path({TEST_FILES "usr/"});
 #ifdef USE_KQUEUE
+    WARN("Tests on kqueue based systems can take about a minute. Please be "
+         "patient.");
     NotifyKqueue notify(search_path);
 #else
     NotifyInotify notify(search_path);
