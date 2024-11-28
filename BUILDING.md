@@ -15,7 +15,7 @@ Shell completions are provided as release artifacts. See [`etc/README.md`](etc/)
 for more info.
 
 > [!WARNING]
-> Meson build system requires Meson >=1.2.0 (as marked in the `meson_version`
+> Meson build system requires Meson >=1.1.0 (as marked in the `meson_version`
 field in `meson.build`). If that isn't available in your build environment,
 CMake can be used instead.
 
