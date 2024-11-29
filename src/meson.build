@@ -5,7 +5,7 @@ comp = meson.get_compiler('cpp')
 # Implement semi-automatic detection of kqueue/inotify.
 if get_option('notify-implementation') == 'auto'
   if target_machine.system() in ['freebsd', 'dragonfly', 'netbsd', 'openbsd']
-    if comp.check_header('sys/event.h')
+    if comp.check_header('sys/event.h', prefix: '#include <sys/types.h>')
       inotify = false
     else
       error(
@@ -26,7 +26,7 @@ if get_option('notify-implementation') == 'auto'
   else
     if comp.check_header('sys/inotify.h')
       inotify = true
-    elif comp.check_header('sys/event.h')
+    elif comp.check_header('sys/event.h', prefix: '#include <sys/types.h>')
       inotify = false
     else
       error(
