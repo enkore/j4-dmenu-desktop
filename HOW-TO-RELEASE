@@ -1,3 +1,4 @@
+- Update etc/completions/ if necessary
 - Compile and commit CHANGELOG
 - update version.txt
 - Commit message follows the pattern "rX.Y released ISO8601DATE"

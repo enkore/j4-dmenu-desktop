@@ -32,12 +32,21 @@ if crazy_complete_exe.found() and crazy_complete_exe.version() != 'unknown'
   endif
 endif
 
+is_generating = crazy_complete_exe.found()
+
 summary(
   'generated shell completions',
-  crazy_complete_exe.found(),
+  is_generating,
   section: 'Optional build components',
   bool_yn: true,
 )
+
+if not is_generating and get_option('generate-tests-shell-completion')
+  warning(
+    '\'generate-tests-shell-completion\' is set, but shell completions are not',
+    'being generated with the current configuration, ignoring...',
+  )
+endif
 
 shells = {
   'bash': ['@0@', get_option('datadir') / 'bash-completion/completions'],
@@ -52,24 +61,34 @@ foreach shell, out_file_data : shells
   install_dir = out_file_data[1]
 
   if shell in enabled_completions
-    completion_targets += custom_target(
-      command: [crazy_complete_exe, shell, '@INPUT@', '--output', '@OUTPUT@'],
-      input: 'j4-dmenu-desktop.yaml',
-      output: out_file.format('j4-dmenu-desktop'),
-      install: true,
-      install_dir: install_dir,
-    )
-
-    if get_option('generate-tests-shell-completion')
+    if is_generating
       completion_targets += custom_target(
         command: [crazy_complete_exe, shell, '@INPUT@', '--output', '@OUTPUT@'],
-        input: 'j4-dmenu-tests.yaml',
-        output: out_file.format('j4-dmenu-tests'),
+        input: 'j4-dmenu-desktop.yaml',
+        output: out_file.format('j4-dmenu-desktop'),
         install: true,
+        install_dir: install_dir,
+      )
+
+      if get_option('generate-tests-shell-completion')
+        completion_targets += custom_target(
+          command: [crazy_complete_exe, shell, '@INPUT@', '--output', '@OUTPUT@'],
+          input: 'j4-dmenu-tests.yaml',
+          output: out_file.format('j4-dmenu-tests'),
+          install: true,
+          install_dir: install_dir,
+        )
+      endif
+    else
+      install_data(
+        'completions' / out_file.format('j4-dmenu-desktop'),
+        preserve_path: true,
         install_dir: install_dir,
       )
     endif
   endif
 endforeach
 
-alias_target('shell-completions', completion_targets)
+if is_generating
+  alias_target('shell-completions', completion_targets)
+endif

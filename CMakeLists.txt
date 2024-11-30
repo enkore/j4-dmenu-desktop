@@ -156,3 +156,6 @@ endif()
 
 install(TARGETS j4-dmenu-desktop RUNTIME DESTINATION bin)
 INSTALL(FILES j4-dmenu-desktop.1 DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1/)
+INSTALL(FILES etc/completions/_j4-dmenu-desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/zsh/site-functions)
+INSTALL(FILES etc/completions/j4-dmenu-desktop.fish DESTINATION ${CMAKE_INSTALL_PREFIX}/share/fish/vendor_completions.d)
+INSTALL(FILES etc/completions/j4-dmenu-desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/bash-completion/completions)
