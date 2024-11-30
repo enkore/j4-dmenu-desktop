@@ -34,7 +34,7 @@ Building with Meson:
 
     ./meson-setup.sh build
     cd build
-    meson compile j4-dmenu-desktop
+    meson compile
     sudo meson install
 
 Building with CMake:
