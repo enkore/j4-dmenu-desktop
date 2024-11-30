@@ -45,9 +45,6 @@ Building with CMake:
     make j4-dmenu-desktop
     sudo make install
 
-Shell completions are provided as release artifacts. See [`etc/README.md`](etc/)
-for more info.
-
 See [BUILDING](BUILDING.md) for more info.
 
 ## Distribution packages

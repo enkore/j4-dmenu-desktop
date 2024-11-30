@@ -11,9 +11,6 @@ is done to speed up release builds, but developers may wish to turn this off.
 Although both systems will be supported for compatibility, **Meson should be
 preferred**. Meson provides overall better development and packaging experience.
 
-Shell completions are provided as release artifacts. See [`etc/README.md`](etc/)
-for more info.
-
 > [!WARNING]
 > Meson build system requires Meson >=1.1.0 (as marked in the `meson_version`
 field in `meson.build`). If that isn't available in your build environment,
