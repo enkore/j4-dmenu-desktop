@@ -85,7 +85,6 @@ foreach shell, out_file_data : shells
     else
       install_data(
         'completions' / out_file.format('j4-dmenu-desktop'),
-        preserve_path: true,
         install_dir: install_dir,
       )
     endif
