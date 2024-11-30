@@ -11,6 +11,7 @@ if enabled_completions == []
 endif
 
 crazy_complete_min_version = '0.3.0'
+crazy_complete_latest_tested_version = '0.3.2'
 
 crazy_complete_exe = find_program(
   'crazy-complete',
@@ -22,12 +23,14 @@ crazy_complete_exe = find_program(
 
 if crazy_complete_exe.found() and crazy_complete_exe.version() != 'unknown'
   crazy_complete_version = crazy_complete_exe.version()
-  if crazy_complete_version.version_compare('!=' + crazy_complete_min_version)
+  if crazy_complete_version.version_compare('>' + crazy_complete_latest_tested_version)
     warning(
-      f'Version of crazy-complete @crazy_complete_version@ doesn\'t match the',
-      f'expected version @crazy_complete_min_version@. Build will proceed, but',
-      f'consider using version @crazy_complete_min_version@ if you have',
-      'problems with your version.'
+      f'Current version of crazy-complete (@crazy_complete_version@) is newer',
+      'than the latest tested version of crazy-complete which is known to be',
+      'compatible with j4-dmenu-desktop',
+      f'(@crazy_complete_latest_tested_version@). Build will proceed, but',
+      'consider using an older tested version if you have problems with your',
+      'version.'
     )
   endif
 endif
