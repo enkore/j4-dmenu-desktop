@@ -52,7 +52,7 @@ option(
 option(
     'generate-shell-completions',
     type: 'feature',
-    description: 'Use crazy-complete to generate completions. Completions for releases are also available as release artifacts.'
+    description: 'Use crazy-complete to generate completions.'
 )
 
 option(
