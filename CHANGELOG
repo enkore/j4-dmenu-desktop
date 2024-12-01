@@ -123,7 +123,7 @@ r3.1 released 2024-07-31
 	+ added pytest testsuite
 	+ changed signing key
 
-r3.2 to be released
+r3.2 released 2024-12-01
 	+ added desktop file "quirk" handling, which fixes Wine and distrobox
 	  desktop files
 	+ switched to crazy-complete for shell completion generation
@@ -135,3 +135,4 @@ r3.2 to be released
 	+ minor logging improvements
 	+ added informative summary of enabled optional features to Meson
 	+ fixed typos in manpage and elsewhere
+	+ fixed notify implementation detection on OpenBSD
