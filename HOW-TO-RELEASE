@@ -11,6 +11,3 @@
 - Compare to repo
 - gpg --detach-sign .tar.gz
 - Upload .tar.gz.sig to GitHub
-- Upload etc/ completions to GitHub
-  Filenames must be j4-dmenu-desktop, _j4-dmenu-desktop and j4-dmenu-desktop.fish
-  for Bash, ZSH and Fish respectively
