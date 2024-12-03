@@ -103,8 +103,25 @@ void NotifyKqueue::process_kqueue(const stringlist_t &search_path,
 }
 
 NotifyKqueue::NotifyKqueue(const stringlist_t &search_path) {
-    if (pipe2(pipefd, O_NONBLOCK | O_CLOEXEC) == -1)
+    if (pipe(pipefd) == -1)
         PFATALE("pipe");
+    int fdflags;
+    // Set FD_CLOEXEC and O_NONBLOCK on pipefd[0]
+    if (fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) == -1)
+        PFATALE("fcntl");
+    if ((fdflags = fcntl(pipefd[0], F_GETFL)) == -1)
+        PFATALE("fcntl");
+    fdflags |= O_NONBLOCK;
+    if (fcntl(pipefd[0], F_SETFL, fdflags) == -1)
+        PFATALE("fcntl");
+    // Set FD_CLOEXEC and O_NONBLOCK on pipefd[1]
+    if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1)
+        PFATALE("fcntl");
+    if ((fdflags = fcntl(pipefd[1], F_GETFL)) == -1)
+        PFATALE("fcntl");
+    fdflags |= O_NONBLOCK;
+    if (fcntl(pipefd[1], F_SETFL, fdflags) == -1)
+        PFATALE("fcntl");
 
     std::vector<directory_entry> directories;
 
