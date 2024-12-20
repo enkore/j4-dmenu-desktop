@@ -10,6 +10,8 @@ just fine on about any desktop environment).
 
 You can also execute shell commands using it.
 
+https://github.com/user-attachments/assets/311779a5-4ebf-41db-b942-cb90747649f9
+
 ## Features
 
 - speed
