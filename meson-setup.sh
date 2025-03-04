@@ -4,7 +4,7 @@
 
 # This shell script is compatible with dash shell.
 
-set +o nounset +o errexit
+set -o nounset -o errexit
 
 if ! type meson >/dev/null; then
     echo "Meson must be installed!" 1>&2
