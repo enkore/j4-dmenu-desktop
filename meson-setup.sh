@@ -52,14 +52,13 @@ fi
 
 case $build_type in
 release)
-    exec $DRYRUN meson setup --buildtype=release -Db_lto=true "$1"
+    exec $DRYRUN meson setup --native-file meson-native/release.ini "$1"
     ;;
 debug)
-    exec $DRYRUN meson setup -Dsplit-source=true --unity=off "$1"
+    exec $DRYRUN meson setup --native-file meson-native/debug.ini "$1"
     ;;
 sanitize)
-    # See https://github.com/catchorg/Catch2/issues/2811 for explanation of forcefallback
-    exec $DRYRUN meson setup -Dsplit-source=true -Db_sanitize=address,undefined -Dcpp_debugstl=true -Db_lundef=false --wrap-mode forcefallback --unity=off "$1"
+    exec $DRYRUN meson setup --native-file meson-native/sanitize.ini "$1"
     ;;
 *)
     echo "Unknown build style $build_type!" 1>&2

@@ -64,10 +64,14 @@ Tests can be disabled using the `-DWITH_TESTS=OFF` flag.
 
 ## Building with Meson
 J4-dmenu-desktop provides a simple setup helper
-[`meson-setup.sh`](meson-setup.sh). It calls `meson setup` with some preset
-flags. You can run this script with the `-d` flag to do a dry run, which just
-prints the commands it would have executed to stdout. You can then tweak it to
-your needs using standard Meson flags.
+[`meson-setup.sh`](meson-setup.sh). It calls `meson setup` with official [native
+files](https://mesonbuild.com/Native-environments.html) present in
+`meson-native/` directory. You can run this script with the `-d` flag to do a
+dry run, which just prints the commands it would have executed to stdout.
+
+You can also directly source the native files with `meson setup --native-file
+meson-native/...`, bypassing [`meson-setup.sh`](meson-setup.sh). This allows you
+to further override the options.
 
 Meson, like CMake, provides several options that tweak the build. In particular,
 developers may want to set `split-source` to reduce unnecessary recompilation
