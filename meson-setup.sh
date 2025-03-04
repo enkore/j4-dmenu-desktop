@@ -45,8 +45,16 @@ done
 
 shift $((OPTIND - 1))
 
-if [ $# -ne 1 ]; then
+if [ $# -eq 0 ]; then
     echo "Build directory must be specified!" 1>&2
+    exit 1
+fi
+if [ $# -ge 2 ]; then
+    printf "Too many arguments specified! If you want to append your own " 1>&2
+    printf "flags to 'meson setup', invoke it directly. Run this script " 1>&2
+    printf "with the -d flag to do a dry-run showing the default native " 1>&2
+    printf "files used (you can then append your own flags to the " 1>&2
+    printf "'meson setup' invocation).\n" 1>&2
     exit 1
 fi
 
