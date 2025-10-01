@@ -1380,6 +1380,8 @@ int main(int argc, char **argv) {
     // alignment to the line number part of the message.
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] [%s:%-3#] %v");
 
+    SPDLOG_INFO("Start of j4-dmenu-desktop {} log", version());
+
     /// i3 ipc
     SPDLOG_DEBUG("I3 IPC interface is {}.", (use_i3_ipc ? "on" : "off"));
 
