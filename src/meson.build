@@ -65,7 +65,6 @@ spdlog = dependency(
   'spdlog',
   default_options: [
     'tests=disabled',
-    'external_fmt=enabled',
     'compile_library=true',
     'default_library=static',
   ],

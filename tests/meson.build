@@ -16,7 +16,14 @@ summary('unit tests', true, section: 'Optional build components', bool_yn: true)
 # won't likely work. version isn't set to >3.3.0 because 3.3.0 is the oldest
 # Catch2 release I was able to compile (compilation errors are likely caused
 # by newer version of gcc which wasn't used at that time).
-catch2 = dependency('catch2', version: '>3.0.0', default_options: 'tests=false')
+catch2 = dependency(
+  'catch2',
+  version: '>3.0.0',
+  default_options: [
+    'tests=false',
+    'install=false',
+  ],
+)
 
 test_files = [
   'FSUtils.cc',

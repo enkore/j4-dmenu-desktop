@@ -1,11 +1,14 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -50,16 +50,4 @@
+@@ -60,19 +60,4 @@
    )
  endif
  
 -# install header and pkg-config file
--install_subdir('include/spdlog', install_dir: get_option('includedir'))
+-install_subdir(
+-  'include/spdlog',
+-  install_dir: get_option('includedir'),
+-)
 -pkg = import('pkgconfig')
 -pkg.generate(
 -  name: 'libspdlog',
