@@ -2,50 +2,30 @@
 # crazy-complete: A tool that creates robust and reliable autocompletion scripts for Bash, Fish and Zsh.
 # For more information, visit: https://github.com/crazy-complete/crazy-complete
 
-_j4-dmenu-desktop_compgen_w_replacement() {
-  local cur word append=0
-
-  [[ "$1" == "-a" ]] && { shift; append=1; }
-  [[ "$1" == "--" ]] && { shift; }
-
-  cur="$1"
-  shift
-
-  (( append )) || COMPREPLY=()
-
-  for word; do
-    if [[ "$word" == "$cur"* ]]; then
-      COMPREPLY+=("$(printf '%q' "$word")")
-    fi
-  done
-}
-
-_j4-dmenu-desktop_value_list() {
+_j4-dmenu-desktop__value_list() {
   local separator="$1"; shift
-  local -a values=("$@")
-  local -a having_values
 
   if [[ -z "$cur" ]]; then
-    COMPREPLY=("${values[@]}")
+    COMPREPLY=("$@")
     return
   fi
 
+  local value having_value found_value
+  local -a having_values remaining_values
+
   IFS="$separator" read -r -a having_values <<< "$cur"
 
-  local -a remaining_values=()
-  local value having_value found_value
-
-  for value in "${values[@]}"; do
-    found_value=false
+  for value; do
+    found_value=0
 
     for having_value in "${having_values[@]}"; do
       if [[ "$value" == "$having_value" ]]; then
-        found_value=true
+        found_value=1
         break
       fi
     done
 
-    if ! $found_value; then
+    if (( ! found_value )); then
       remaining_values+=("$value")
     fi
   done
@@ -67,19 +47,51 @@ _j4-dmenu-desktop_value_list() {
   fi
 }
 
-_j4-dmenu-desktop_prefix_compreply() {
-  local i=0 prefix="$1"
+_j4-dmenu-desktop__prefix_compreply() {
+  local i prefix="$1"
   for ((i=0; i < ${#COMPREPLY[@]}; ++i)); do
     COMPREPLY[i]="$prefix${COMPREPLY[i]}"
   done
 }
 
-_j4-dmenu-desktop_parse_commandline() {
-  POSITIONALS=()
+_j4-dmenu-desktop__parse_commandline() {
   END_OF_OPTIONS=0
-  POSITIONAL_NUM=0
 
-  local cmd="${words[0]}" argi arg i char trailing_chars
+  local cmd="root" argi arg i char trailing_chars VAR ARGS
+
+  __find_option() {
+    case "$2" in
+      -h|--help) VAR=OPT_help; ARGS=0; return;;
+      --version) VAR=OPT_version; ARGS=0; return;;
+      -b|--display-binary) VAR=OPT_display_binary; ARGS=0; return;;
+      -f|--display-binary-base) VAR=OPT_display_binary_base; ARGS=0; return;;
+      -d|--dmenu) VAR=OPT_dmenu; ARGS=1; return;;
+      --no-exec) VAR=OPT_no_exec; ARGS=0; return;;
+      --no-generic) VAR=OPT_no_generic; ARGS=0; return;;
+      -t|--term) VAR=OPT_term; ARGS=1; return;;
+      --term-mode) VAR=OPT_term_mode; ARGS=1; return;;
+      --usage-log) VAR=OPT_usage_log; ARGS=1; return;;
+      --prune-bad-usage-log-entries) VAR=OPT_prune_bad_usage_log_entries; ARGS=0; return;;
+      -x|--use-xdg-de) VAR=OPT_use_xdg_de; ARGS=0; return;;
+      --wait-on) VAR=OPT_wait_on; ARGS=1; return;;
+      --wrapper) VAR=OPT_wrapper; ARGS=1; return;;
+      -I|--i3-ipc) VAR=OPT_i3_ipc; ARGS=0; return;;
+      --skip-i3-exec-check) VAR=OPT_skip_i3_exec_check; ARGS=0; return;;
+      -i|--case-insensitive) VAR=OPT_case_insensitive; ARGS=0; return;;
+      -v) VAR=OPT_v; ARGS=0; return;;
+      --log-level) VAR=OPT_log_level; ARGS=1; return;;
+      --log-file) VAR=OPT_log_file; ARGS=1; return;;
+      --log-file-level) VAR=OPT_log_file_level; ARGS=1; return;;
+      --desktop-file-quirks) VAR=OPT_desktop_file_quirks; ARGS=1; return;;
+      --strict-parsing) VAR=OPT_strict_parsing; ARGS=0; return;;
+    esac
+    return 1
+  }
+
+  __append_to_array() {
+    local -n arr=$1
+    arr+=("$2")
+  }
 
   for ((argi=1; argi < ${#words[@]} - 1; ++argi)); do
     arg="${words[argi]}"
@@ -87,160 +99,37 @@ _j4-dmenu-desktop_parse_commandline() {
     case "$arg" in
       --)
         END_OF_OPTIONS=1
-        for ((++argi; argi < ${#words[@]}; ++argi)); do
-          POSITIONALS[POSITIONAL_NUM++]="${words[argi]}"
-        done
-        break;;
-      -)
-        POSITIONALS[POSITIONAL_NUM++]="-";;
-      -*)
-        case "$cmd" in j4-dmenu-desktop)
-          case "$arg" in
-            --help)
-              OPT_help+=(_OPT_ISSET_)
-              continue;;
-            --version)
-              OPT_version+=(_OPT_ISSET_)
-              continue;;
-            --display-binary)
-              OPT_display_binary+=(_OPT_ISSET_)
-              continue;;
-            --display-binary-base)
-              OPT_display_binary_base+=(_OPT_ISSET_)
-              continue;;
-            --dmenu)
-              OPT_dmenu+=("${words[++argi]}")
-              continue;;
-            --dmenu=*)
-              OPT_dmenu+=("${arg#*=}")
-              continue;;
-            --no-exec)
-              OPT_no_exec+=(_OPT_ISSET_)
-              continue;;
-            --no-generic)
-              OPT_no_generic+=(_OPT_ISSET_)
-              continue;;
-            --term)
-              OPT_term+=("${words[++argi]}")
-              continue;;
-            --term=*)
-              OPT_term+=("${arg#*=}")
-              continue;;
-            --term-mode)
-              OPT_term_mode+=("${words[++argi]}")
-              continue;;
-            --term-mode=*)
-              OPT_term_mode+=("${arg#*=}")
-              continue;;
-            --usage-log)
-              OPT_usage_log+=("${words[++argi]}")
-              continue;;
-            --usage-log=*)
-              OPT_usage_log+=("${arg#*=}")
-              continue;;
-            --prune-bad-usage-log-entries)
-              OPT_prune_bad_usage_log_entries+=(_OPT_ISSET_)
-              continue;;
-            --use-xdg-de)
-              OPT_use_xdg_de+=(_OPT_ISSET_)
-              continue;;
-            --wait-on)
-              OPT_wait_on+=("${words[++argi]}")
-              continue;;
-            --wait-on=*)
-              OPT_wait_on+=("${arg#*=}")
-              continue;;
-            --wrapper)
-              OPT_wrapper+=("${words[++argi]}")
-              continue;;
-            --wrapper=*)
-              OPT_wrapper+=("${arg#*=}")
-              continue;;
-            --i3-ipc)
-              OPT_i3_ipc+=(_OPT_ISSET_)
-              continue;;
-            --skip-i3-exec-check)
-              OPT_skip_i3_exec_check+=(_OPT_ISSET_)
-              continue;;
-            --case-insensitive)
-              OPT_case_insensitive+=(_OPT_ISSET_)
-              continue;;
-            --log-level)
-              OPT_log_level+=("${words[++argi]}")
-              continue;;
-            --log-level=*)
-              OPT_log_level+=("${arg#*=}")
-              continue;;
-            --log-file)
-              OPT_log_file+=("${words[++argi]}")
-              continue;;
-            --log-file=*)
-              OPT_log_file+=("${arg#*=}")
-              continue;;
-            --log-file-level)
-              OPT_log_file_level+=("${words[++argi]}")
-              continue;;
-            --log-file-level=*)
-              OPT_log_file_level+=("${arg#*=}")
-              continue;;
-            --desktop-file-quirks)
-              OPT_desktop_file_quirks+=("${words[++argi]}")
-              continue;;
-            --desktop-file-quirks=*)
-              OPT_desktop_file_quirks+=("${arg#*=}")
-              continue;;
-            --strict-parsing)
-              OPT_strict_parsing+=(_OPT_ISSET_)
-              continue;;
-          esac
-        esac
+        return;;
+      --*=*)
+        if __find_option "$cmd" "${arg%%=*}"
+        then __append_to_array "$VAR" "${arg#*=}"
+        fi;;
+      --*)
+        if __find_option "$cmd" "$arg"; then
+          if [[ "$ARGS" == 1 ]]
+          then __append_to_array "$VAR" "${words[++argi]}"
+          else __append_to_array "$VAR" "_OPT_ISSET_"
+          fi
+        fi;;
+      -?*) # ignore '-'
+
         for ((i=1; i < ${#arg}; ++i)); do
           char="${arg:$i:1}"
           trailing_chars="${arg:$((i + 1))}"
-          case "$cmd" in j4-dmenu-desktop)
-            case "$char" in
-              h)
-                OPT_help+=(_OPT_ISSET_);;
-              b)
-                OPT_display_binary+=(_OPT_ISSET_);;
-              f)
-                OPT_display_binary_base+=(_OPT_ISSET_);;
-              d)
-                if [[ -n "$trailing_chars" ]]
-                then OPT_dmenu+=("$trailing_chars")
-                else OPT_dmenu+=("${words[++argi]}")
-                fi
-                continue 2;;
-              t)
-                if [[ -n "$trailing_chars" ]]
-                then OPT_term+=("$trailing_chars")
-                else OPT_term+=("${words[++argi]}")
-                fi
-                continue 2;;
-              x)
-                OPT_use_xdg_de+=(_OPT_ISSET_);;
-              I)
-                OPT_i3_ipc+=(_OPT_ISSET_);;
-              i)
-                OPT_case_insensitive+=(_OPT_ISSET_);;
-              v)
-                OPT_v+=(_OPT_ISSET_);;
-            esac
-          esac
-        done;;
-      *)
-        POSITIONALS[POSITIONAL_NUM++]="$arg"
+
+          if __find_option "$cmd" "-$char"; then
+            if [[ "$ARGS" == 1 ]]; then
+              if [[ -n "$trailing_chars" ]]
+              then __append_to_array "$VAR" "$trailing_chars"
+              else __append_to_array "$VAR" "${words[++argi]}"
+              fi
+              break;
+            else
+              __append_to_array "$VAR" "_OPT_ISSET_"
+            fi
+          fi
+        done
         ;;
-    esac
-  done
-
-  for ((; argi < ${#words[@]}; ++argi)); do
-    arg="${words[$argi]}"
-
-    case "$arg" in
-      -) POSITIONALS[POSITIONAL_NUM++]="$arg";;
-      -*);;
-      *) POSITIONALS[POSITIONAL_NUM++]="$arg";;
     esac
   done
 }
@@ -249,31 +138,31 @@ _j4_dmenu_desktop() {
   local cur prev words cword split
   _init_completion -n = || return
 
-  local END_OF_OPTIONS POSITIONALS POSITIONAL_NUM
+  local END_OF_OPTIONS POSITIONALS
   local -a OPT_help OPT_version OPT_display_binary OPT_display_binary_base OPT_dmenu OPT_no_exec OPT_no_generic OPT_term OPT_term_mode OPT_usage_log OPT_prune_bad_usage_log_entries OPT_use_xdg_de OPT_wait_on OPT_wrapper OPT_i3_ipc OPT_skip_i3_exec_check OPT_case_insensitive OPT_v OPT_log_level OPT_log_file OPT_log_file_level OPT_desktop_file_quirks OPT_strict_parsing
 
-  _j4-dmenu-desktop_parse_commandline
+  _j4-dmenu-desktop__parse_commandline
 
   local COMP_WORDBREAKS=''
 
   __complete_option() {
-    local opt="$1" cur="$2" mode="$3"
+    local opt="$1" cur="$2"
 
     case "$opt" in
       --dmenu|-d|--term|-t|--wrapper)
         COMPREPLY=($(compgen -A command -- "$cur"))
         return 0;;
       --term-mode)
-        _j4-dmenu-desktop_compgen_w_replacement -- "$cur" default xterm alacritty kitty terminator gnome-terminal custom
+        COMPREPLY=($(compgen -W 'default xterm alacritty kitty terminator gnome-terminal custom' -- "$cur"))
         return 0;;
       --usage-log|--wait-on|--log-file)
         _filedir
         return 0;;
       --log-level|--log-file-level)
-        _j4-dmenu-desktop_compgen_w_replacement -- "$cur" ERROR WARNING INFO DEBUG
+        COMPREPLY=($(compgen -W 'ERROR WARNING INFO DEBUG' -- "$cur"))
         return 0;;
       --desktop-file-quirks)
-        _j4-dmenu-desktop_value_list , wine multispace nowine nomultispace
+        _j4-dmenu-desktop__value_list , wine multispace nowine nomultispace
         return 0;;
     esac
 
@@ -281,56 +170,52 @@ _j4_dmenu_desktop() {
   }
 
   case "$prev" in
-    --*)
-      __complete_option "$prev" "$cur" WITHOUT_OPTIONALS && return 0;;
-    -*)
-      case "$prev" in -*([hbfxIiv])[dt])
-        __complete_option "-${prev: -1}" "$cur" WITHOUT_OPTIONALS && return 0
-      esac;;
+    --*) __complete_option "$prev" "$cur" && return 0;;
+    -*([hbfxIiv])[dt])
+         __complete_option "-${prev: -1}" "$cur" && return 0;;
   esac
 
   case "$cur" in
     --*=*)
-      __complete_option "${cur%%=*}" "${cur#*=}" WITH_OPTIONALS && return 0;;
-    -*=*);;
+      __complete_option "${cur%%=*}" "${cur#*=}" && return 0;;
     --*);;
-    -*)
-        local i
-        for ((i=2; i <= ${#cur}; ++i)); do
-          local pre="${cur:0:$i}" value="${cur:$i}"
-          __complete_option "-${pre: -1}" "$value" WITH_OPTIONALS && {
-            _j4-dmenu-desktop_prefix_compreply "$pre"
-            return 0
-          }
-        done;;
+    -*=*);;
+    -*([hbfxIiv])[dt]*)
+      local i
+      for ((i=2; i <= ${#cur}; ++i)); do
+        local pre="${cur:0:$i}" value="${cur:$i}"
+        __complete_option "-${pre: -1}" "$value" && {
+          _j4-dmenu-desktop__prefix_compreply "$pre"
+          return 0
+        }
+      done;;
   esac
 
   if (( ! END_OF_OPTIONS )) && [[ "$cur" = -* ]]; then
-    local -a opts=()
-    (( ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-h --help)
-    (( ! ${#OPT_version} && ! ${#OPT_help} )) && opts+=(--version)
-    (( ! ${#OPT_display_binary} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-b --display-binary)
-    (( ! ${#OPT_display_binary_base} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-f --display-binary-base)
-    (( ! ${#OPT_dmenu} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-d --dmenu=)
-    (( ! ${#OPT_no_exec} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--no-exec)
-    (( ! ${#OPT_no_generic} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--no-generic)
-    (( ! ${#OPT_term} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-t --term=)
-    (( ! ${#OPT_term_mode} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--term-mode=)
-    (( ! ${#OPT_usage_log} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--usage-log=)
-    (( ! ${#OPT_prune_bad_usage_log_entries} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--prune-bad-usage-log-entries)
-    (( ! ${#OPT_use_xdg_de} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-x --use-xdg-de)
-    (( ! ${#OPT_wait_on} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--wait-on=)
-    (( ! ${#OPT_wrapper} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--wrapper=)
-    (( ! ${#OPT_i3_ipc} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-I --i3-ipc)
-    (( ! ${#OPT_skip_i3_exec_check} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--skip-i3-exec-check)
-    (( ! ${#OPT_case_insensitive} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-i --case-insensitive)
-    (( ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(-v)
-    (( ! ${#OPT_log_level} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--log-level=)
-    (( ! ${#OPT_log_file} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--log-file=)
-    (( ! ${#OPT_log_file_level} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--log-file-level=)
-    (( ! ${#OPT_desktop_file_quirks} && ! ${#OPT_strict_parsing} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--desktop-file-quirks=)
-    (( ! ${#OPT_strict_parsing} && ! ${#OPT_desktop_file_quirks} && ! ${#OPT_help} && ! ${#OPT_version} )) && opts+=(--strict-parsing)
-    _j4-dmenu-desktop_compgen_w_replacement -a -- "$cur" "${opts[@]}"
+    local -a opts
+    if (( ! ${#OPT_help[@]} && ! ${#OPT_version[@]} )); then
+      opts+=(-h --help --version -v)
+      (( ! ${#OPT_display_binary[@]} )) && opts+=(-b --display-binary)
+      (( ! ${#OPT_display_binary_base[@]} )) && opts+=(-f --display-binary-base)
+      (( ! ${#OPT_dmenu[@]} )) && opts+=(-d --dmenu=)
+      (( ! ${#OPT_no_exec[@]} )) && opts+=(--no-exec)
+      (( ! ${#OPT_no_generic[@]} )) && opts+=(--no-generic)
+      (( ! ${#OPT_term[@]} )) && opts+=(-t --term=)
+      (( ! ${#OPT_term_mode[@]} )) && opts+=(--term-mode=)
+      (( ! ${#OPT_usage_log[@]} )) && opts+=(--usage-log=)
+      (( ! ${#OPT_prune_bad_usage_log_entries[@]} )) && opts+=(--prune-bad-usage-log-entries)
+      (( ! ${#OPT_use_xdg_de[@]} )) && opts+=(-x --use-xdg-de)
+      (( ! ${#OPT_wait_on[@]} )) && opts+=(--wait-on=)
+      (( ! ${#OPT_wrapper[@]} )) && opts+=(--wrapper=)
+      (( ! ${#OPT_i3_ipc[@]} )) && opts+=(-I --i3-ipc)
+      (( ! ${#OPT_skip_i3_exec_check[@]} )) && opts+=(--skip-i3-exec-check)
+      (( ! ${#OPT_case_insensitive[@]} )) && opts+=(-i --case-insensitive)
+      (( ! ${#OPT_log_level[@]} )) && opts+=(--log-level=)
+      (( ! ${#OPT_log_file[@]} )) && opts+=(--log-file=)
+      (( ! ${#OPT_log_file_level[@]} )) && opts+=(--log-file-level=)
+      (( ! ${#OPT_desktop_file_quirks[@]} && ! ${#OPT_strict_parsing[@]} )) && opts+=(--desktop-file-quirks= --strict-parsing)
+    fi
+    COMPREPLY+=($(compgen -W "${opts[*]}" -- "$cur"))
     [[ ${COMPREPLY-} == *= ]] && compopt -o nospace
     return 1
   fi

@@ -11,7 +11,7 @@ if enabled_completions == []
 endif
 
 crazy_complete_min_version = '0.3.0'
-crazy_complete_latest_tested_version = '0.3.2'
+crazy_complete_latest_tested_version = '0.3.6'
 
 crazy_complete_exe = find_program(
   'crazy-complete',
