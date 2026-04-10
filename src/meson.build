@@ -4,7 +4,7 @@ comp = meson.get_compiler('cpp')
 
 # Implement semi-automatic detection of kqueue/inotify.
 if get_option('notify-implementation') == 'auto'
-  if target_machine.system() in ['freebsd', 'dragonfly', 'netbsd', 'openbsd']
+  if host_machine.system() in ['freebsd', 'dragonfly', 'netbsd', 'openbsd']
     if comp.check_header('sys/event.h', prefix: '#include <sys/types.h>')
       inotify = false
     else
@@ -13,7 +13,7 @@ if get_option('notify-implementation') == 'auto'
         '-Dnotify-implementation=<inotify or kqueue> when creating the builddir.',
       )
     endif
-  elif target_machine.system() == 'linux'
+  elif host_machine.system() == 'linux'
     # Using kqueue on Linux is very unlikely.
     if comp.check_header('sys/inotify.h')
       inotify = true
@@ -36,7 +36,7 @@ if get_option('notify-implementation') == 'auto'
     endif
   endif
 elif get_option('notify-implementation') == 'inotify'
-  if target_machine.system() in ['freebsd', 'dragonfly', 'netbsd', 'openbsd']
+  if host_machine.system() in ['freebsd', 'dragonfly', 'netbsd', 'openbsd']
     warning('''
   #################################################################
   # WARNING: Meson has detected usage of inotify notify backend   #
