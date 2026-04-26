@@ -75,7 +75,7 @@
 
 #ifdef USE_KQUEUE
 #include "NotifyKqueue.hh"
-#else
+#elif defined USE_INOTIFY
 #include "NotifyInotify.hh"
 #endif
 
@@ -200,11 +200,13 @@ static void print_usage(FILE *f) {
         "    -h, --help\n"
         "        Display this help message\n\n"
         "See the manpage for a more detailed description of the flags.\n"
-        "j4-dmenu-desktop is compiled with "
+        "j4-dmenu-desktop is compiled "
 #ifdef USE_KQUEUE
-        "kqueue"
+        "with kqueue"
+#elif defined USE_INOTIFY
+        "with inotify"
 #else
-        "inotify"
+        "without notify"
 #endif
         " support.\n"
 #ifdef DEBUG
@@ -1554,12 +1556,18 @@ int main(int argc, char **argv) {
         if (wait_on) {
 #ifdef USE_KQUEUE
             NotifyKqueue notify(search_path);
-#else
+#elif defined USE_INOTIFY
             NotifyInotify notify(search_path);
 #endif
+#if defined USE_KQUEUE || defined USE_INOTIFY
             do_wait_on(notify, wait_on, appm, search_path,
                        command_retrieval_loop, executor.get());
             abort();
+#else
+            SPDLOG_ERROR(
+                "j4-dmenu-desktop is compiled without notify support.");
+            exit(EXIT_FAILURE);
+#endif
         } else {
             std::optional<RunPhase::CommandRetrievalLoop::CommandInfoVariant>
                 command = command_retrieval_loop.prompt_user_for_choice();

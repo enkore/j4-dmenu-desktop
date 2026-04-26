@@ -36,7 +36,6 @@ test_files = [
   'TestFileFinder.cc',
   'TestFormatters.cc',
   'TestLocaleSuffixes.cc',
-  'TestNotify.cc',
   'TestSearchPath.cc',
   'TestI3Exec.cc',
   'TestCMDLineTerm.cc',
@@ -44,6 +43,10 @@ test_files = [
   'TestCMDLineAssembler.cc',
   'MainTest.cc',
 ]
+
+if notify != 'none'
+  test_files += 'TestNotify.cc'
+endif
 
 subdir('generated')
 
