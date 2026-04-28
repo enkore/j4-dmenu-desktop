@@ -23,6 +23,9 @@ if get_option('notify-implementation') == 'auto'
         'https://github.com/enkore/j4-dmenu-desktop/issues/new',
       )
     endif
+  elif host_machine.system() == 'gnu'
+    # Support for GNU Hurd is not implemented.
+    notify = 'none'
   else
     if comp.check_header('sys/inotify.h')
       notify = 'inotify'
