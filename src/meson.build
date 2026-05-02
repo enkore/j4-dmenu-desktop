@@ -62,6 +62,7 @@ elif get_option('notify-implementation') == 'none'
   )
   notify = 'none'
 endif
+summary('notify implementation', notify)
 
 flags = ['-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG']
 
