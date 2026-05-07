@@ -79,6 +79,15 @@
 #include "NotifyInotify.hh"
 #endif
 
+// UNUSED_WITH_NONE_IMPL is just a "cosmetic" macro that silences compiler
+// warnings when the "none" notify implementation is used, which makes
+// the do_wait_on() function and some functions called by it unused.
+#if defined USE_KQUEUE || defined USE_INOTIFY
+#define UNUSED_WITH_NONE_IMPL
+#else
+#define UNUSED_WITH_NONE_IMPL [[maybe_unused]]
+#endif
+
 #ifdef FIX_COVERAGE
 extern "C" void __gcov_dump();
 
@@ -102,7 +111,7 @@ static void sigchld(int) {
     errno = saved_errno;
 }
 
-static int setup_sigchld_signal() {
+UNUSED_WITH_NONE_IMPL static int setup_sigchld_signal() {
     int pipefd[2];
     if (pipe(pipefd) == -1)
         PFATALE("pipe");
@@ -877,7 +886,7 @@ private:
 };
 }; // namespace ExecutePhase
 
-[[noreturn]] static void
+[[noreturn]] UNUSED_WITH_NONE_IMPL static void
 do_wait_on(NotifyBase &notify, const char *wait_on, AppManager &appm,
            const stringlist_t &search_path,
            RunPhase::CommandRetrievalLoop &command_retrieve,
