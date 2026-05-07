@@ -23,6 +23,9 @@ if get_option('notify-implementation') == 'auto'
         'https://github.com/enkore/j4-dmenu-desktop/issues/new',
       )
     endif
+  elif host_machine.system() == 'gnu'
+    # Support for GNU Hurd is not implemented.
+    notify = 'none'
   else
     if comp.check_header('sys/inotify.h')
       notify = 'inotify'
@@ -59,6 +62,7 @@ elif get_option('notify-implementation') == 'none'
   )
   notify = 'none'
 endif
+summary('notify implementation', notify)
 
 flags = ['-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG']
 
