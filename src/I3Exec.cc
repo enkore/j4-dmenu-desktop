@@ -196,6 +196,30 @@ static string trim_spaces(const string &orig) {
     return result;
 }
 
+// See https://i3wm.org/docs/userguide.html#exec_quoting
+static std::string i3_quote(const std::string to_quote) {
+    std::string result;
+    result.reserve(to_quote.size() + 2);
+    result += '"';
+
+    std::string::size_type start_pos = 0;
+    while (true) {
+        auto new_pos = to_quote.find('"', start_pos);
+        if (new_pos == std::string::npos)
+            break;
+        result.append(to_quote, start_pos, new_pos - start_pos);
+        // A signle backslash seems to be sufficient, which doesn't match the
+        // instructions on the linked page, but multiple layers of unquoting may
+        // be involved in the i3 config file. I3 IPC may skip some of them.
+        result.append(R"--(\")--");
+        start_pos = new_pos + 1;
+    }
+    result.append(to_quote, start_pos);
+    result += '"';
+
+    return result;
+}
+
 void exec(const string &command, const string &socket_path) {
     // These are the base lengths (sum of message_base_header_length,
     // message_base_command_length and command.length() should result in the
@@ -206,9 +230,13 @@ void exec(const string &command, const string &socket_path) {
 
     constexpr auto max_message_length =
         std::numeric_limits<uint32_t>::max() - message_base_command_length;
-    if (command.size() > max_message_length) {
-        SPDLOG_ERROR("Command '{}' is too long! (expected <= {}, got {})",
-                     command, max_message_length, command.size());
+
+    std::string processed_command = i3_quote(command);
+
+    if (processed_command.size() > max_message_length) {
+        SPDLOG_ERROR("Command {} is too long! (expected <= {}, got {})",
+                     processed_command, max_message_length,
+                     processed_command.size());
         exit(EXIT_FAILURE);
     }
 
@@ -234,7 +262,8 @@ void exec(const string &command, const string &socket_path) {
     if (connect(sfd, (struct sockaddr *)&addr, sizeof(sockaddr_un)) == -1)
         PFATALE("connect");
 
-    uint32_t command_size = command.size() + message_base_command_length;
+    uint32_t command_size =
+        processed_command.size() + message_base_command_length;
 
     auto payload_size = message_base_header_length + command_size;
     auto payload = std::make_unique<char[]>(payload_size);
@@ -252,7 +281,7 @@ void exec(const string &command, const string &socket_path) {
     std::memcpy(message, "exec ", sizeof "exec " - 1);
     message += sizeof "exec " - 1;
 
-    std::memcpy(message, command.data(), command.size());
+    std::memcpy(message, processed_command.data(), processed_command.size());
 
 #ifdef DEBUG
     // Print the payload in hex, because some parts of it can't be printed
@@ -298,27 +327,27 @@ void exec(const string &command, const string &socket_path) {
                                      trimmed_response.cend());
                 SPDLOG_ERROR(
                     "An error occurred while communicating with i3 (executing "
-                    "command '{}'): {}",
-                    command, error);
+                    "command {}): {}",
+                    processed_command, error);
             } catch (const JSONError &) {
                 SPDLOG_ERROR(
                     "An error occurred while communicating with i3 (executing "
-                    "command '{}'): j4-dmenu-desktop has received invalid "
+                    "command {}): j4-dmenu-desktop has received invalid "
                     "response.",
-                    command);
+                    processed_command);
             }
         } else
             SPDLOG_ERROR(
                 "An error occurred while communicating with i3 (executing "
-                "command '{}')!",
-                command);
+                "command {})!",
+                processed_command);
         exit(EXIT_FAILURE);
     } else if (trimmed_response.find(R"("success":true)") != string::npos)
         return;
     else {
         SPDLOG_ERROR("A parsing error occurred while reading i3's "
-                     "response (executing command '{}')!",
-                     command);
+                     "response (executing command {})!",
+                     processed_command);
         abort();
     }
 }
