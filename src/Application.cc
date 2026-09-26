@@ -286,6 +286,9 @@ Application::Application(const char *path, LineReader &liner,
                 }
             } else if (strcmp(key, "Terminal") == 0) {
                 this->terminal = strcmp(value, "true") == 0;
+            } else if (strcmp(key, "Actions") == 0) {
+                this->action_ids =
+                    DesktopEntryParser::expandlist("Actions", value);
             }
         } catch (const escape_error &e) {
             throw escape_error((std::string)e.what() + " (line " +
@@ -296,4 +299,77 @@ Application::Application(const char *path, LineReader &liner,
         throw invalid_error("Desktop file doesn't contain '[Desktop Entry]'.");
     if (this->name.empty())
         throw invalid_error("'Name' key is missing or empty.");
+}
+
+stringlist_t Application::get_action_ids() const {
+    return this->action_ids;
+}
+
+ApplicationAction
+Application::get_action(const char *action_id, LineReader &liner,
+                        const LocaleSuffixes &locale_suffixes) const {
+    if (std::find(this->action_ids.begin(), this->action_ids.end(),
+                  action_id) == this->action_ids.end())
+        throw invalid_error("Desktop file doesn't contain action '" +
+                            std::string(action_id) + "'.");
+
+    return ApplicationAction(
+        this, ("[Desktop Action " + std::string(action_id) + "]").c_str(),
+        liner, locale_suffixes);
+}
+
+ApplicationAction Application::default_action() const {
+    return ApplicationAction(this);
+}
+
+ApplicationAction::ApplicationAction(const Application *a)
+    : app(a), name(""), exec(this->app->exec) {}
+
+ApplicationAction::ApplicationAction(const Application *a,
+                                     const char *section_header,
+                                     LineReader &liner,
+                                     const LocaleSuffixes &locale_suffixes)
+    : app(a) {
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!   The code below is extremely hacky. But fast.    !!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // Please don't try this at home.
+
+    int locale_match = -1;
+
+    bool parse_key_values = false;
+    DesktopEntryParser parser(this->app->location.c_str(), liner,
+                              section_header);
+
+    while (!parser.is_done()) {
+        auto kv_ = parser.next();
+        if (!kv_.has_value())
+            break;
+        auto kv = kv_.value();
+        const char *key = kv.first, *value = kv.second;
+        parse_key_values = true;
+        try {
+            if (strncmp(key, "Name", 4) == 0)
+                DesktopEntryParser::parse_localestring(
+                    key, 4, locale_match, value, this->name, locale_suffixes);
+            else if (strcmp(key, "Exec") == 0)
+                this->exec = DesktopEntryParser::expand("Exec", value);
+        } catch (const escape_error &e) {
+            throw escape_error((std::string)e.what() + " (line " +
+                               std::to_string(parser.get_line_number()) + ")");
+        }
+    }
+    if (!parse_key_values)
+        throw invalid_error("Desktop file doesn't contain '" +
+                            std::string(section_header) + "'.");
+    if (this->name.empty())
+        throw invalid_error("'Name' key is missing or empty.");
+}
+
+std::string ApplicationAction::formatted_name() const {
+    if (this->name.empty()) {
+        return this->app->name;
+    }
+    return this->app->name + " (" + this->name + ")";
 }

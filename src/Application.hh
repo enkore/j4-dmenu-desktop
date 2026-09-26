@@ -26,6 +26,7 @@
 #include "Utilities.hh"
 
 class LineReader;
+class ApplicationAction;
 
 // Desktop file is disabled, further parsing is unnecessary
 struct disabled_error final : public std::runtime_error
@@ -103,12 +104,37 @@ public:
     // Applications
     std::string id;
 
+    stringlist_t action_ids;
+
     bool operator==(const Application &other) const;
 
     // If desktopenvs is {}, notShowIn and onlyShowIn will be ignored.
     Application(const char *path, LineReader &liner,
                 const LocaleSuffixes &locale_suffixes,
                 const stringlist_t &desktopenvs);
+
+    stringlist_t get_action_ids() const;
+    ApplicationAction get_action(const char *action_id, LineReader &liner,
+                                 const LocaleSuffixes &locale_suffixes) const;
+    ApplicationAction default_action() const;
+};
+
+class ApplicationAction
+{
+public:
+    const Application *app;
+
+    // Localized name
+    std::string name;
+
+    // Command line
+    std::string exec;
+
+    ApplicationAction(const Application *a);
+    ApplicationAction(const Application *a, const char *section_header,
+                      LineReader &liner, const LocaleSuffixes &locale_suffixes);
+
+    std::string formatted_name() const;
 };
 
 #endif

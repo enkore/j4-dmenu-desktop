@@ -100,6 +100,31 @@ TEST_CASE("Tests correct parsing of localization (gimp)",
     REQUIRE(!app.terminal);
 }
 
+TEST_CASE("Validate correct parsing of action list",
+          "[Application][Application/valid]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+    Application app(TEST_FILES "applications/actions.desktop", liner, ls, {});
+    stringlist_t action_ids = app.get_action_ids();
+
+    REQUIRE(std::find(action_ids.begin(), action_ids.end(), "new-window") !=
+            action_ids.end());
+    REQUIRE(std::find(action_ids.begin(), action_ids.end(),
+                      "new-private-window") != action_ids.end());
+
+    ApplicationAction action_0 = app.default_action();
+    REQUIRE(action_0.exec == "chrome %U");
+
+    ApplicationAction action_1 = app.get_action("new-window", liner, ls);
+    REQUIRE(action_1.name == "New Window");
+    REQUIRE(action_1.exec == "chrome");
+
+    ApplicationAction action_2 =
+        app.get_action("new-private-window", liner, ls);
+    REQUIRE(action_2.name == "New Incognito Window");
+    REQUIRE(action_2.exec == "chrome --incognito");
+}
+
 TEST_CASE("Regression test for issue #17, Hidden=false was read as Hidden=true",
           "[Application][Application/flag]") {
     LocaleSuffixes ls("en_US");
@@ -194,4 +219,37 @@ TEST_CASE("Test opening desktop file with missing required keys",
 
     REQUIRE_THROWS(Application(
         TEST_FILES "applications/missing-entries.desktop", liner, ls, {}));
+}
+
+TEST_CASE("Test opening desktop file action with missing required keys",
+          "[Application]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+    Application app(TEST_FILES "applications/missing-actions-entries.desktop",
+                    liner, ls, {});
+    stringlist_t action_ids = app.get_action_ids();
+
+    REQUIRE_THROWS(app.get_action("new-window", liner, ls));
+}
+
+TEST_CASE("Test opening desktop file action with missing entry",
+          "[Application]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+    Application app(TEST_FILES "applications/missing-actions-entries.desktop",
+                    liner, ls, {});
+    stringlist_t action_ids = app.get_action_ids();
+
+    REQUIRE_THROWS(app.get_action("new-private-window", liner, ls));
+}
+
+TEST_CASE("Test opening desktop file action not in Actions tag",
+          "[Application]") {
+    LocaleSuffixes ls("en_US");
+    LineReader liner;
+    Application app(TEST_FILES "applications/missing-actions-entries.desktop",
+                    liner, ls, {});
+    stringlist_t action_ids = app.get_action_ids();
+
+    REQUIRE_THROWS(app.get_action("new-incognito-window", liner, ls));
 }
