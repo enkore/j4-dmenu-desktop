@@ -18,6 +18,7 @@
 #ifndef APPLICATION_DEF
 #define APPLICATION_DEF
 
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -42,6 +43,38 @@ struct invalid_error : public std::runtime_error
 struct escape_error final : public invalid_error
 {
     using invalid_error::invalid_error;
+};
+
+class DesktopEntryParser
+{
+public:
+    DesktopEntryParser(const char *path, LineReader &liner,
+                       const char *section);
+    std::optional<std::pair<const char *, const char *>> next();
+    bool is_done() const;
+    unsigned long get_line_number() const;
+
+    static char convert(char escape);
+    static std::string expand(const char *key, const char *value);
+    static stringlist_t expandlist(const char *key, const char *value);
+
+    // Value is assigned to field if the new match is less or equal the current
+    // match. Newer entries of same match override older ones.
+    static void parse_localestring(const char *key, int key_length, int &match,
+                                   const char *value, std::string &field,
+                                   const LocaleSuffixes &locale_suffixes);
+
+private:
+    const char *section;
+    LineReader &liner;
+    bool parse_key_values;
+    bool done;
+    std::unique_ptr<FILE, fclose_deleter> file;
+    // The choice of 'unsigned long' is arbitrary here. This variable isn't
+    // checked for integer overflow, but it is unlikely that a desktop file will
+    // have more than (unsigned long)-1 lines. This is used for diagnostics
+    // only, so it doesn't matter much.
+    unsigned long line_number;
 };
 
 class Application
@@ -76,17 +109,6 @@ public:
     Application(const char *path, LineReader &liner,
                 const LocaleSuffixes &locale_suffixes,
                 const stringlist_t &desktopenvs);
-
-private:
-    static char convert(char escape);
-    std::string expand(const char *key, const char *value);
-    stringlist_t expandlist(const char *key, const char *value);
-
-    // Value is assigned to field if the new match is less or equal the current
-    // match. Newer entries of same match override older ones.
-    void parse_localestring(const char *key, int key_length, int &match,
-                            const char *value, std::string &field,
-                            const LocaleSuffixes &locale_suffixes);
 };
 
 #endif
