@@ -19,9 +19,11 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cstring>
 #include <errno.h>
 #include <memory>
+#include <optional>
 #include <stdio.h>
 #include <string_view>
 #include <sys/types.h>
@@ -30,133 +32,7 @@
 
 #include "LineReader.hh"
 
-bool Application::operator==(const Application &other) const {
-    return name == other.name && generic_name == other.generic_name &&
-           exec == other.exec && path == other.path &&
-           location == other.location && terminal == other.terminal &&
-           id == other.id;
-}
-
-Application::Application(const char *path, LineReader &liner,
-                         const LocaleSuffixes &locale_suffixes,
-                         const stringlist_t &desktopenvs) {
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!   The code below is extremely hacky. But fast.    !!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // Please don't try this at home.
-
-    this->location = path;
-
-    int locale_match = -1, locale_generic_match = -1;
-
-    bool parse_key_values = false;
-    ssize_t line_length;
-    std::unique_ptr<FILE, fclose_deleter> file(fopen(path, "r"));
-    if (!file)
-        throw std::system_error(errno, std::system_category());
-
-    // The choice of 'unsigned long' is arbitrary here. This variable isn't
-    // checked for integer overflow, but it is unlikely that a desktop file will
-    // have more than (unsigned long)-1 lines. This is used for diagnostics
-    // only, so it doesn't matter much.
-    unsigned long line_number = 0;
-
-    while ((line_length = liner.getline(file.get())) != -1) {
-        ++line_number;
-        char *line = liner.get_lineptr();
-        line[--line_length] = 0; // Chop off \n
-
-        // Blank line or comment
-        if (!line_length || line[0] == '#')
-            continue;
-
-        if (parse_key_values) {
-            // Desktop Entry section ended (b/c another section starts)
-            if (line[0] == '[')
-                break;
-
-            // Split that string in place
-            char *key = line, *value = strpbrk(line, " =");
-            if (!value || value == line) {
-                if (line[0] == ' ')
-                    throw invalid_error(
-                        "Malformed file, expected key=value pair, got invalid "
-                        "whitespace at start of line (line " +
-                        std::to_string(line_number) + ").");
-                else
-                    throw invalid_error(
-                        "Malformed file, invalid key=value pair (line " +
-                        std::to_string(line_number) + ").");
-            }
-            // Cut spaces before equal sign
-            if (*value != '=') {
-                *value++ = '\0';
-                value = strchr(value, '=');
-                if (!value)
-                    throw invalid_error(
-                        "Malformed file, invalid key=value pair (line " +
-                        std::to_string(line_number) + ").");
-            } else
-                *value = '\0';
-            value++;
-            // Cut spaces after equal sign
-            while (*value == ' ')
-                value++;
-
-            try {
-                if (strncmp(key, "Name", 4) == 0)
-                    parse_localestring(key, 4, locale_match, value, this->name,
-                                       locale_suffixes);
-                else if (strncmp(key, "GenericName", 11) == 0)
-                    parse_localestring(key, 11, locale_generic_match, value,
-                                       this->generic_name, locale_suffixes);
-                else if (strcmp(key, "Exec") == 0)
-                    this->exec = expand("Exec", value);
-                else if (strcmp(key, "Path") == 0)
-                    this->path = expand("Path", value);
-                else if (strcmp(key, "OnlyShowIn") == 0) {
-                    if (!desktopenvs.empty()) {
-                        stringlist_t values = expandlist("OnlyShowIn", value);
-                        if (!have_equal_element(desktopenvs, values)) {
-                            throw disabled_error(
-                                "Refusing to parse desktop file whose "
-                                "OnlyShowIn field doesn't match current "
-                                "desktop.");
-                        }
-                    }
-                } else if (strcmp(key, "NotShowIn") == 0) {
-                    if (!desktopenvs.empty()) {
-                        stringlist_t values = expandlist("NotShowIn", value);
-                        if (have_equal_element(desktopenvs, values)) {
-                            throw disabled_error(
-                                "Refusing to parse desktop file whose "
-                                "NotShowIn field matches current desktop.");
-                        }
-                    }
-                } else if (strcmp(key, "Hidden") == 0 ||
-                           strcmp(key, "NoDisplay") == 0) {
-                    if (strcmp(value, "true") == 0) {
-                        throw disabled_error("Refusing to parse Hidden or "
-                                             "NoDisplay desktop file.");
-                    }
-                } else if (strcmp(key, "Terminal") == 0) {
-                    this->terminal = strcmp(value, "true") == 0;
-                }
-            } catch (const escape_error &e) {
-                throw escape_error((std::string)e.what() + " (line " +
-                                   std::to_string(line_number) + ")");
-            }
-        } else if (!strcmp(line, "[Desktop Entry]"))
-            parse_key_values = true;
-    }
-    if (!parse_key_values)
-        throw invalid_error("Desktop file doesn't contain '[Desktop Entry]'.");
-    if (this->name.empty())
-        throw invalid_error("'Name' key is missing or empty.");
-}
-
-char Application::convert(char escape) {
+char DesktopEntryParser::convert(char escape) {
     switch (escape) {
     case 's':
         return ' ';
@@ -174,7 +50,7 @@ char Application::convert(char escape) {
         ".");
 }
 
-std::string Application::expand(const char *key, const char *value) {
+std::string DesktopEntryParser::expand(const char *key, const char *value) {
     size_t len = strlen(value);
     std::string result;
     result.reserve(len);
@@ -199,7 +75,8 @@ std::string Application::expand(const char *key, const char *value) {
     return result;
 }
 
-stringlist_t Application::expandlist(const char *key, const char *value) {
+stringlist_t DesktopEntryParser::expandlist(const char *key,
+                                            const char *value) {
     stringlist_t result;
     std::string curr;
     bool escape = false;
@@ -238,10 +115,11 @@ stringlist_t Application::expandlist(const char *key, const char *value) {
     return result;
 }
 
-void Application::parse_localestring(const char *key, int key_length,
-                                     int &match, const char *value,
-                                     std::string &field,
-                                     const LocaleSuffixes &locale_suffixes) {
+// Value is assigned to field if the new match is less or equal the current
+// match. Newer entries of same match override older ones.
+void DesktopEntryParser::parse_localestring(
+    const char *key, int key_length, int &match, const char *value,
+    std::string &field, const LocaleSuffixes &locale_suffixes) {
     if (key[key_length] == '[') {
         std::string_view locale(key + key_length + 1,
                                 strlen(key + key_length + 1) - 1);
@@ -258,4 +136,233 @@ void Application::parse_localestring(const char *key, int key_length,
                    // means default value.
         field = expand(key, value);
     }
+}
+
+bool DesktopEntryParser::is_done() const {
+    return this->done;
+}
+
+unsigned long DesktopEntryParser::get_line_number() const {
+    return this->line_number;
+}
+
+DesktopEntryParser::DesktopEntryKeyVal::DesktopEntryKeyVal(const char *key,
+                                                           const char *value)
+    : key(key), value(value) {};
+
+DesktopEntryParser::DesktopEntryParser(const char *path, LineReader &liner,
+                                       std::string_view section)
+    : section(section), liner(liner), parse_key_values(false), done(false),
+      file(fopen(path, "r")), line_number(0) {
+    if (!this->file)
+        throw std::system_error(errno, std::system_category());
+}
+
+std::optional<DesktopEntryParser::DesktopEntryKeyVal>
+DesktopEntryParser::next() {
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!   The code below is extremely hacky. But fast.    !!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // Please don't try this at home.
+    if (this->done)
+        return {};
+
+    ssize_t line_length;
+
+    while ((line_length = this->liner.getline(this->file.get())) != -1) {
+        ++this->line_number;
+        char *line = liner.get_lineptr();
+        line[--line_length] = 0; // Chop off \n
+
+        // Blank line or comment
+        if (!line_length || line[0] == '#')
+            continue;
+
+        if (this->parse_key_values) {
+            // Section ended (b/c another section starts)
+            if (line[0] == '[')
+                break;
+
+            // Split that string in place
+            char *key = line, *value = strpbrk(line, " =");
+            if (!value || value == line) {
+                if (line[0] == ' ')
+                    throw invalid_error(
+                        "Malformed file, expected key=value pair, got invalid "
+                        "whitespace at start of line (line " +
+                        std::to_string(this->line_number) + ").");
+                else
+                    throw invalid_error(
+                        "Malformed file, invalid key=value pair (line " +
+                        std::to_string(this->line_number) + ").");
+            }
+            // Cut spaces before equal sign
+            if (*value != '=') {
+                *value++ = '\0';
+                value = strchr(value, '=');
+                if (!value)
+                    throw invalid_error(
+                        "Malformed file, invalid key=value pair (line " +
+                        std::to_string(this->line_number) + ").");
+            } else
+                *value = '\0';
+            value++;
+            // Cut spaces after equal sign
+            while (*value == ' ')
+                value++;
+
+            return DesktopEntryKeyVal(key, value);
+        } else if (!strncmp(line, this->section.data(), this->section.size()))
+            this->parse_key_values = true;
+    }
+    this->done = true;
+    return {};
+}
+
+bool Application::operator==(const Application &other) const {
+    return name == other.name && generic_name == other.generic_name &&
+           exec == other.exec && path == other.path &&
+           location == other.location && terminal == other.terminal &&
+           id == other.id;
+}
+
+Application::Application(const char *path, LineReader &liner,
+                         const LocaleSuffixes &locale_suffixes,
+                         const stringlist_t &desktopenvs) {
+    this->location = path;
+
+    int locale_match = -1, locale_generic_match = -1;
+
+    bool parse_key_values = false;
+    DesktopEntryParser parser(path, liner, "[Desktop Entry]");
+
+    while (!parser.is_done()) {
+        auto kv_ = parser.next();
+        if (!kv_.has_value())
+            break;
+        auto kv = kv_.value();
+        const char *key = kv.key, *value = kv.value;
+        parse_key_values = true;
+        try {
+            if (strncmp(key, "Name", 4) == 0)
+                DesktopEntryParser::parse_localestring(
+                    key, 4, locale_match, value, this->name, locale_suffixes);
+            else if (strncmp(key, "GenericName", 11) == 0)
+                DesktopEntryParser::parse_localestring(
+                    key, 11, locale_generic_match, value, this->generic_name,
+                    locale_suffixes);
+            else if (strcmp(key, "Exec") == 0)
+                this->exec = DesktopEntryParser::expand("Exec", value);
+            else if (strcmp(key, "Path") == 0)
+                this->path = DesktopEntryParser::expand("Path", value);
+            else if (strcmp(key, "OnlyShowIn") == 0) {
+                if (!desktopenvs.empty()) {
+                    stringlist_t values =
+                        DesktopEntryParser::expandlist("OnlyShowIn", value);
+                    if (!have_equal_element(desktopenvs, values)) {
+                        throw disabled_error(
+                            "Refusing to parse desktop file whose "
+                            "OnlyShowIn field doesn't match current "
+                            "desktop.");
+                    }
+                }
+            } else if (strcmp(key, "NotShowIn") == 0) {
+                if (!desktopenvs.empty()) {
+                    stringlist_t values =
+                        DesktopEntryParser::expandlist("NotShowIn", value);
+                    if (have_equal_element(desktopenvs, values)) {
+                        throw disabled_error(
+                            "Refusing to parse desktop file whose "
+                            "NotShowIn field matches current desktop.");
+                    }
+                }
+            } else if (strcmp(key, "Hidden") == 0 ||
+                       strcmp(key, "NoDisplay") == 0) {
+                if (strcmp(value, "true") == 0) {
+                    throw disabled_error("Refusing to parse Hidden or "
+                                         "NoDisplay desktop file.");
+                }
+            } else if (strcmp(key, "Terminal") == 0) {
+                this->terminal = strcmp(value, "true") == 0;
+            } else if (strcmp(key, "Actions") == 0) {
+                this->action_ids =
+                    DesktopEntryParser::expandlist("Actions", value);
+            }
+        } catch (const escape_error &e) {
+            throw escape_error((std::string)e.what() + " (line " +
+                               std::to_string(parser.get_line_number()) + ")");
+        }
+    }
+    if (!parse_key_values)
+        throw invalid_error("Desktop file doesn't contain '[Desktop Entry]'.");
+    if (this->name.empty())
+        throw invalid_error("'Name' key is missing or empty.");
+}
+
+stringlist_t Application::get_action_ids() const {
+    return this->action_ids;
+}
+
+ApplicationAction
+Application::get_action(const char *action_id, LineReader &liner,
+                        const LocaleSuffixes &locale_suffixes) const {
+    if (std::find(this->action_ids.begin(), this->action_ids.end(),
+                  action_id) == this->action_ids.end())
+        throw invalid_error("Desktop file doesn't contain action '" +
+                            std::string(action_id) + "'.");
+
+    return ApplicationAction(this,
+                             "[Desktop Action " + std::string(action_id) + "]",
+                             liner, locale_suffixes);
+}
+
+ApplicationAction Application::default_action() const {
+    return ApplicationAction(this);
+}
+
+ApplicationAction::ApplicationAction(const Application *a)
+    : app(a), name(""), exec(this->app->exec) {}
+
+ApplicationAction::ApplicationAction(const Application *a,
+                                     std::string_view section_header,
+                                     LineReader &liner,
+                                     const LocaleSuffixes &locale_suffixes)
+    : app(a) {
+    int locale_match = -1;
+
+    bool parse_key_values = false;
+    DesktopEntryParser parser(this->app->location.c_str(), liner,
+                              section_header);
+
+    while (!parser.is_done()) {
+        auto kv_ = parser.next();
+        if (!kv_.has_value())
+            break;
+        auto kv = kv_.value();
+        const char *key = kv.key, *value = kv.value;
+        parse_key_values = true;
+        try {
+            if (strncmp(key, "Name", 4) == 0)
+                DesktopEntryParser::parse_localestring(
+                    key, 4, locale_match, value, this->name, locale_suffixes);
+            else if (strcmp(key, "Exec") == 0)
+                this->exec = DesktopEntryParser::expand("Exec", value);
+        } catch (const escape_error &e) {
+            throw escape_error((std::string)e.what() + " (line " +
+                               std::to_string(parser.get_line_number()) + ")");
+        }
+    }
+    if (!parse_key_values)
+        throw invalid_error("Desktop file doesn't contain '" +
+                            std::string(section_header) + "'.");
+    if (this->name.empty())
+        throw invalid_error("'Name' key is missing or empty.");
+}
+
+std::string ApplicationAction::formatted_name() const {
+    if (this->name.empty()) {
+        return this->app->name;
+    }
+    return this->app->name + " (" + this->name + ")";
 }

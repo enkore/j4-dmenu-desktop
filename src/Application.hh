@@ -18,6 +18,7 @@
 #ifndef APPLICATION_DEF
 #define APPLICATION_DEF
 
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -25,6 +26,7 @@
 #include "Utilities.hh"
 
 class LineReader;
+class ApplicationAction;
 
 // Desktop file is disabled, further parsing is unnecessary
 struct disabled_error final : public std::runtime_error
@@ -42,6 +44,47 @@ struct invalid_error : public std::runtime_error
 struct escape_error final : public invalid_error
 {
     using invalid_error::invalid_error;
+};
+
+class DesktopEntryParser
+{
+public:
+    DesktopEntryParser(const char *path, LineReader &liner,
+                       std::string_view section);
+
+    struct DesktopEntryKeyVal
+    {
+        const char *key;
+        const char *value;
+
+        DesktopEntryKeyVal(const char *key, const char *value);
+    };
+
+    std::optional<DesktopEntryKeyVal> next();
+    bool is_done() const;
+    unsigned long get_line_number() const;
+
+    static char convert(char escape);
+    static std::string expand(const char *key, const char *value);
+    static stringlist_t expandlist(const char *key, const char *value);
+
+    // Value is assigned to field if the new match is less or equal the current
+    // match. Newer entries of same match override older ones.
+    static void parse_localestring(const char *key, int key_length, int &match,
+                                   const char *value, std::string &field,
+                                   const LocaleSuffixes &locale_suffixes);
+
+private:
+    std::string_view section;
+    LineReader &liner;
+    bool parse_key_values;
+    bool done;
+    std::unique_ptr<FILE, fclose_deleter> file;
+    // The choice of 'unsigned long' is arbitrary here. This variable isn't
+    // checked for integer overflow, but it is unlikely that a desktop file will
+    // have more than (unsigned long)-1 lines. This is used for diagnostics
+    // only, so it doesn't matter much.
+    unsigned long line_number;
 };
 
 class Application
@@ -70,6 +113,8 @@ public:
     // Applications
     std::string id;
 
+    stringlist_t action_ids;
+
     bool operator==(const Application &other) const;
 
     // If desktopenvs is {}, notShowIn and onlyShowIn will be ignored.
@@ -77,16 +122,28 @@ public:
                 const LocaleSuffixes &locale_suffixes,
                 const stringlist_t &desktopenvs);
 
-private:
-    static char convert(char escape);
-    std::string expand(const char *key, const char *value);
-    stringlist_t expandlist(const char *key, const char *value);
+    stringlist_t get_action_ids() const;
+    ApplicationAction get_action(const char *action_id, LineReader &liner,
+                                 const LocaleSuffixes &locale_suffixes) const;
+    ApplicationAction default_action() const;
+};
 
-    // Value is assigned to field if the new match is less or equal the current
-    // match. Newer entries of same match override older ones.
-    void parse_localestring(const char *key, int key_length, int &match,
-                            const char *value, std::string &field,
-                            const LocaleSuffixes &locale_suffixes);
+class ApplicationAction
+{
+public:
+    const Application *app;
+
+    // Localized name
+    std::string name;
+
+    // Command line
+    std::string exec;
+
+    ApplicationAction(const Application *a);
+    ApplicationAction(const Application *a, std::string_view section_header,
+                      LineReader &liner, const LocaleSuffixes &locale_suffixes);
+
+    std::string formatted_name() const;
 };
 
 #endif

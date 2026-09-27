@@ -566,12 +566,12 @@ public:
 
     struct DesktopCommandInfo
     {
-        const Application *app;
+        const ApplicationAction action;
         std::string args; // Arguments provided to %f, %F, %u and %U field codes
                           // in desktop files. This will be empty in most cases.
 
-        DesktopCommandInfo(const Application *app, std::string args)
-            : app(app), args(std::move(args)) {}
+        DesktopCommandInfo(const ApplicationAction action, std::string args)
+            : action(action), args(std::move(args)) {}
     };
 
     struct CustomCommandInfo
@@ -627,8 +627,8 @@ public:
                 this->hist_manager->increment(name);
             }
             return CommandInfoVariant(
-                std::in_place_type_t<DesktopCommandInfo>{}, appl.app,
-                appl.args);
+                std::in_place_type_t<DesktopCommandInfo>{},
+                appl.app->default_action(), appl.args);
         }
     }
 
@@ -714,17 +714,17 @@ public:
 
             try {
                 command_array = CMDLineAssembly::convert_exec_to_command(
-                    info.app->exec, quirks);
+                    info.action.exec, quirks);
             } catch (const invalid_Exec &e) {
                 throw invalid_Exec(
                     (std::string) "Error while processing selected desktop "
                                   "file '" +
-                    info.app->location + "': " + e.what());
+                    info.action.app->location + "': " + e.what());
             }
-            expand_field_codes(command_array, *info.app, info.args);
-            if (info.app->terminal)
-                command_array =
-                    term_assembler(command_array, terminal, info.app->name);
+            expand_field_codes(command_array, *info.action.app, info.args);
+            if (info.action.app->terminal)
+                command_array = term_assembler(command_array, terminal,
+                                               info.action.formatted_name());
         }
 
         if (!wrapper.empty())
@@ -742,7 +742,7 @@ public:
             const std::string &path =
                 std::get<RunPhase::CommandRetrievalLoop::DesktopCommandInfo>(
                     command_info)
-                    .app->path;
+                    .action.app->path;
             if (!path.empty()) {
                 if (chdir(path.c_str()) == -1) {
                     SPDLOG_ERROR("Couldn't chdir() to '{}' set in Path key: {}",
@@ -837,31 +837,33 @@ public:
             std::vector<std::string> command_array;
             try {
                 command_array = CMDLineAssembly::convert_exec_to_command(
-                    info.app->exec, this->quirks);
+                    info.action.exec, this->quirks);
             } catch (const invalid_Exec &e) {
                 throw invalid_Exec(
                     (std::string) "Error while processing selected desktop "
                                   "file '" +
-                    info.app->location + "': " + e.what());
+                    info.action.app->location + "': " + e.what());
             }
-            expand_field_codes(command_array, *info.app, info.args);
-            if (!info.app->path.empty()) {
-                result = "cd " + CMDLineAssembly::sq_quote(info.app->path) +
+            expand_field_codes(command_array, *info.action.app, info.args);
+            if (!info.action.app->path.empty()) {
+                result = "cd " +
+                         CMDLineAssembly::sq_quote(info.action.app->path) +
                          " && " +
                          CMDLineAssembly::convert_argv_to_string(command_array);
-                if (info.app->terminal) {
+                if (info.action.app->terminal) {
                     std::vector<std::string> new_command_array =
                         CMDLineAssembly::wrap_cmdstring_in_shell(result);
-                    new_command_array = this->term_assembler(
-                        new_command_array, this->terminal, info.app->name);
+                    new_command_array =
+                        this->term_assembler(new_command_array, this->terminal,
+                                             info.action.formatted_name());
                     result = CMDLineAssembly::convert_argv_to_string(
                         new_command_array);
                 }
             } else {
-                if (info.app->terminal) {
+                if (info.action.app->terminal) {
                     std::vector<std::string> new_command_array =
                         this->term_assembler(command_array, this->terminal,
-                                             info.app->name);
+                                             info.action.formatted_name());
                     result = CMDLineAssembly::convert_argv_to_string(
                         new_command_array);
                 } else

@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Web
+Exec=chrome %U
+Actions=new-window;new-private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=chrome
+
+[Desktop Action new-private-window]
+Name=New Incognito Window
+Exec=chrome --incognito
