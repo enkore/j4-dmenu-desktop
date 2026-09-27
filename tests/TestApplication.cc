@@ -15,6 +15,7 @@
 // along with j4-dmenu-desktop.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 

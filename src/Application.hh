@@ -50,8 +50,17 @@ class DesktopEntryParser
 {
 public:
     DesktopEntryParser(const char *path, LineReader &liner,
-                       const char *section);
-    std::optional<std::pair<const char *, const char *>> next();
+                       std::string_view section);
+
+    struct DesktopEntryKeyVal
+    {
+        const char *key;
+        const char *value;
+
+        DesktopEntryKeyVal(const char *key, const char *value);
+    };
+
+    std::optional<DesktopEntryKeyVal> next();
     bool is_done() const;
     unsigned long get_line_number() const;
 
@@ -66,7 +75,7 @@ public:
                                    const LocaleSuffixes &locale_suffixes);
 
 private:
-    const char *section;
+    std::string_view section;
     LineReader &liner;
     bool parse_key_values;
     bool done;
@@ -131,7 +140,7 @@ public:
     std::string exec;
 
     ApplicationAction(const Application *a);
-    ApplicationAction(const Application *a, const char *section_header,
+    ApplicationAction(const Application *a, std::string_view section_header,
                       LineReader &liner, const LocaleSuffixes &locale_suffixes);
 
     std::string formatted_name() const;

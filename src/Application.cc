@@ -19,6 +19,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cstring>
 #include <errno.h>
 #include <memory>
@@ -145,15 +146,19 @@ unsigned long DesktopEntryParser::get_line_number() const {
     return this->line_number;
 }
 
+DesktopEntryParser::DesktopEntryKeyVal::DesktopEntryKeyVal(const char *key,
+                                                           const char *value)
+    : key(key), value(value) {};
+
 DesktopEntryParser::DesktopEntryParser(const char *path, LineReader &liner,
-                                       const char *section)
+                                       std::string_view section)
     : section(section), liner(liner), parse_key_values(false), done(false),
       file(fopen(path, "r")), line_number(0) {
     if (!this->file)
         throw std::system_error(errno, std::system_category());
 }
 
-std::optional<std::pair<const char *, const char *>>
+std::optional<DesktopEntryParser::DesktopEntryKeyVal>
 DesktopEntryParser::next() {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // !!   The code below is extremely hacky. But fast.    !!
@@ -207,8 +212,8 @@ DesktopEntryParser::next() {
             while (*value == ' ')
                 value++;
 
-            return std::make_pair(key, value);
-        } else if (!strcmp(line, this->section))
+            return DesktopEntryKeyVal(key, value);
+        } else if (!strncmp(line, this->section.data(), this->section.size()))
             this->parse_key_values = true;
     }
     this->done = true;
@@ -225,12 +230,6 @@ bool Application::operator==(const Application &other) const {
 Application::Application(const char *path, LineReader &liner,
                          const LocaleSuffixes &locale_suffixes,
                          const stringlist_t &desktopenvs) {
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!   The code below is extremely hacky. But fast.    !!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // Please don't try this at home.
-
     this->location = path;
 
     int locale_match = -1, locale_generic_match = -1;
@@ -243,7 +242,7 @@ Application::Application(const char *path, LineReader &liner,
         if (!kv_.has_value())
             break;
         auto kv = kv_.value();
-        const char *key = kv.first, *value = kv.second;
+        const char *key = kv.key, *value = kv.value;
         parse_key_values = true;
         try {
             if (strncmp(key, "Name", 4) == 0)
@@ -313,9 +312,9 @@ Application::get_action(const char *action_id, LineReader &liner,
         throw invalid_error("Desktop file doesn't contain action '" +
                             std::string(action_id) + "'.");
 
-    return ApplicationAction(
-        this, ("[Desktop Action " + std::string(action_id) + "]").c_str(),
-        liner, locale_suffixes);
+    return ApplicationAction(this,
+                             "[Desktop Action " + std::string(action_id) + "]",
+                             liner, locale_suffixes);
 }
 
 ApplicationAction Application::default_action() const {
@@ -326,16 +325,10 @@ ApplicationAction::ApplicationAction(const Application *a)
     : app(a), name(""), exec(this->app->exec) {}
 
 ApplicationAction::ApplicationAction(const Application *a,
-                                     const char *section_header,
+                                     std::string_view section_header,
                                      LineReader &liner,
                                      const LocaleSuffixes &locale_suffixes)
     : app(a) {
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!   The code below is extremely hacky. But fast.    !!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // Please don't try this at home.
-
     int locale_match = -1;
 
     bool parse_key_values = false;
@@ -347,7 +340,7 @@ ApplicationAction::ApplicationAction(const Application *a,
         if (!kv_.has_value())
             break;
         auto kv = kv_.value();
-        const char *key = kv.first, *value = kv.second;
+        const char *key = kv.key, *value = kv.value;
         parse_key_values = true;
         try {
             if (strncmp(key, "Name", 4) == 0)
