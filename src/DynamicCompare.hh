@@ -33,7 +33,7 @@ public:
     DynamicCompare() = delete;
 
     DynamicCompare(bool case_insensitive)
-        : compare(case_insensitive ? strcasecmp_wrapper : less_wrapper) {}
+        : compare(case_insensitive ? strcasecmp_wrapper : strcoll_wrapper) {}
 
     bool operator()(string_view a, string_view b) const {
         return this->compare(a, b);
@@ -44,13 +44,16 @@ private:
     const cmp_func_type compare;
 
     static bool strcasecmp_wrapper(string_view a, string_view b) {
+        // NOTE: Case insensitive ordering respecting locale is hard to
+        //       implement (ICU might be required), so case insensitive sorting
+        //       does not currently support locale.
         auto min = std::min(a.size(), b.size());
         int result = strncasecmp(a.data(), b.data(), min);
         return result == 0 ? a.size() < b.size() : result < 0;
     }
 
-    static bool less_wrapper(string_view a, string_view b) {
-        return a < b;
+    static bool strcoll_wrapper(string_view a, string_view b) {
+        return strcoll(a.data(), b.data()) < 0;
     }
 };
 

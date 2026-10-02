@@ -101,5 +101,26 @@ std::string LocaleSuffixes::set_locale() {
             exit(EXIT_FAILURE);
         }
     }
+
+    if (!setlocale(LC_COLLATE, "")) {
+        SPDLOG_WARN("Locale configuration invalid for LC_COLLATE, "
+                    "falling back to POSIX/C locale.");
+        if (!setlocale(LC_COLLATE, "C")) {
+            SPDLOG_ERROR("POSIX/C locale is not available for LC_COLLATE, "
+                         "setlocale(3) failed. Bailing.");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if (!setlocale(LC_CTYPE, "")) {
+        SPDLOG_WARN("Locale configuration invalid for LC_CTYPE, "
+                    "falling back to POSIX/C locale.");
+        if (!setlocale(LC_CTYPE, "C")) {
+            SPDLOG_ERROR("POSIX/C locale is not available for LC_CTYPE, "
+                         "setlocale(3) failed. Bailing.");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     return user_locale;
 }
